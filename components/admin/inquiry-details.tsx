@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 interface Inquiry {
@@ -34,7 +34,7 @@ interface Inquiry {
 
 export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [status, setStatus] = useState(inquiry.status)
   const [adminNotes, setAdminNotes] = useState(inquiry.admin_notes || "")
   const [isSaving, setIsSaving] = useState(false)

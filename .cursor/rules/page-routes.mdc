@@ -1,0 +1,34 @@
+---
+description: all the routes in the project
+globs: 
+alwaysApply: false
+---
+Public Routes
+
+/ - Main form page for clients
+
+Admin Routes (Auth Required)
+
+/admin - Inquiry list dashboard
+/admin/category - Category management
+/admin/photos - Photo upload and categorization
+/admin/inquiry/[id] - Inquiry detail with result photos
+/admin/my-account - Account settings
+
+Image Handling
+Upload Requirements
+
+Max file size: 2MB per image
+Supported formats: JPEG, PNG, WebP
+Client-side compression before upload
+Auto-generate thumbnails (400px width)
+Storage structure: /photos/YYYY/MM/[timestamp]-[filename]
+
+Compression Settings
+javascript{
+  maxSizeMB: 1.5,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  fileType: 'image/jpeg',
+  quality: 0.85
+}

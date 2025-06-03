@@ -1,27 +1,28 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+
 import { InquiryTable } from "@/components/admin/inquiry-table"
 import { SearchBar } from "@/components/admin/search-bar"
 import { FilterDropdown } from "@/components/admin/filter-dropdown"
 import { SortDropdown } from "@/components/admin/sort-dropdown"
 import { Pagination } from "@/components/admin/pagination"
+import { createClient } from "@/lib/supabase/server"
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: {
+  searchParams: Promise<{
     page?: string
     status?: string
     sort?: string
     search?: string
-  }
+  }>
 }) {
-  const supabase = createServerComponentClient({ cookies })
-
-  const page = Number.parseInt(searchParams.page || "1")
-  const status = searchParams.status || "all"
-  const sort = searchParams.sort || "newest"
-  const search = searchParams.search || ""
+  const supabase = await createClient()
+  
+  const params = await searchParams
+  const page = Number.parseInt(params.page || "1")
+  const status = params.status || "all"
+  const sort = params.sort || "newest"
+  const search = params.search || ""
 
   const pageSize = 20
   const start = (page - 1) * pageSize
@@ -41,7 +42,7 @@ export default async function AdminPage({
 
   // Apply status filter
   if (status !== "all") {
-    query = query.eq("status", status)
+    query = query.eq("status", status as "new" | "contacted" | "completed")
   }
 
   // Apply search
@@ -81,7 +82,7 @@ export default async function AdminPage({
         <SearchBar initialSearch={search} />
       </div>
 
-      <InquiryTable inquiries={inquiries || []} />
+      <InquiryTable inquiries={inquiries as any} />
 
       <Pagination currentPage={page} totalPages={totalPages} />
     </div>

@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Eye, ChevronDown } from "lucide-react"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 interface Inquiry {
@@ -33,7 +33,7 @@ interface Inquiry {
 
 export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
   const router = useRouter()
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const handleStatusChange = async (id: string, newStatus: "new" | "contacted" | "completed") => {

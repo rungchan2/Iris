@@ -1,5 +1,4 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,7 +11,7 @@ export default async function InquiryDetailPage({
 }: {
   params: { id: string }
 }) {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createClient()
 
   // Get inquiry with category
   const { data: inquiry, error } = await supabase

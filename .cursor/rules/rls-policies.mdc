@@ -1,0 +1,33 @@
+---
+description: for knowing supabase rls policies
+globs: 
+alwaysApply: false
+---
+Row Level Security (RLS) Policies
+Helper Function
+sqlCREATE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admin_users WHERE id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+Policies
+
+Public Access:
+
+View active categories, photos, keywords
+View available dates
+Create inquiries
+
+
+Admin Access:
+
+Full CRUD on all tables (using public.is_admin())
+
+
+User Access:
+
+Create/update own admin_users record
+View all admin_users if admin
