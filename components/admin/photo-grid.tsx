@@ -4,7 +4,8 @@ import { useEffect } from "react"
 import { useInView } from "react-intersection-observer"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Loader2 } from "lucide-react"
+import { Loader2, ImageIcon } from "lucide-react"
+import { PhotoContextMenu } from "@/components/admin/photo-context-menu"
 
 interface Photo {
   id: string
@@ -70,57 +71,75 @@ export function PhotoGrid({
         </label>
       </div>
 
-      {/* Photo Grid */}
-      <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-15 2xl:grid-cols-20 gap-2">
+      {/* Photo Grid - Responsive layout for 150x150 thumbnails */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-4">
         {photos.map((photo) => (
-          <div
+          <PhotoContextMenu
             key={photo.id}
-            className="relative group cursor-pointer"
-            onClick={() => onPhotoSelect(photo.id, !selectedPhotos.has(photo.id))}
+            photo={photo}
+            onDelete={() => {
+              // Refresh the grid after delete
+              onLoadMore()
+            }}
           >
-            {/* Checkbox Overlay */}
-            <div className="absolute top-1 left-1 z-10">
-              <Checkbox
-                checked={selectedPhotos.has(photo.id)}
-                onCheckedChange={(checked) => onPhotoSelect(photo.id, !!checked)}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white/80 border-white/80"
-              />
-            </div>
-
-            {/* Image */}
-            <div className="aspect-square overflow-hidden rounded-md bg-muted">
-              <img
-                src={photo.thumbnail_url || photo.storage_url}
-                alt={photo.filename}
-                className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
-                loading="lazy"
-              />
-            </div>
-
-            {/* Category Badges */}
-            {photo.photo_categories && photo.photo_categories.length > 0 && (
-              <div className="absolute bottom-1 right-1 left-1">
-                <div className="flex flex-wrap gap-0.5 justify-end">
-                  {photo.photo_categories.slice(0, 2).map((pc) => (
-                    <Badge key={pc.category_id} variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                      {pc.categories.name}
-                    </Badge>
-                  ))}
-                  {photo.photo_categories.length > 2 && (
-                    <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                      +{photo.photo_categories.length - 2}
-                    </Badge>
-                  )}
-                </div>
+            <div
+              className="relative group cursor-pointer w-[150px] h-[150px]"
+              onClick={() => onPhotoSelect(photo.id, !selectedPhotos.has(photo.id))}
+            >
+              {/* Checkbox Overlay */}
+              <div className="absolute top-2 left-2 z-10">
+                <Checkbox
+                  checked={selectedPhotos.has(photo.id)}
+                  onCheckedChange={(checked) => onPhotoSelect(photo.id, !!checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white/90 backdrop-blur border-white/90"
+                />
               </div>
-            )}
 
-            {/* Selection Overlay */}
-            {selectedPhotos.has(photo.id) && (
-              <div className="absolute inset-0 bg-primary/20 border-2 border-primary rounded-md" />
-            )}
-          </div>
+              {/* Image - 150x150 */}
+              <div className="w-[150px] h-[150px] overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={photo.thumbnail_url || photo.storage_url}
+                  alt={photo.filename}
+                  className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Category Badges */}
+              {photo.photo_categories && photo.photo_categories.length > 0 && (
+                <div className="absolute bottom-2 right-2 left-2">
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {photo.photo_categories.slice(0, 2).map((pc) => (
+                      <Badge
+                        key={pc.category_id}
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
+                      >
+                        {pc.categories.name}
+                      </Badge>
+                    ))}
+                    {photo.photo_categories.length > 2 && (
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
+                      >
+                        +{photo.photo_categories.length - 2}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Selection Overlay */}
+              {selectedPhotos.has(photo.id) && (
+                <div className="absolute inset-0 bg-primary/20 border-2 border-primary rounded-lg" />
+              )}
+
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg" />
+            </div>
+          </PhotoContextMenu>
         ))}
       </div>
 
@@ -133,8 +152,14 @@ export function PhotoGrid({
 
       {/* No Photos Message */}
       {photos.length === 0 && !isLoading && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>No photos found. Upload some photos to get started.</p>
+        <div className="col-span-full text-center py-16 text-muted-foreground">
+          <div className="max-w-sm mx-auto">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+              <ImageIcon className="w-8 h-8" />
+            </div>
+            <p className="text-lg font-medium mb-2">No photos found</p>
+            <p className="text-sm">Upload some photos to get started, or adjust your filters.</p>
+          </div>
         </div>
       )}
     </div>

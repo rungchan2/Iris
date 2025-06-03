@@ -1,6 +1,20 @@
 import { createClient } from "@/lib/supabase/server"
 import { PhotoManager } from "@/components/admin/photo-manager"
 
+interface Category {
+  id: string
+  parent_id: string | null
+  name: string
+  path: string
+  depth: number
+  display_order: number | null  
+  is_active: boolean | null
+  representative_image_url: string | null
+  representative_image_id: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 export default async function PhotosPage({
   searchParams,
 }: {
@@ -24,7 +38,7 @@ export default async function PhotosPage({
       </div>
 
       <PhotoManager
-        categories={categories || []}
+        categories={(categories || []) as Category[]}
         userId={user?.id || ""}
         initialPage={Number.parseInt(searchParams.page || "1")}
         filterCategory={searchParams.category}

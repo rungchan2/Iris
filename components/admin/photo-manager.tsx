@@ -16,13 +16,14 @@ interface Photo {
   id: string
   filename: string
   storage_url: string
-  thumbnail_url?: string
-  width?: number
-  height?: number
-  size_kb?: number
-  uploaded_by?: string
-  is_active: boolean
-  created_at: string
+  thumbnail_url: string | null
+  width: number | null
+  height: number | null
+  size_kb: number | null
+  uploaded_by: string | null
+  is_active: boolean | null
+  created_at: string | null
+  updated_at: string | null
   photo_categories?: Array<{
     category_id: string
     categories: {
@@ -39,7 +40,12 @@ interface Category {
   name: string
   path: string
   depth: number
-  is_active: boolean
+  display_order: number | null  
+  is_active: boolean | null
+  representative_image_url: string | null
+  representative_image_id: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 interface PhotoManagerProps {
@@ -143,6 +149,50 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
     },
   })
 
+  // Mutation for bulk delete
+  const deletePhotos = useMutation({
+    mutationFn: async (photoIds: string[]) => {
+      const supabase = createClient()
+
+      // Get photo info for storage deletion
+      const { data: photos } = await supabase.from("photos").select("storage_url").in("id", photoIds)
+
+      // Extract storage paths from URLs
+      const paths =
+        photos
+          ?.map((photo) => {
+            const url = new URL(photo.storage_url)
+            const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
+            return pathMatch ? pathMatch[1] : null
+          })
+          .filter(Boolean) || []
+
+      // Delete from storage
+      if (paths.length > 0) {
+        const { error: storageError } = await supabase.storage.from("photos").remove(paths)
+
+        if (storageError) throw storageError
+      }
+
+      // Delete photo categories first (foreign key constraint)
+      await supabase.from("photo_categories").delete().in("photo_id", photoIds)
+
+      // Delete from database
+      const { error: dbError } = await supabase.from("photos").delete().in("id", photoIds)
+
+      if (dbError) throw dbError
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photos"] })
+      setSelectedPhotos(new Set())
+      toast.success("Photos deleted successfully")
+    },
+    onError: (error) => {
+      toast.error("Failed to delete photos")
+      console.error(error)
+    },
+  })
+
   const photos = data?.pages.flat() || []
 
   const handlePhotoSelect = (photoId: string, selected: boolean) => {
@@ -182,6 +232,18 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
           <span className="text-sm font-medium">{selectedPhotos.size} photos selected</span>
           <Button onClick={() => setAssignModalOpen(true)} size="sm">
             Assign Categories
+          </Button>
+          <Button
+            onClick={() => {
+              if (confirm(`Delete ${selectedPhotos.size} photos? This action cannot be undone.`)) {
+                deletePhotos.mutate(Array.from(selectedPhotos))
+              }
+            }}
+            size="sm"
+            variant="destructive"
+            disabled={deletePhotos.isPending}
+          >
+            {deletePhotos.isPending ? "Deleting..." : "Delete Selected"}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedPhotos(new Set())}>
             Clear Selection

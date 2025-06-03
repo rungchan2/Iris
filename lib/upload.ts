@@ -6,10 +6,35 @@ interface UploadOptions {
   generateThumbnail?: boolean
 }
 
+// Photo 데이터베이스 레코드 타입 정의
+interface PhotoRecord {
+  id: string
+  filename: string
+  storage_url: string
+  width: number | null
+  height: number | null
+  size_kb: number | null
+  uploaded_by: string | null
+  created_at: string | null
+  updated_at: string | null
+  thumbnail_url: string | null
+  is_active: boolean | null
+}
+
 interface UploadResult {
   url: string
   thumbnailUrl?: string
-  metadata: any
+  metadata: PhotoRecord
+}
+
+// 업로드 결과 타입 정의
+interface UploadResultWithStatus {
+  success: boolean
+  url?: string
+  thumbnailUrl?: string
+  metadata?: PhotoRecord
+  error?: Error | unknown
+  file?: File
 }
 
 export async function uploadPhoto(file: File, userId: string, options?: UploadOptions): Promise<UploadResult> {
@@ -20,16 +45,20 @@ export async function uploadPhoto(file: File, userId: string, options?: UploadOp
     maxSizeMB: 1.5,
     maxWidthOrHeight: 1920,
     useWebWorker: true,
+    onProgress: options?.onProgress,
   })
 
   // Generate unique filename
   const timestamp = Date.now()
   const ext = file.name.split(".").pop()
   const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`
-  const path = `${new Date().getFullYear()}/${new Date().getMonth() + 1}/${filename}`
+  
+  // IMPORTANT: Path must start with userId to match the RLS policy
+  // Policy checks if auth.uid() equals the first folder name
+  const path = `${userId}/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${filename}`
 
   // Upload to Supabase Storage
-  const { data, error } = await supabase.storage.from("photos").upload(path, compressedFile, {
+  const { error } = await supabase.storage.from("photos").upload(path, compressedFile, {
     cacheControl: "3600",
     upsert: false,
   })
@@ -72,8 +101,8 @@ export async function uploadMultiplePhotos(
   files: File[],
   userId: string,
   onProgress?: (fileIndex: number, progress: number) => void,
-): Promise<any[]> {
-  const results = []
+): Promise<UploadResultWithStatus[]> {
+  const results: UploadResultWithStatus[] = []
 
   for (let i = 0; i < files.length; i++) {
     try {
