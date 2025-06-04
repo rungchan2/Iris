@@ -38,7 +38,7 @@ const items = [
   },
   {
     title: "My Account",
-    url: "/admin/my-account",
+    url: "/admin/my-page",
     icon: User,
   },
 ]

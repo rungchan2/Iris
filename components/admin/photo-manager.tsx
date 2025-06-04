@@ -16,14 +16,13 @@ interface Photo {
   id: string
   filename: string
   storage_url: string
-  thumbnail_url: string | null
-  width: number | null
-  height: number | null
-  size_kb: number | null
-  uploaded_by: string | null
-  is_active: boolean | null
-  created_at: string | null
-  updated_at: string | null
+  thumbnail_url?: string
+  width?: number
+  height?: number
+  size_kb?: number
+  uploaded_by?: string
+  is_active: boolean
+  created_at: string
   photo_categories?: Array<{
     category_id: string
     categories: {
@@ -40,12 +39,7 @@ interface Category {
   name: string
   path: string
   depth: number
-  display_order: number | null  
-  is_active: boolean | null
-  representative_image_url: string | null
-  representative_image_id: string | null
-  created_at: string | null
-  updated_at: string | null
+  is_active: boolean
 }
 
 interface PhotoManagerProps {
