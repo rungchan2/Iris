@@ -136,7 +136,7 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
                 </div>
                 <div>
                   <span className="font-medium text-muted-foreground">Uploaded:</span>
-                  <p>{new Date(photo.created_at).toLocaleDateString()}</p>
+                  <p>{new Date(photo.created_at).toLocaleDateString('en-US')}</p>
                 </div>
               </div>
 

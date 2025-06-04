@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { Inbox, FolderTree, ImageIcon, User, LogOut } from "lucide-react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar } from "lucide-react"
 
 import {
   Sidebar,
@@ -35,6 +35,11 @@ const items = [
     title: "Photos",
     url: "/admin/photos",
     icon: ImageIcon,
+  },
+  {
+    title: "Schedule",
+    url: "/admin/schedule",
+    icon: Calendar,
   },
   {
     title: "My Account",

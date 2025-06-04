@@ -89,6 +89,56 @@ export type Database = {
         }
         Relationships: []
       }
+      available_slots: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          current_bookings: number | null
+          date: string
+          duration_minutes: number | null
+          end_time: string
+          id: string
+          is_available: boolean | null
+          max_bookings: number | null
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          current_bookings?: number | null
+          date: string
+          duration_minutes?: number | null
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          max_bookings?: number | null
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          current_bookings?: number | null
+          date?: string
+          duration_minutes?: number | null
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          max_bookings?: number | null
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "available_slots_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -149,6 +199,7 @@ export type Database = {
       inquiries: {
         Row: {
           admin_note: string | null
+          assigned_admin_id: string | null
           created_at: string | null
           current_mood_keywords: string[] | null
           desired_date: string | null
@@ -162,6 +213,7 @@ export type Database = {
           phone: string
           relationship: string | null
           selected_category_id: string | null
+          selected_slot_id: string | null
           selection_history: Json | null
           selection_path: string[] | null
           special_request: string | null
@@ -170,6 +222,7 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          assigned_admin_id?: string | null
           created_at?: string | null
           current_mood_keywords?: string[] | null
           desired_date?: string | null
@@ -183,6 +236,7 @@ export type Database = {
           phone: string
           relationship?: string | null
           selected_category_id?: string | null
+          selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
           special_request?: string | null
@@ -191,6 +245,7 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          assigned_admin_id?: string | null
           created_at?: string | null
           current_mood_keywords?: string[] | null
           desired_date?: string | null
@@ -204,6 +259,7 @@ export type Database = {
           phone?: string
           relationship?: string | null
           selected_category_id?: string | null
+          selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
           special_request?: string | null
@@ -212,10 +268,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "inquiries_assigned_admin_id_fkey"
+            columns: ["assigned_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inquiries_selected_category_id_fkey"
             columns: ["selected_category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_selected_slot_id_fkey"
+            columns: ["selected_slot_id"]
+            isOneToOne: false
+            referencedRelation: "available_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -338,12 +408,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      book_slot: {
+        Args: { p_slot_id: string; p_inquiry_id: string }
+        Returns: boolean
+      }
+      cancel_slot_booking: {
+        Args: { p_inquiry_id: string }
+        Returns: boolean
+      }
       get_leaf_categories: {
         Args: Record<PropertyKey, never>
         Returns: {
           id: string
           path: string
         }[]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {
