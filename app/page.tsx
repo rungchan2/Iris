@@ -1,39 +1,57 @@
-"use client"
+import { createClient } from "@/lib/supabase/server"
+import { InquiryForm } from "@/components/inquiry/inquiry-form"
+import { HeroSection } from "@/components/inquiry/hero-section"
+import type { Category, MoodKeyword } from "@/types/inquiry.types"
 
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { logout } from "@/lib/login";
-import { useRouter } from "next/navigation";
+export default async function InquiryPage() {
+  const supabase = await createClient()
 
-export default function Home() {
-  const router = useRouter();
-  const handleLogout = async () => {
-    const { error } = await logout();
-    if (error) {
-      console.error(error);
-    } else {
-      router.push("/login");
-    }
-  }
+  // Fetch root categories (depth = 1)
+  const { data: rootCategories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("depth", 1)
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+
+  // Fetch all categories for the tournament
+  const { data: allCategories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true })
+
+  // Fetch mood keywords
+  const { data: moodKeywords } = await supabase
+    .from("keywords")
+    .select("*")
+    .order("display_order", { ascending: true })
+
+  // Fetch available dates
+  const currentDate = new Date()
+  const threeMonthsLater = new Date()
+  threeMonthsLater.setMonth(currentDate.getMonth() + 3)
+
+  const { data: availableSlots } = await supabase
+    .from("available_slots")
+    .select("date")
+    .eq("is_available", true)
+    .gte("date", currentDate.toISOString().split("T")[0])
+    .lte("date", threeMonthsLater.toISOString().split("T")[0])
+    .order("date")
+
+  // Extract unique available dates
+  const availableDates = availableSlots ? [...new Set(availableSlots.map((slot) => slot.date))] : []
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <Button onClick={handleLogout}>로그아웃</Button>
-        </div>
-      </main>
-      
+    <div className="min-h-screen bg-white">
+      <HeroSection />
+      <InquiryForm
+        rootCategories={(rootCategories as Category[]) || []}
+        allCategories={(allCategories as Category[]) || []}
+        moodKeywords={(moodKeywords as MoodKeyword[]) || []}
+        availableDates={availableDates}
+      />
     </div>
-  );
+  )
 }

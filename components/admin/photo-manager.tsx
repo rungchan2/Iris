@@ -16,13 +16,14 @@ interface Photo {
   id: string
   filename: string
   storage_url: string
-  thumbnail_url?: string
-  width?: number
-  height?: number
-  size_kb?: number
-  uploaded_by?: string
-  is_active: boolean
-  created_at: string
+  thumbnail_url?: string | null
+  width?: number | null
+  height?: number | null
+  size_kb?: number | null
+  uploaded_by?: string | null
+  is_active?: boolean | null
+  created_at?: string | null
+  updated_at?: string | null
   photo_categories?: Array<{
     category_id: string
     categories: {
@@ -100,12 +101,12 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
           .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
 
         const unassignedPhotos = allPhotos?.filter((photo) => !photo.photo_categories?.length) || []
-        return unassignedPhotos
+        return unassignedPhotos as any
       }
 
       const { data, error } = await query
       if (error) throw error
-      return data
+      return data as any
     },
     getNextPageParam: (lastPage, pages) => {
       return lastPage.length === PHOTOS_PER_PAGE ? pages.length : undefined
@@ -152,14 +153,13 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
       const { data: photos } = await supabase.from("photos").select("storage_url").in("id", photoIds)
 
       // Extract storage paths from URLs
-      const paths =
-        photos
-          ?.map((photo) => {
-            const url = new URL(photo.storage_url)
-            const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
-            return pathMatch ? pathMatch[1] : null
-          })
-          .filter(Boolean) || []
+      const paths = photos
+        ?.map((photo) => {
+          const url = new URL(photo.storage_url)
+          const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
+          return pathMatch ? pathMatch[1] : null
+        })
+        .filter((path): path is string => path !== null) || []
 
       // Delete from storage
       if (paths.length > 0) {
@@ -223,9 +223,9 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
       {/* Bulk Actions */}
       {selectedPhotos.size > 0 && (
         <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">{selectedPhotos.size} photos selected</span>
+          <span className="text-sm font-medium">{selectedPhotos.size} 개의 사진이 선택되었습니다.</span>
           <Button onClick={() => setAssignModalOpen(true)} size="sm">
-            Assign Categories
+            카테고리 할당
           </Button>
           <Button
             onClick={() => {
@@ -237,10 +237,10 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
             variant="destructive"
             disabled={deletePhotos.isPending}
           >
-            {deletePhotos.isPending ? "Deleting..." : "Delete Selected"}
+            {deletePhotos.isPending ? "삭제중..." : "선택한 사진 삭제"}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedPhotos(new Set())}>
-            Clear Selection
+            선택 초기화
           </Button>
         </div>
       )}

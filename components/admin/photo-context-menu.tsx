@@ -93,11 +93,11 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
         <ContextMenuContent className="w-48">
           <ContextMenuItem onClick={() => setViewOpen(true)} className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
-            View Large
+            크게 보기
           </ContextMenuItem>
           <ContextMenuItem onClick={handleDownload} className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Download
+            다운로드
           </ContextMenuItem>
           <ContextMenuItem
             onClick={handleDelete}
@@ -105,7 +105,7 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
             className="flex items-center gap-2 text-destructive focus:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
-            {deleting ? "Deleting..." : "Delete"}
+            {deleting ? "삭제중..." : "삭제"}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
@@ -113,7 +113,7 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
       {/* View Dialog */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-4xl">
-          <DialogTitle className="sr-only">View Photo - {photo.filename}</DialogTitle>
+          <DialogTitle className="sr-only">사진 보기 - {photo.filename}</DialogTitle>
           <div className="relative">
             <img
               src={photo.storage_url || "/placeholder.svg"}
@@ -123,26 +123,26 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
             <div className="mt-4 space-y-3">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium text-muted-foreground">Filename:</span>
+                  <span className="font-medium text-muted-foreground">파일명:</span>
                   <p className="font-mono">{photo.filename}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-muted-foreground">Size:</span>
+                  <span className="font-medium text-muted-foreground">크기:</span>
                   <p>{photo.size_kb ? `${photo.size_kb}KB` : "Unknown"}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-muted-foreground">Dimensions:</span>
+                  <span className="font-medium text-muted-foreground">크기:</span>
                   <p>{photo.width && photo.height ? `${photo.width} × ${photo.height}` : "Unknown"}</p>
                 </div>
                 <div>
-                  <span className="font-medium text-muted-foreground">Uploaded:</span>
-                  <p>{new Date(photo.created_at).toLocaleDateString('en-US')}</p>
+                  <span className="font-medium text-muted-foreground">업로드 일자:</span>
+                  <p>{new Date(photo.created_at).toLocaleDateString()}</p>
                 </div>
               </div>
 
               {photo.photo_categories && photo.photo_categories.length > 0 && (
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Categories:</span>
+                  <span className="text-sm font-medium text-muted-foreground">카테고리:</span>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {photo.photo_categories.map((pc) => (
                       <Badge key={pc.category_id} variant="secondary">

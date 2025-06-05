@@ -71,7 +71,7 @@ export default async function AdminPage({
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Inquiry Management</h1>
+        <h1 className="text-2xl font-bold">문의 관리</h1>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-between">

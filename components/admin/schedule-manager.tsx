@@ -57,7 +57,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
 
       if (error) throw error
 
-      setSlots(data || [])
+      setSlots(data as AvailableSlot[])
     } catch (error) {
       console.error("Error fetching slots:", error)
       toast.error("Failed to load schedule")
@@ -161,7 +161,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              Schedule Calendar
+              일정
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -170,19 +170,19 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
               <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span>Available</span>
+                  <span>가능</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <span>Partially Booked</span>
+                  <span>부분 예약</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <span>Fully Booked</span>
+                  <span>예약 마감</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                  <span>No Slots</span>
+                  <span>시간대 없음</span>
                 </div>
               </div>
 
@@ -194,9 +194,9 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
                 onMonthChange={handleMonthChange}
                 className="rounded-md border"
                 modifiers={{
-                  available: (date) => getDateModifiers(date).available,
-                  partiallyBooked: (date) => getDateModifiers(date).partiallyBooked,
-                  fullyBooked: (date) => getDateModifiers(date).fullyBooked,
+                  available: (date) => getDateModifiers(date).available || false,
+                  partiallyBooked: (date) => getDateModifiers(date).partiallyBooked || false,
+                  fullyBooked: (date) => getDateModifiers(date).fullyBooked || false,
                 }}
                 modifiersStyles={{
                   available: { backgroundColor: "rgb(34 197 94 / 0.2)" },
@@ -218,20 +218,20 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              {selectedDate.toLocaleDateString('en-US')} Slots
+              {selectedDate.toLocaleDateString('ko-KR')} 시간대
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button size="sm" onClick={() => setBulkModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-1" />
-                Bulk Add
+                일괄 추가
               </Button>
               <Button size="sm" variant="outline" onClick={handleCopyLastWeek}>
                 <Copy className="h-4 w-4 mr-1" />
-                Copy Last Week
+                지난 주 복사
               </Button>
               <Button size="sm" variant="outline" onClick={handleClearDay} disabled={selectedDateSlots.length === 0}>
                 <Trash2 className="h-4 w-4 mr-1" />
-                Clear Day
+                날짜 초기화
               </Button>
             </div>
           </CardHeader>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ScheduleManager } from "@/components/admin/schedule-manager"
+import type { AvailableSlot } from "@/types/schedule.types"
 
 export default async function SchedulePage() {
   const supabase = await createClient()
@@ -38,11 +39,11 @@ export default async function SchedulePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Schedule Management</h1>
-        <p className="text-muted-foreground">Manage your available time slots for photo shoot bookings</p>
+        <h1 className="text-3xl font-bold">일정 관리</h1>
+        <p className="text-muted-foreground">사진 촬영 예약을 위한 가능한 시간대를 관리하세요</p>
       </div>
 
-      <ScheduleManager initialSlots={slots || []} adminId={session.user.id} />
+      <ScheduleManager initialSlots={slots as AvailableSlot[]} adminId={session.user.id} />
     </div>
   )
 }

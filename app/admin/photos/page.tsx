@@ -1,26 +1,16 @@
 import { createClient } from "@/lib/supabase/server"
 import { PhotoManager } from "@/components/admin/photo-manager"
+import type { Database } from "@/types/database.types"
 
-interface Category {
-  id: string
-  parent_id: string | null
-  name: string
-  path: string
-  depth: number
-  display_order: number | null  
-  is_active: boolean | null
-  representative_image_url: string | null
-  representative_image_id: string | null
-  created_at: string | null
-  updated_at: string | null
-}
+type Category = Database['public']['Tables']['categories']['Row']
 
 export default async function PhotosPage({
   searchParams,
 }: {
-  searchParams: { page?: string; category?: string; unassigned?: string }
+  searchParams: Promise<{ page?: string; category?: string; unassigned?: string }>
 }) {
   const supabase = await createClient()
+  const params = await searchParams
 
   // Get user for upload permissions
   const {
@@ -33,16 +23,16 @@ export default async function PhotosPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Photo Management</h1>
-        <p className="text-muted-foreground">Upload and categorize photos efficiently</p>
+        <h1 className="text-3xl font-bold">사진 관리</h1>
+        <p className="text-muted-foreground">사진을 업로드하고 카테고리로 분류하세요.</p>
       </div>
 
       <PhotoManager
-        categories={(categories || []) as Category[]}
+        categories={categories as Category[] || []}
         userId={user?.id || ""}
-        initialPage={Number.parseInt(searchParams.page || "1")}
-        filterCategory={searchParams.category}
-        showUnassigned={searchParams.unassigned === "true"}
+        initialPage={Number.parseInt(params.page || "1")}
+        filterCategory={params.category}
+        showUnassigned={params.unassigned === "true"}
       />
     </div>
   )

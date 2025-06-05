@@ -53,33 +53,33 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
 
   const stats = [
     {
-      title: "Total Slots",
+      title: "총 시간대",
       value: totalSlots.toString(),
-      description: "This month",
+      description: "이번 달",
       icon: Calendar,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
     {
-      title: "Available Hours",
+      title: "가능한 시간대",
       value: `${totalHours.toFixed(1)}h`,
-      description: "Total time available",
+      description: "총 가능한 시간대",
       icon: Clock,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Booking Rate",
+      title: "예약 비율",
       value: `${bookingRate}%`,
-      description: "Slots booked",
+      description: "예약된 시간대",
       icon: TrendingUp,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
     {
-      title: "This Week",
+      title: "이번 주",
       value: `${weekHours.toFixed(1)}h`,
-      description: "Available hours",
+      description: "가능한 시간대",
       icon: Users,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
@@ -91,7 +91,7 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Schedule Statistics
+          일정 통계
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -112,22 +112,22 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
 
         {/* Additional Insights */}
         <div className="space-y-3 pt-4 border-t">
-          <h4 className="text-sm font-medium">Quick Insights</h4>
+          <h4 className="text-sm font-medium">빠른 인사이트</h4>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Available Slots</span>
+              <span className="text-sm text-muted-foreground">가능한 시간대</span>
               <Badge variant="outline">{availableSlots}</Badge>
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Booked Slots</span>
+              <span className="text-sm text-muted-foreground">예약된 시간대</span>
               <Badge variant={bookedSlots > 0 ? "default" : "outline"}>{bookedSlots}</Badge>
             </div>
 
             {popularTimeSlot && (
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Popular Time</span>
+                <span className="text-sm text-muted-foreground">인기 시간대</span>
                 <Badge variant="secondary">
                   {formatTime(popularTimeSlot[0].split("-")[0])} - {formatTime(popularTimeSlot[0].split("-")[1])}
                 </Badge>
@@ -140,7 +140,7 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
         {totalSlots === 0 && (
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No schedule set yet. Start by adding some time slots!</p>
+            <p className="text-muted-foreground">아직 일정이 없습니다. 시간대를 추가하세요!</p>
           </div>
         )}
       </CardContent>

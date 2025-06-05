@@ -10,10 +10,10 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
 
 const navigation = [
-  { name: "Inquiries", href: "/admin", icon: Inbox },
-  { name: "Categories", href: "/admin/category", icon: FolderTree },
-  { name: "Photos", href: "/admin/photos", icon: ImageIcon },
-  { name: "My Account", href: "/admin/my-account", icon: User },
+  { name: "문의", href: "/admin", icon: Inbox },
+  { name: "카테고리", href: "/admin/category", icon: FolderTree },
+  { name: "사진", href: "/admin/photos", icon: ImageIcon },
+  { name: "내 계정", href: "/admin/my-account", icon: User },
 ]
 
 export function Sidebar() {

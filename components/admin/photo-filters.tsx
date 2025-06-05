@@ -55,14 +55,14 @@ export function PhotoFilters({ categories, selectedCategory, showUnassigned }: P
   return (
     <div className="flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Filter by:</label>
+        <label className="text-sm font-medium">필터:</label>
 
         <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="all">모든 카테고리</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
                 {category.path}
@@ -72,19 +72,19 @@ export function PhotoFilters({ categories, selectedCategory, showUnassigned }: P
         </Select>
 
         <Button variant={showUnassigned ? "default" : "outline"} size="sm" onClick={handleUnassignedToggle}>
-          Unassigned Only
+          미분류 사진만
         </Button>
       </div>
 
       {hasFilters && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
+          <span className="text-sm text-muted-foreground">활성 필터:</span>
           {selectedCategory && (
-            <Badge variant="secondary">Category: {categories.find((c) => c.id === selectedCategory)?.name}</Badge>
+            <Badge variant="secondary">카테고리: {categories.find((c) => c.id === selectedCategory)?.name}</Badge>
           )}
-          {showUnassigned && <Badge variant="secondary">Unassigned</Badge>}
+          {showUnassigned && <Badge variant="secondary">미분류</Badge>}
           <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear all
+            모든 필터 제거
           </Button>
         </div>
       )}

@@ -74,7 +74,7 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
-          Profile Information
+          프로필 정보
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -82,31 +82,31 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
         <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            Email Address
+            이메일 주소
           </Label>
           <Input id="email" value={adminUser.email} disabled className="bg-muted" />
-          <p className="text-xs text-muted-foreground">Email address cannot be changed</p>
+          <p className="text-xs text-muted-foreground">이메일 주소는 변경할 수 없습니다</p>
         </div>
 
         {/* Name (Editable) */}
         <div className="space-y-2">
-          <Label htmlFor="name">Display Name</Label>
+          <Label htmlFor="name">이름</Label>
           <div className="flex gap-2">
             <Input
               id="name"
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter your display name"
+              placeholder="이름을 입력하세요"
               className={hasChanges ? "border-orange-300 focus:border-orange-500" : ""}
             />
             {hasChanges && (
               <Button onClick={handleSave} disabled={isUpdating || !name.trim()} size="sm">
-                {isUpdating ? "Saving..." : "Save"}
+                {isUpdating ? "저장중..." : "저장"}
               </Button>
             )}
           </div>
-          {hasChanges && <p className="text-xs text-orange-600">Press Enter or click Save to update</p>}
+          {hasChanges && <p className="text-xs text-orange-600">Enter 키를 누르거나 저장 버튼을 클릭하여 업데이트</p>}
         </div>
 
         {/* Account Dates */}
@@ -114,7 +114,7 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Account Created
+              계정 생성일
             </Label>
             <p className="text-sm text-muted-foreground">{formatDate(adminUser.created_at)}</p>
           </div>
@@ -122,7 +122,7 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              Last Updated
+              마지막 업데이트
             </Label>
             <p className="text-sm text-muted-foreground">{formatDate(adminUser.updated_at)}</p>
           </div>

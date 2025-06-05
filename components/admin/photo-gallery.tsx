@@ -23,11 +23,11 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Photo Gallery</CardTitle>
+          <CardTitle>사진 갤러리</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground">No photos available for this category.</p>
+            <p className="text-muted-foreground">사진이 없습니다.</p>
           </div>
         </CardContent>
       </Card>
@@ -38,10 +38,10 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Photo Gallery</CardTitle>
+          <CardTitle>사진 갤러리</CardTitle>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {photos.length} {photos.length === 1 ? "photo" : "photos"}
+              {photos.length} {photos.length === 1 ? "사진" : "사진들"}
             </span>
             <Button variant="outline" size="sm" className="flex items-center gap-1">
               <Download className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
               onClick={() => setSelectedPhoto(null)}
             >
               <X className="h-6 w-6" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">닫기</span>
             </Button>
 
             <div className="relative max-h-full max-w-full">

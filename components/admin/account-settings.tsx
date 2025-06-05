@@ -2,7 +2,7 @@
 import { ProfileSection } from "@/components/admin/profile-section"
 import { UploadStatistics } from "@/components/admin/upload-statistics"
 
-interface AdminUser {
+export interface AdminUser {
   id: string
   email: string
   name: string

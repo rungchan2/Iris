@@ -74,12 +74,12 @@ export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) 
         <input {...getInputProps()} />
         <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
         {isDragActive ? (
-          <p>Drop the photos here...</p>
+          <p>여기에 사진을 놓으세요...</p>
         ) : (
           <div>
-            <p className="text-lg font-medium">Drop photos here, or click to select</p>
+            <p className="text-lg font-medium">여기에 사진을 놓으세요, 또는 클릭하여 선택하세요</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Support for JPEG, PNG, WebP • Max 1.5MB per file after compression
+              JPEG, PNG, WebP 지원 • 압축 후 최대 1.5MB 파일 크기
             </p>
           </div>
         )}
@@ -88,11 +88,11 @@ export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) 
       {/* Upload Progress */}
       {uploading && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium">Uploading {Object.keys(uploadProgress).length} files...</h4>
+          <h4 className="text-sm font-medium">업로드 중 {Object.keys(uploadProgress).length} 파일...</h4>
           {Object.entries(uploadProgress).map(([index, progress]) => (
             <div key={index} className="space-y-1">
               <div className="flex justify-between text-sm">
-                <span>File {Number.parseInt(index) + 1}</span>
+                <span>파일 {Number.parseInt(index) + 1}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -112,7 +112,7 @@ export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) 
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
               )}
               <AlertDescription>
-                Successfully uploaded {successCount} of {uploadResults.length} photos
+                {successCount} 개의 사진을 성공적으로 업로드했습니다.
                 {errorCount > 0 && ` (${errorCount} failed)`}
               </AlertDescription>
             </div>

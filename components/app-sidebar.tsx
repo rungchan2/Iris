@@ -22,27 +22,27 @@ import { useRouter, usePathname } from "next/navigation"
 // Menu items
 const items = [
   {
-    title: "Inquiries",
+    title: "문의",
     url: "/admin",
     icon: Inbox,
   },
   {
-    title: "Categories",
+    title: "카테고리",
     url: "/admin/category",
     icon: FolderTree,
   },
   {
-    title: "Photos",
+    title: "사진",
     url: "/admin/photos",
     icon: ImageIcon,
   },
   {
-    title: "Schedule",
+    title: "일정",
     url: "/admin/schedule",
     icon: Calendar,
   },
   {
-    title: "My Account",
+    title: "내 계정",
     url: "/admin/my-page",
     icon: User,
   },
@@ -77,8 +77,8 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                   <ImageIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Photo Admin</span>
-                  <span className="truncate text-xs">Dashboard</span>
+                  <span className="truncate font-semibold">사진 관리자</span>
+                  <span className="truncate text-xs">대시보드</span>
                 </div>
               </div>
             </SidebarMenuButton>
@@ -87,7 +87,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>관리자 페이지</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
@@ -125,7 +125,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleSignOut}>
               <LogOut />
-              <span>Sign Out</span>
+              <span>로그아웃</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

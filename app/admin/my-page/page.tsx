@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { AccountSettings } from "@/components/admin/account-settings"
+import { AccountSettings, AdminUser } from "@/components/admin/account-settings"
 
 export default async function MyAccountPage() {
   const supabase = await createClient()
@@ -42,7 +42,7 @@ export default async function MyAccountPage() {
   currentMonth.setDate(1)
   currentMonth.setHours(0, 0, 0, 0)
 
-  const photosThisMonth = photoStats?.filter((photo) => new Date(photo.created_at) >= currentMonth).length || 0
+  const photosThisMonth = photoStats?.filter((photo) => new Date(photo.created_at || "") >= currentMonth).length || 0
 
   const statistics = {
     totalPhotos,
@@ -54,11 +54,11 @@ export default async function MyAccountPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">My Account</h1>
-        <p className="text-muted-foreground">Manage your profile and view upload statistics</p>
+        <h1 className="text-3xl font-bold">내 계정</h1>
+        <p className="text-muted-foreground">프로필을 관리하고 업로드 통계를 확인하세요</p>
       </div>
 
-      <AccountSettings adminUser={adminUser} statistics={statistics} />
+      <AccountSettings adminUser={adminUser as AdminUser} statistics={statistics} />
     </div>
   )
 }

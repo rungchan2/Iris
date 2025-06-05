@@ -8,9 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
 
-interface Inquiry {
+export interface Inquiry {
   id: string
   name: string
   phone: string
@@ -33,7 +32,6 @@ interface Inquiry {
 }
 
 export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
-  const router = useRouter()
   const supabase = createClient()
   const [status, setStatus] = useState(inquiry.status)
   const [adminNotes, setAdminNotes] = useState(inquiry.admin_notes || "")
@@ -53,7 +51,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
 
   const saveNotes = async () => {
     setIsSaving(true)
-    const { error } = await supabase.from("inquiries").update({ admin_notes: adminNotes }).eq("id", inquiry.id)
+    const { error } = await supabase.from("inquiries").update({ admin_note: adminNotes }).eq("id", inquiry.id)
 
     if (error) {
       console.error("Error saving notes:", error)
@@ -64,24 +62,24 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Inquiry Information</CardTitle>
+        <CardTitle>문의 정보</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Name</p>
+              <p className="text-sm font-medium text-muted-foreground">이름</p>
               <p className="text-lg font-medium">{inquiry.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Phone</p>
+              <p className="text-sm font-medium text-muted-foreground">전화번호</p>
               <p className="text-lg font-medium">{inquiry.phone}</p>
             </div>
           </div>
 
           {inquiry.instagram_id && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Instagram</p>
+              <p className="text-sm font-medium text-muted-foreground">인스타그램</p>
               <p className="text-lg font-medium">@{inquiry.instagram_id}</p>
             </div>
           )}
@@ -89,32 +87,32 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
           <div className="grid grid-cols-2 gap-4">
             {inquiry.gender && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Gender</p>
+                <p className="text-sm font-medium text-muted-foreground">성별</p>
                 <p className="text-lg font-medium capitalize">{inquiry.gender}</p>
               </div>
             )}
 
             <div>
-              <p className="text-sm font-medium text-muted-foreground">People Count</p>
+              <p className="text-sm font-medium text-muted-foreground">인원</p>
               <p className="text-lg font-medium">{inquiry.people_count}</p>
             </div>
           </div>
 
           {inquiry.desired_date && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Desired Date</p>
+              <p className="text-sm font-medium text-muted-foreground">예약 날짜</p>
               <p className="text-lg font-medium">{inquiry.desired_date}</p>
             </div>
           )}
 
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Created At</p>
+            <p className="text-sm font-medium text-muted-foreground">생성 날짜</p>
             <p className="text-lg font-medium">{formatDate(inquiry.created_at)}</p>
           </div>
 
           {inquiry.selection_path && inquiry.selection_path.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Selected Category</p>
+              <p className="text-sm font-medium text-muted-foreground">선택한 카테고리</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {inquiry.selection_path.map((item, index) => (
                   <div key={index} className="flex items-center">
@@ -130,7 +128,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
 
           {inquiry.special_request && (
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Special Request</p>
+              <p className="text-sm font-medium text-muted-foreground">특별 요청</p>
               <p className="text-lg">{inquiry.special_request}</p>
             </div>
           )}
@@ -138,7 +136,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
 
         <div className="space-y-2 pt-4 border-t">
           <div className="flex justify-between items-center">
-            <p className="text-sm font-medium text-muted-foreground">Status</p>
+            <p className="text-sm font-medium text-muted-foreground">상태</p>
             <Select
               value={status}
               onValueChange={(value: "new" | "contacted" | "completed") => handleStatusChange(value)}
@@ -163,7 +161,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
           </div>
 
           <div className="space-y-2 pt-4">
-            <p className="text-sm font-medium text-muted-foreground">Admin Notes</p>
+            <p className="text-sm font-medium text-muted-foreground">작가 메모</p>
             <Textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
@@ -171,7 +169,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
               rows={4}
             />
             <Button onClick={saveNotes} disabled={isSaving} className="w-full">
-              {isSaving ? "Saving..." : "Save Notes"}
+              {isSaving ? "저장중..." : "메모 저장"}
             </Button>
           </div>
         </div>

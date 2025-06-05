@@ -133,17 +133,17 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
                       {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                     </span>
                     <Badge variant="outline" className="text-xs">
-                      {slot.duration_minutes}min
+                      {slot.duration_minutes}분
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     <Users className="h-3 w-3" />
                     <span>
-                      {slot.current_bookings}/{slot.max_bookings} booked
+                      {slot.current_bookings}/{slot.max_bookings} 예약됨
                     </span>
                     {slot.current_bookings >= slot.max_bookings && (
                       <Badge variant="destructive" className="text-xs">
-                        Full
+                        마감
                       </Badge>
                     )}
                   </div>
@@ -171,14 +171,14 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
       {!isAdding ? (
         <Button onClick={() => setIsAdding(true)} className="w-full" variant="outline">
           <Plus className="h-4 w-4 mr-2" />
-          Add Time Slot
+          가능한 시간 추가
         </Button>
       ) : (
         <Card className="p-4">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startTime">Start Time</Label>
+                <Label htmlFor="startTime">시작 시간</Label>
                 <Select
                   value={newSlot.startTime}
                   onValueChange={(value) => setNewSlot({ ...newSlot, startTime: value })}
@@ -197,7 +197,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="endTime">End Time</Label>
+                <Label htmlFor="endTime">종료 시간</Label>
                 <Select value={newSlot.endTime} onValueChange={(value) => setNewSlot({ ...newSlot, endTime: value })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -215,7 +215,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Label htmlFor="duration">시간 (분)</Label>
                 <Select
                   value={newSlot.duration.toString()}
                   onValueChange={(value) => setNewSlot({ ...newSlot, duration: Number.parseInt(value) })}
@@ -224,17 +224,17 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="90">1.5 hours</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
-                    <SelectItem value="180">3 hours</SelectItem>
+                    <SelectItem value="30">30분</SelectItem>
+                    <SelectItem value="60">1시간</SelectItem>
+                    <SelectItem value="90">1.5시간</SelectItem>
+                    <SelectItem value="120">2시간</SelectItem>
+                    <SelectItem value="180">3시간</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maxBookings">Max Bookings</Label>
+                <Label htmlFor="maxBookings">최대 예약 가능 인원</Label>
                 <Input
                   type="number"
                   min="1"
@@ -247,10 +247,10 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
 
             <div className="flex gap-2">
               <Button onClick={handleAddSlot} className="flex-1">
-                Add Slot
+                추가하기
               </Button>
               <Button variant="outline" onClick={() => setIsAdding(false)}>
-                Cancel
+                취소
               </Button>
             </div>
           </div>

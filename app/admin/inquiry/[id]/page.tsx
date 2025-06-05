@@ -3,8 +3,9 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
-import { InquiryDetails } from "@/components/admin/inquiry-details"
+import { Inquiry, InquiryDetails } from "@/components/admin/inquiry-details"
 import { PhotoGallery } from "@/components/admin/photo-gallery"
+
 
 export default async function InquiryDetailPage({
   params,
@@ -34,7 +35,7 @@ export default async function InquiryDetailPage({
   }
 
   // Get photos for selected category if available
-  let photos = []
+  let photos: any[] = []
   if (inquiry.selected_category_id) {
     const { data: photoData } = await supabase
       .from("photos")
@@ -60,13 +61,13 @@ export default async function InquiryDetailPage({
               Back
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">Inquiry Details</h1>
+          <h1 className="text-2xl font-bold">문의 상세</h1>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <InquiryDetails inquiry={inquiry} />
+          <InquiryDetails inquiry={inquiry as Inquiry} />
         </div>
         <div className="lg:col-span-2">
           <PhotoGallery photos={photos} />

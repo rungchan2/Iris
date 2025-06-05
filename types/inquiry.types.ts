@@ -1,0 +1,66 @@
+import { z } from "zod"
+
+export const inquiryFormSchema = z.object({
+  // Personal Info
+  name: z.string().min(2, { message: "이름은 최소 2자 이상이어야 합니다." }),
+  instagram_id: z.string().optional(),
+  gender: z.enum(["male", "female", "other"]),
+  phone: z
+    .string()
+    .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, { message: "유효한 전화번호를 입력해주세요 (예: 010-1234-5678)" }),
+  desired_date: z.date({ required_error: "날짜를 선택해주세요" }),
+  selected_slot_id: z.string().optional(), // Add this field
+  people_count: z.number().int().min(1),
+  relationship: z.string().optional(),
+
+  // Mood Keywords
+  current_mood_keywords: z.array(z.string()).min(1, { message: "최소 하나의 현재 기분을 선택해주세요" }),
+  desired_mood_keywords: z.array(z.string()).min(1, { message: "최소 하나의 원하는 기분을 선택해주세요" }),
+
+  // Additional Info
+  special_request: z.string().optional(),
+  difficulty_note: z.string().optional(),
+})
+
+export type InquiryFormValues = z.infer<typeof inquiryFormSchema>
+
+export interface Category {
+  id: string
+  parent_id: string | null
+  name: string
+  depth: number
+  path: string
+  display_order: number
+  is_active: boolean
+  representative_image_url: string | null
+  representative_image_id: string | null
+}
+
+export interface MoodKeyword {
+  id: string
+  name: string
+  type: "current_mood" | "desired_mood"
+  display_order: number
+}
+
+export interface SelectionHistoryStep {
+  level: number
+  selected_id: string
+  options: string[]
+}
+
+export interface AvailableSlot {
+  id: string
+  date: string
+  start_time: string
+  end_time: string
+  duration_minutes: number
+  max_bookings: number
+  current_bookings: number
+  is_available: boolean
+  admin_id: string
+  admin_users?: {
+    name: string
+    email: string
+  }
+}

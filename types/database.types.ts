@@ -11,12 +11,18 @@ export interface Database {
           instagram_id: string | null
           gender: "male" | "female" | "other" | null
           desired_date: string | null
+          selected_slot_id: string | null
           people_count: number
+          relationship: string | null
+          current_mood_keywords: string[] | null
+          desired_mood_keywords: string[] | null
           selected_category_id: string | null
           selection_path: string[] | null
+          selection_history: Json | null
           status: "new" | "contacted" | "completed"
           created_at: string
           special_request: string | null
+          difficulty_note: string | null
           admin_notes: string | null
         }
         Insert: {
@@ -26,12 +32,18 @@ export interface Database {
           instagram_id?: string | null
           gender?: "male" | "female" | "other" | null
           desired_date?: string | null
+          selected_slot_id?: string | null
           people_count: number
+          relationship?: string | null
+          current_mood_keywords?: string[] | null
+          desired_mood_keywords?: string[] | null
           selected_category_id?: string | null
           selection_path?: string[] | null
+          selection_history?: Json | null
           status?: "new" | "contacted" | "completed"
           created_at?: string
           special_request?: string | null
+          difficulty_note?: string | null
           admin_notes?: string | null
         }
         Update: {
@@ -41,12 +53,18 @@ export interface Database {
           instagram_id?: string | null
           gender?: "male" | "female" | "other" | null
           desired_date?: string | null
+          selected_slot_id?: string | null
           people_count?: number
+          relationship?: string | null
+          current_mood_keywords?: string[] | null
+          desired_mood_keywords?: string[] | null
           selected_category_id?: string | null
           selection_path?: string[] | null
+          selection_history?: Json | null
           status?: "new" | "contacted" | "completed"
           created_at?: string
           special_request?: string | null
+          difficulty_note?: string | null
           admin_notes?: string | null
         }
       }
@@ -165,6 +183,73 @@ export interface Database {
           id?: string
           email?: string
           name?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      available_slots: {
+        Row: {
+          id: string
+          date: string
+          start_time: string
+          end_time: string
+          duration_minutes: number
+          max_bookings: number
+          current_bookings: number
+          is_available: boolean
+          admin_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          date: string
+          start_time: string
+          end_time: string
+          duration_minutes: number
+          max_bookings: number
+          current_bookings?: number
+          is_available?: boolean
+          admin_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          date?: string
+          start_time?: string
+          end_time?: string
+          duration_minutes?: number
+          max_bookings?: number
+          current_bookings?: number
+          is_available?: boolean
+          admin_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      mood_keywords: {
+        Row: {
+          id: string
+          name: string
+          type: "current" | "desired"
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type: "current" | "desired"
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: "current" | "desired"
+          display_order?: number
           created_at?: string
           updated_at?: string
         }

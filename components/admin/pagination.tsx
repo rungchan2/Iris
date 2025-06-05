@@ -86,7 +86,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
         disabled={currentPage === 1}
       >
         <ChevronLeft className="h-4 w-4" />
-        <span className="sr-only">Previous page</span>
+        <span className="sr-only">이전 페이지</span>
       </Button>
 
       {pageNumbers.map((page, index) => {
@@ -119,7 +119,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
         disabled={currentPage === totalPages}
       >
         <ChevronRight className="h-4 w-4" />
-        <span className="sr-only">Next page</span>
+        <span className="sr-only">다음 페이지</span>
       </Button>
     </div>
   )

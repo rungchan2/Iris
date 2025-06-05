@@ -32,34 +32,34 @@ export function UploadStatistics({ statistics }: UploadStatisticsProps) {
 
   const stats = [
     {
-      title: "Total Photos",
+      title: "총 사진",
       value: statistics.totalPhotos.toLocaleString(),
       icon: ImageIcon,
-      description: "Photos uploaded",
+      description: "업로드된 사진",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
     {
-      title: "Storage Used",
+      title: "사용 공간",
       value: formatFileSize(statistics.totalSizeMB),
       icon: HardDrive,
-      description: "Total storage consumed",
+      description: "총 사용 공간",
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Average Size",
+      title: "평균 크기",
       value: formatAverageSize(statistics.averageSizeKB),
       icon: BarChart3,
-      description: "Per photo average",
+      description: "평균 사진 크기",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
     {
-      title: "This Month",
+      title: "이번 달",
       value: statistics.photosThisMonth.toLocaleString(),
       icon: TrendingUp,
-      description: "Photos uploaded",
+      description: "업로드된 사진",
       color: "text-orange-600",
       bgColor: "bg-orange-50",
     },
@@ -70,7 +70,7 @@ export function UploadStatistics({ statistics }: UploadStatisticsProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Upload Statistics
+          업로드 통계
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -85,7 +85,7 @@ export function UploadStatistics({ statistics }: UploadStatisticsProps) {
                   <p className="text-2xl font-bold">{stat.value}</p>
                   {stat.title === "This Month" && statistics.photosThisMonth > 0 && (
                     <Badge variant="secondary" className="text-xs">
-                      Active
+                      활성
                     </Badge>
                   )}
                 </div>
@@ -99,14 +99,14 @@ export function UploadStatistics({ statistics }: UploadStatisticsProps) {
         {/* Additional Insights */}
         {statistics.totalPhotos > 0 && (
           <div className="mt-6 pt-6 border-t space-y-3">
-            <h4 className="text-sm font-medium">Quick Insights</h4>
+            <h4 className="text-sm font-medium">빠른 인사이트</h4>
             <div className="space-y-2 text-sm text-muted-foreground">
-              {statistics.totalSizeMB > 1024 && <p>• You're using over 1 GB of storage space</p>}
+              {statistics.totalSizeMB > 1024 && <p>• 1GB 이상의 저장 공간을 사용하고 있습니다</p>}
               {statistics.photosThisMonth > 10 && (
-                <p>• Very active this month with {statistics.photosThisMonth} uploads</p>
+                <p>• 이번 달에 {statistics.photosThisMonth}개의 사진을 업로드했습니다</p>
               )}
-              {statistics.averageSizeKB > 1024 && <p>• Your photos average over 1 MB in size</p>}
-              {statistics.totalPhotos > 100 && <p>• You've uploaded over 100 photos total</p>}
+              {statistics.averageSizeKB > 1024 && <p>• 평균 사진 크기가 1MB 이상입니다</p>}
+              {statistics.totalPhotos > 100 && <p>• 총 100개 이상의 사진을 업로드했습니다</p>}
             </div>
           </div>
         )}
@@ -115,7 +115,7 @@ export function UploadStatistics({ statistics }: UploadStatisticsProps) {
         {statistics.totalPhotos === 0 && (
           <div className="text-center py-8">
             <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No photos uploaded yet. Start uploading to see your statistics!</p>
+            <p className="text-muted-foreground">아직 사진이 없습니다. 업로드를 시작하여 통계를 확인하세요!</p>
           </div>
         )}
       </CardContent>
