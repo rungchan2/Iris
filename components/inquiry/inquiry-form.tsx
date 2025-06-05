@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useState } from "react"
 import { PersonalInfoForm } from "@/components/inquiry/personal-info-form"
 import { CategoryTournament } from "@/components/inquiry/category-tournament"
@@ -22,12 +24,14 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
   const [selectionPath, setSelectionPath] = useState<string[]>([])
   const [selectionHistory, setSelectionHistory] = useState<SelectionHistoryStep[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
 
   const supabase = createClient()
 
   const handlePersonalInfoSubmit = (data: InquiryFormValues) => {
     setFormData(data)
     setStep("category-selection")
+    setIsDirty(false) // Reset dirty state when moving to next step
 
     // Scroll to top for category selection
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -46,34 +50,54 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.from("inquiries").insert({
-        name: formData.name,
-        instagram_id: formData.instagram_id || null,
-        gender: formData.gender,
-        phone: formData.phone,
-        desired_date: formData.desired_date.toISOString().split("T")[0],
-        people_count: formData.people_count,
-        relationship: formData.relationship || null,
-        current_mood_keywords: formData.current_mood_keywords,
-        desired_mood_keywords: formData.desired_mood_keywords,
-        special_request: formData.special_request || null,
-        difficulty_note: formData.difficulty_note || null,
-        selected_category_id: category.id,
-        selection_path: path,
-        selection_history: {
-          steps: history,
-          completed_at: new Date().toISOString(),
-        },
-        status: "new",
-      })
+      const { data: newInquiry, error } = await supabase
+        .from("inquiries")
+        .insert({
+          name: formData.name,
+          instagram_id: formData.instagram_id || null,
+          gender: formData.gender,
+          phone: formData.phone,
+          desired_date: formData.desired_date.toISOString().split("T")[0],
+          selected_slot_id: formData.selected_slot_id || null,
+          people_count: formData.people_count,
+          relationship: formData.relationship || null,
+          current_mood_keywords: formData.current_mood_keywords,
+          desired_mood_keywords: formData.desired_mood_keywords,
+          special_request: formData.special_request || null,
+          difficulty_note: formData.difficulty_note || null,
+          selected_category_id: category.id,
+          selection_path: path,
+          selection_history: {
+            steps: history,
+            completed_at: new Date().toISOString(),
+          },
+          status: "new",
+        })
+        .select()
+        .single()
 
       if (error) throw error
 
+      // If a slot was selected, mark it as booked
+      if (formData.selected_slot_id) {
+        const { error: slotError } = await supabase
+          .from("available_slots")
+          .update({ is_available: false })
+          .eq("id", formData.selected_slot_id)
+
+        if (slotError) {
+          console.error("Error booking slot:", slotError)
+          toast.error("슬롯 예약 중 오류가 발생했지만 문의는 정상적으로 접수되었습니다.")
+        }
+      }
+
       setStep("success")
+      setIsDirty(false) // Reset dirty state after successful submission
       window.scrollTo({ top: 0, behavior: "smooth" })
+      toast.success("문의가 성공적으로 접수되었습니다!")
     } catch (error) {
       console.error("Error submitting inquiry:", error)
-      toast.error("Failed to submit inquiry. Please try again.")
+      toast.error("문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.")
     } finally {
       setIsSubmitting(false)
     }
@@ -85,30 +109,62 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
     setSelectedCategory(null)
     setSelectionPath([])
     setSelectionHistory([])
+    setIsDirty(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  const handleFormChange = () => {
+    setIsDirty(true)
+  }
+
+  // Navigation warning for unsaved changes
+  React.useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && !isSubmitting) {
+        const message = "작성중인 내용이 사라질 수 있습니다. 페이지를 떠나시겠습니까?"
+        e.preventDefault()
+        e.returnValue = message
+        return message
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  }, [isDirty, isSubmitting])
+
   return (
-    <div id="inquiry-form" className="container mx-auto py-16 px-4">
+    <div className="container mx-auto py-16 px-4">
       {step === "personal-info" && (
-        <PersonalInfoForm
-          onSubmit={handlePersonalInfoSubmit}
-          moodKeywords={moodKeywords}
-          availableDates={availableDates}
-        />
+        <div className="min-h-[100dvh] flex items-center justify-center">
+          <div className="w-full max-w-2xl">
+            <PersonalInfoForm
+              onSubmit={handlePersonalInfoSubmit}
+              onFormChange={handleFormChange}
+              moodKeywords={moodKeywords}
+              availableDates={availableDates}
+            />
+          </div>
+        </div>
       )}
 
       {step === "category-selection" && (
-        <CategoryTournament
-          rootCategories={rootCategories}
-          allCategories={allCategories}
-          onComplete={handleCategoryComplete}
-          isSubmitting={isSubmitting}
-        />
+        <div className="min-h-[100dvh] flex flex-col">
+          <CategoryTournament
+            rootCategories={rootCategories}
+            allCategories={allCategories}
+            onComplete={handleCategoryComplete}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       )}
 
       {step === "success" && formData && selectedCategory && (
-        <SuccessScreen formData={formData} category={selectedCategory} onStartOver={handleStartOver} />
+        <div className="min-h-[100dvh] flex items-center justify-center">
+          <SuccessScreen formData={formData} category={selectedCategory} onStartOver={handleStartOver} />
+        </div>
       )}
     </div>
   )

@@ -1,4 +1,3 @@
-
 import { InquiryTable } from "@/components/admin/inquiry-table"
 import { SearchBar } from "@/components/admin/search-bar"
 import { FilterDropdown } from "@/components/admin/filter-dropdown"
