@@ -111,8 +111,6 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
         start_time: slot.start_time,
         end_time: slot.end_time,
         duration_minutes: slot.duration_minutes,
-        max_bookings: slot.max_bookings,
-        current_bookings: 0,
         is_available: true,
         admin_id: adminId,
       }))
@@ -179,10 +177,6 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
                   <span>예약 마감</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                  <span>시간대 없음</span>
                 </div>
               </div>
 
