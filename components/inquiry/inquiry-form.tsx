@@ -72,7 +72,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
             completed_at: new Date().toISOString(),
           },
           status: "new",
-        })
+        } as any)
         .select()
         .single()
 

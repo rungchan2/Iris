@@ -3,14 +3,15 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
-import { Inquiry, InquiryDetails } from "@/components/admin/inquiry-details"
+import { InquiryDetails } from "@/components/admin/inquiry-details"
+import { Inquiry } from "@/types/inquiry.types"
 import { PhotoGallery } from "@/components/admin/photo-gallery"
 
 
 export default async function InquiryDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const supabase = await createClient()
 
@@ -24,10 +25,34 @@ export default async function InquiryDetailPage({
         name,
         path,
         representative_image_url
+      ),
+      selected_slot_id (
+        id,
+        date,
+        start_time,
+        end_time
       )
     `)
-    .eq("id", params.id)
+    .eq("id", (await params).id)
     .single()
+
+    
+
+    const currentMoodkeywordId = inquiry?.current_mood_keywords
+    const desiredMoodkeywordId = inquiry?.desired_mood_keywords
+
+    const { data: keywords, error: keywordsError } = await supabase
+    .from("keywords")
+    .select("id, name")
+    .in("id", [...(currentMoodkeywordId || []), ...(desiredMoodkeywordId || [])])
+    
+    
+    const transformedInquiry = {
+      ...inquiry,
+      current_mood_keywords: keywords?.filter((keyword) => currentMoodkeywordId?.includes(keyword.id)) || [],
+      desired_mood_keywords: keywords?.filter((keyword) => desiredMoodkeywordId?.includes(keyword.id)) || [],
+    }
+
 
   if (error || !inquiry) {
     console.error("Error fetching inquiry:", error)
@@ -38,15 +63,15 @@ export default async function InquiryDetailPage({
   let photos: any[] = []
   if (inquiry.selected_category_id) {
     const { data: photoData } = await supabase
-      .from("photos")
-      .select(`
-        *,
-        photo_categories!inner (
-          category_id
-        )
-      `)
-      .eq("photo_categories.category_id", inquiry.selected_category_id)
-      .eq("is_active", true)
+    .from("photos")
+    .select(`
+      *,
+      photo_categories!inner (
+        category_id
+      )
+    `)
+    .eq("photo_categories.category_id", inquiry.selected_category_id || "")
+    .eq("is_active", true)
 
     photos = photoData || []
   }
@@ -67,7 +92,7 @@ export default async function InquiryDetailPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <InquiryDetails inquiry={inquiry as Inquiry} />
+          <InquiryDetails inquiry={transformedInquiry as Inquiry} />
         </div>
         <div className="lg:col-span-2">
           <PhotoGallery photos={photos} />

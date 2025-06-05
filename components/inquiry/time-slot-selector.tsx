@@ -81,7 +81,7 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
   if (loading) {
     return (
       <div className="space-y-3">
-        <div className="text-sm text-muted-foreground">Loading available times...</div>
+        <div className="text-sm text-muted-foreground">시간대를 불러오는 중입니다...</div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />
@@ -104,9 +104,9 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
   return (
     <div className="space-y-3">
       <div className="text-sm text-muted-foreground">
-        {slots.length} 시간대 available for {format(date, "MMMM d, yyyy")}
+        {slots.length}개의 가능한 시간대가 있습니다. {format(date, "yyyy년 MM월 dd일")}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="flex flex-wrap gap-3">
         {slots.map((slot) => {
           const isSelected = selectedSlotId === slot.id
 
@@ -114,7 +114,7 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
             <Button
               key={slot.id}
               variant={isSelected ? "default" : "outline"}
-              className={`p-4 h-auto text-center transition-all hover:scale-105 ${
+              className={`p-4 h-auto text-center transition-all hover:scale-105 w-full ${
                 isSelected ? "ring-2 ring-primary ring-offset-2" : ""
               }`}
               onClick={() => onSelect(slot.id)}
@@ -124,10 +124,10 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
                   {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                 </div>
 
-                <div className="text-xs text-muted-foreground">{slot.admin_users.name}</div>
+                <div className="text-xs text-muted-foreground">작가: {slot.admin_users.name}</div>
 
                 <Badge variant="secondary" className="text-xs">
-                  45분
+                  {slot.duration_minutes}분
                 </Badge>
               </div>
             </Button>

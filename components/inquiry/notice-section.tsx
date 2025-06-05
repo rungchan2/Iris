@@ -11,13 +11,13 @@ export function NoticeSection() {
   }
 
   return (
-    <section className="relative min-h-[100dvh] flex items-center justify-center bg-black text-white">
+    <section className="relative min-h-[100dvh] flex items-center justify-center bg-black text-white" id="notice-section">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70" />
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-bold mb-8">촬영 안내사항</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-8">"시네마틱프로필" 예약 안내</h2>
 
         <div className="space-y-6 text-lg md:text-xl text-gray-200 mb-12">
           <p>

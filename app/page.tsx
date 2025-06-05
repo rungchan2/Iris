@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { InquiryForm } from "@/components/inquiry/inquiry-form"
 import { HeroSection } from "@/components/inquiry/hero-section"
+import { NoticeSection } from "@/components/inquiry/notice-section"
 import type { Category, MoodKeyword } from "@/types/inquiry.types"
 
 export default async function InquiryPage() {
@@ -46,12 +47,15 @@ export default async function InquiryPage() {
   return (
     <div className="min-h-screen bg-white">
       <HeroSection />
-      <InquiryForm
-        rootCategories={(rootCategories as Category[]) || []}
-        allCategories={(allCategories as Category[]) || []}
-        moodKeywords={(moodKeywords as MoodKeyword[]) || []}
-        availableDates={availableDates}
-      />
+      <NoticeSection />
+      <div id="inquiry-form">
+        <InquiryForm
+          rootCategories={(rootCategories as Category[]) || []}
+          allCategories={(allCategories as Category[]) || []}
+          moodKeywords={(moodKeywords as MoodKeyword[]) || []}
+          availableDates={availableDates}
+        />
+      </div>
     </div>
   )
 }

@@ -46,7 +46,7 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
     { value: 6, label: "Saturday" },
   ]
 
-  const timeOptions = []
+  const timeOptions: string[] = []
   for (let hour = 6; hour <= 22; hour++) {
     for (let minute = 0; minute < 60; minute += 15) {
       const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
@@ -127,8 +127,6 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
               start_time: slot.startTime,
               end_time: slot.endTime,
               duration_minutes: slot.duration,
-              max_bookings: slot.maxBookings,
-              current_bookings: 0,
               is_available: true,
               admin_id: adminId,
             })

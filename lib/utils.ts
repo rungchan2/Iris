@@ -11,7 +11,7 @@ export function formatDate(dateString: string): string {
     if (isNaN(date.getTime())) {
       return "Invalid Date"
     }
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("ko-KR", {
       year: "numeric",
       month: "short",
       day: "numeric",

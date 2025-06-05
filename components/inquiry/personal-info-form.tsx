@@ -81,9 +81,9 @@ export function PersonalInfoForm({
 
   // 시간대 문제를 방지하기 위해 date-fns format 사용
   const isDateAvailable = (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd")
-    return availableDates.includes(dateStr)
-  }
+    const dateStr = format(date, "yyyy-MM-dd");
+    return availableDates.includes(dateStr);
+  };
 
   const handleSubmit = (data: InquiryFormValues) => {
     onSubmit(data);
@@ -203,7 +203,7 @@ export function PersonalInfoForm({
                   name="instagram_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instagram ID (선택사항)</FormLabel>
+                      <FormLabel>Instagram ID (카카오톡 아이디)</FormLabel>
                       <FormControl>
                         <Input placeholder="@yourusername" {...field} />
                       </FormControl>
@@ -259,6 +259,7 @@ export function PersonalInfoForm({
 
                         <Calendar
                           mode="single"
+                          className="w-full"
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={
@@ -266,7 +267,6 @@ export function PersonalInfoForm({
                               date < new Date() || // Can't select past dates
                               !isDateAvailable(date) // Only show available dates
                           }
-                          initialFocus
                         />
 
                         <FormMessage />
@@ -293,30 +293,28 @@ export function PersonalInfoForm({
                       )}
                     />
                   )}
-
-                  <FormField
-                    control={form.control}
-                    name="people_count"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>인원</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number.parseInt(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
-
+                <FormField
+                  control={form.control}
+                  name="people_count"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>인원</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number.parseInt(e.target.value) || "")
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="relationship"
@@ -363,9 +361,7 @@ export function PersonalInfoForm({
                   activeSection !== "mood" && "hidden"
                 )}
               >
-                <h3 className="text-xl font-semibold">
-                  감정 & 스타일 선호도
-                </h3>
+                <h3 className="text-xl font-semibold">감정 & 스타일 선호도</h3>
 
                 <FormField
                   control={form.control}

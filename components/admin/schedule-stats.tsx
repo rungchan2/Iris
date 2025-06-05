@@ -12,12 +12,12 @@ interface ScheduleStatsProps {
 export function ScheduleStats({ slots }: ScheduleStatsProps) {
   // Calculate statistics
   const totalSlots = slots.length
-  const bookedSlots = slots.filter((slot) => slot.current_bookings >= slot.max_bookings).length
-  const availableSlots = totalSlots - bookedSlots
+  const bookedSlots = slots.filter((slot) => !slot.is_available).length
+  const availableSlots = slots.filter((slot) => slot.is_available).length
   const bookingRate = totalSlots > 0 ? ((bookedSlots / totalSlots) * 100).toFixed(1) : "0"
 
   // Calculate total available hours
-  const totalHours = slots.reduce((sum, slot) => sum + slot.duration_minutes, 0) / 60
+  const totalHours = slots.reduce((sum, slot) => sum + (slot.duration_minutes || 0), 0) / 60
 
   // Get current week stats
   const currentWeek = new Date()
@@ -29,7 +29,7 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
     return slotDate >= startOfWeek && slotDate <= endOfWeek
   })
 
-  const weekHours = weekSlots.reduce((sum, slot) => sum + slot.duration_minutes, 0) / 60
+  const weekHours = weekSlots.reduce((sum, slot) => sum + (slot.duration_minutes || 0), 0) / 60
 
   // Find most popular time slots
   const timeSlotCounts = slots.reduce(

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,8 +36,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
     {} as Record<string, AvailableSlot[]>,
   )
 
-  // Get slots for selected date
-  const selectedDateStr = selectedDate.toISOString().split("T")[0]
+  // Get slots for selected date (timezone-safe)
+  const selectedDateStr = format(selectedDate, "yyyy-MM-dd")
   const selectedDateSlots = slotsGroupedByDate[selectedDateStr] || []
 
   // Fetch slots for a specific month
@@ -50,8 +51,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
         .from("available_slots")
         .select("*")
         .eq("admin_id", adminId)
-        .gte("date", startOfMonth.toISOString().split("T")[0])
-        .lte("date", endOfMonth.toISOString().split("T")[0])
+        .gte("date", format(startOfMonth, "yyyy-MM-dd"))
+        .lte("date", format(endOfMonth, "yyyy-MM-dd"))
         .order("date", { ascending: true })
         .order("start_time", { ascending: true })
 
@@ -60,7 +61,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
       setSlots(data as AvailableSlot[])
     } catch (error) {
       console.error("Error fetching slots:", error)
-      toast.error("Failed to load schedule")
+      toast.error("일정을 불러오는데 실패했습니다")
     } finally {
       setIsLoading(false)
     }
@@ -73,20 +74,27 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
 
   // Get calendar day modifiers for visual indicators
   const getDateModifiers = (date: Date) => {
-    const dateStr = date.toISOString().split("T")[0]
+    const dateStr = format(date, "yyyy-MM-dd")
     const daySlots = slotsGroupedByDate[dateStr] || []
 
     if (daySlots.length === 0) return {}
 
     const totalSlots = daySlots.length
-    const bookedSlots = daySlots.filter((slot) => slot.current_bookings >= slot.max_bookings).length
-    const partiallyBooked = daySlots.filter(
-      (slot) => slot.current_bookings > 0 && slot.current_bookings < slot.max_bookings,
-    ).length
+    
+    // 실제 데이터베이스 구조에 맞춰 수정
+    // is_available이 false면 예약됨, true면 예약 가능
+    const bookedSlots = daySlots.filter((slot) => !slot.is_available).length
+    const availableSlots = daySlots.filter((slot) => slot.is_available).length
+
+    // 디버깅용 로그
+    if (daySlots.length > 0) {
+      console.log(`Date: ${dateStr}, Total: ${totalSlots}, Available: ${availableSlots}, Booked: ${bookedSlots}`, 
+        daySlots.map(slot => ({ start: slot.start_time, end: slot.end_time, available: slot.is_available })))
+    }
 
     if (bookedSlots === totalSlots) {
       return { fullyBooked: true }
-    } else if (partiallyBooked > 0 || bookedSlots > 0) {
+    } else if (bookedSlots > 0 && availableSlots > 0) {
       return { partiallyBooked: true }
     } else {
       return { available: true }
@@ -97,11 +105,11 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
   const handleCopyLastWeek = async () => {
     const lastWeekDate = new Date(selectedDate)
     lastWeekDate.setDate(lastWeekDate.getDate() - 7)
-    const lastWeekStr = lastWeekDate.toISOString().split("T")[0]
+    const lastWeekStr = format(lastWeekDate, "yyyy-MM-dd")
     const lastWeekSlots = slotsGroupedByDate[lastWeekStr] || []
 
     if (lastWeekSlots.length === 0) {
-      toast.error("No slots found for the same day last week")
+      toast.error("지난 주 같은 요일에 슬롯이 없습니다")
       return
     }
 
@@ -120,20 +128,20 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
       if (error) throw error
 
       await fetchSlotsForMonth(selectedDate)
-      toast.success("Copied slots from last week")
+      toast.success("지난 주 슬롯을 복사했습니다")
     } catch (error) {
       console.error("Error copying slots:", error)
-      toast.error("Failed to copy slots")
+      toast.error("슬롯 복사에 실패했습니다")
     }
   }
 
   const handleClearDay = async () => {
     if (selectedDateSlots.length === 0) {
-      toast.error("No slots to clear for this date")
+      toast.error("삭제할 슬롯이 없습니다")
       return
     }
 
-    if (!confirm(`Clear all ${selectedDateSlots.length} slots for ${selectedDate.toLocaleDateString('en-US')}?`)) {
+    if (!confirm(`${format(selectedDate, "yyyy년 MM월 dd일")}의 모든 슬롯 ${selectedDateSlots.length}개를 삭제하시겠습니까?`)) {
       return
     }
 
@@ -144,10 +152,10 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
       if (error) throw error
 
       await fetchSlotsForMonth(selectedDate)
-      toast.success("Cleared all slots for the day")
+      toast.success("해당 날짜의 모든 슬롯을 삭제했습니다")
     } catch (error) {
       console.error("Error clearing slots:", error)
-      toast.error("Failed to clear slots")
+      toast.error("슬롯 삭제에 실패했습니다")
     }
   }
 
@@ -186,16 +194,37 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
                 onMonthChange={handleMonthChange}
-                className="rounded-md border"
+                className="rounded-md border w-full"
                 modifiers={{
-                  available: (date) => getDateModifiers(date).available || false,
-                  partiallyBooked: (date) => getDateModifiers(date).partiallyBooked || false,
-                  fullyBooked: (date) => getDateModifiers(date).fullyBooked || false,
+                  available: (date) => {
+                    const modifiers = getDateModifiers(date)
+                    return modifiers.available === true
+                  },
+                  partiallyBooked: (date) => {
+                    const modifiers = getDateModifiers(date)
+                    return modifiers.partiallyBooked === true
+                  },
+                  fullyBooked: (date) => {
+                    const modifiers = getDateModifiers(date)
+                    return modifiers.fullyBooked === true
+                  },
                 }}
                 modifiersStyles={{
-                  available: { backgroundColor: "rgb(34 197 94 / 0.2)" },
-                  partiallyBooked: { backgroundColor: "rgb(234 179 8 / 0.2)" },
-                  fullyBooked: { backgroundColor: "rgb(239 68 68 / 0.2)" },
+                  available: { 
+                    backgroundColor: "hsl(142, 76%, 36%)", 
+                    color: "white",
+                    fontWeight: "bold"
+                  },
+                  partiallyBooked: { 
+                    backgroundColor: "hsl(48, 96%, 53%)", 
+                    color: "black",
+                    fontWeight: "bold"
+                  },
+                  fullyBooked: { 
+                    backgroundColor: "hsl(0, 84%, 60%)", 
+                    color: "white",
+                    fontWeight: "bold"
+                  },
                 }}
               />
             </div>
@@ -212,7 +241,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              {selectedDate.toLocaleDateString('ko-KR')} 시간대
+              {format(selectedDate, "yyyy년 MM월 dd일")} 시간대
             </CardTitle>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" onClick={() => setBulkModalOpen(true)}>

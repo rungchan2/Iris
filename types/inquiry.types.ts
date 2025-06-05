@@ -64,3 +64,39 @@ export interface AvailableSlot {
     email: string
   }
 }
+
+export interface Inquiry {
+  id: string
+  name: string
+  phone: string
+  instagram_id?: string
+  gender?: "male" | "female" | "other"
+  desired_date?: string
+  people_count: number
+  selected_category_id?: string
+  selection_path?: string[]
+  status: "new" | "contacted" | "completed"
+  created_at: string
+  special_request?: string
+  admin_notes?: string
+  categories?: {
+    id: string
+    name: string
+    path: string
+    representative_image_url?: string
+  }
+  current_mood_keywords: {
+    id: string
+    name: string
+  }[]
+  desired_mood_keywords: {
+    id: string
+    name: string
+  }[]
+  selected_slot_id: {
+    id: string
+    date: string
+    start_time: string
+    end_time: string
+  }
+}

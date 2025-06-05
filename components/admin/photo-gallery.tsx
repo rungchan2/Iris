@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, X } from "lucide-react"
+import { AspectImage } from "../ui/aspect-image"
+import Image from "next/image"
 
 interface Photo {
   id: string
@@ -50,18 +51,15 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative aspect-square overflow-hidden rounded-md cursor-pointer"
-                onClick={() => setSelectedPhoto(photo)}
-              >
-                <Image
+              <div key={photo.id}>
+                <AspectImage
                   src={photo.thumbnail_url || photo.storage_url}
                   alt={photo.filename}
-                  fill
-                  className="object-cover transition-transform hover:scale-105"
+                  ratio={16 / 9}
+                  className="rounded-md cursor-pointer transition-transform hover:scale-105"
+                  onClick={() => setSelectedPhoto(photo)}
                 />
               </div>
             ))}

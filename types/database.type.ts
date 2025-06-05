@@ -93,39 +93,33 @@ export type Database = {
         Row: {
           admin_id: string | null
           created_at: string | null
-          current_bookings: number | null
           date: string
           duration_minutes: number | null
           end_time: string
           id: string
           is_available: boolean | null
-          max_bookings: number | null
           start_time: string
           updated_at: string | null
         }
         Insert: {
           admin_id?: string | null
           created_at?: string | null
-          current_bookings?: number | null
           date: string
           duration_minutes?: number | null
           end_time: string
           id?: string
           is_available?: boolean | null
-          max_bookings?: number | null
           start_time: string
           updated_at?: string | null
         }
         Update: {
           admin_id?: string | null
           created_at?: string | null
-          current_bookings?: number | null
           date?: string
           duration_minutes?: number | null
           end_time?: string
           id?: string
           is_available?: boolean | null
-          max_bookings?: number | null
           start_time?: string
           updated_at?: string | null
         }

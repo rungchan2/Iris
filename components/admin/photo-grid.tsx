@@ -20,6 +20,7 @@ interface Photo {
       path: string
     }
   }>
+  created_at: string
 }
 
 interface PhotoGridProps {
@@ -62,7 +63,7 @@ export function PhotoGrid({
         <Checkbox
           checked={allSelected}
           ref={(el) => {
-            if (el) el.indeterminate = someSelected
+            if (el) (el as any).indeterminate = someSelected
           }}
           onCheckedChange={(checked) => onSelectAll(!!checked)}
         />
@@ -76,7 +77,7 @@ export function PhotoGrid({
         {photos.map((photo) => (
           <PhotoContextMenu
             key={photo.id}
-            photo={photo}
+            photo={photo as Photo}
             onDelete={() => {
               // Refresh the grid after delete
               onLoadMore()

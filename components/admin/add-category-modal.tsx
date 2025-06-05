@@ -1,51 +1,73 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Category } from "@/components/admin/category-manager"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Category } from "@/components/admin/category-manager";
 
 interface AddCategoryModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onAdd: (parentId: string | null, name: string, representativeImageId?: string) => void
-  categories: Category[]
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (
+    parentId: string | null,
+    name: string,
+    representativeImageId?: string
+  ) => void;
+  categories: Category[];
 }
 
-export function AddCategoryModal({ isOpen, onClose, onAdd, categories }: AddCategoryModalProps) {
-  const [name, setName] = useState("")
-  const [parentId, setParentId] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function AddCategoryModal({
+  isOpen,
+  onClose,
+  onAdd,
+  categories,
+}: AddCategoryModalProps) {
+  const [name, setName] = useState("");
+  const [parentId, setParentId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!name.trim()) return
+    if (!name.trim()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await onAdd(parentId, name.trim())
-      setName("")
-      setParentId(null)
+      onAdd(parentId as string, name.trim());
+      setName("");
+      setParentId(null);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleClose = () => {
-    setName("")
-    setParentId(null)
-    onClose()
-  }
+    setName("");
+    setParentId(null);
+    onClose();
+  };
 
   // Build options for parent selector
   const buildParentOptions = () => {
-    const options = [{ id: null, name: "Root Level", path: "Root" }]
+    const options: { id: string | null; name: string; path: string }[] = [
+      { id: null, name: "Root Level", path: "Root" },
+    ];
 
     const addCategoryOptions = (cats: Category[], prefix = "") => {
       cats
@@ -56,23 +78,23 @@ export function AddCategoryModal({ isOpen, onClose, onAdd, categories }: AddCate
             id: cat.id,
             name: cat.name,
             path: prefix + cat.name,
-          })
+          });
 
           // Add children
-          const children = categories.filter((c) => c.parent_id === cat.id)
+          const children = categories.filter((c) => c.parent_id === cat.id);
           if (children.length > 0) {
-            addCategoryOptions(children, prefix + cat.name + " > ")
+            addCategoryOptions(children, prefix + cat.name + " > ");
           }
-        })
-    }
+        });
+    };
 
-    const rootCategories = categories.filter((cat) => cat.parent_id === null)
-    addCategoryOptions(rootCategories)
+    const rootCategories = categories.filter((cat) => cat.parent_id === null);
+    addCategoryOptions(rootCategories);
 
-    return options
-  }
+    return options;
+  };
 
-  const parentOptions = buildParentOptions()
+  const parentOptions = buildParentOptions();
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -84,13 +106,21 @@ export function AddCategoryModal({ isOpen, onClose, onAdd, categories }: AddCate
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="parent">Parent Category</Label>
-            <Select value={parentId || "root"} onValueChange={(value) => setParentId(value === "root" ? null : value)}>
+            <Select
+              value={parentId || "root"}
+              onValueChange={(value) =>
+                setParentId(value === "root" ? null : value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select parent category" />
               </SelectTrigger>
               <SelectContent>
                 {parentOptions.map((option) => (
-                  <SelectItem key={option.id || "root"} value={option.id || "root"}>
+                  <SelectItem
+                    key={option.id || "root"}
+                    value={option.id || "root"}
+                  >
                     {option.path}
                   </SelectItem>
                 ))}
@@ -120,5 +150,5 @@ export function AddCategoryModal({ isOpen, onClose, onAdd, categories }: AddCate
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

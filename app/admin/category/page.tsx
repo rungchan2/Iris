@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { CategoryManager } from "@/components/admin/category-manager"
+import { Category } from "@/types/inquiry.types"
 
 export default async function CategoryPage() {
   const supabase = await createClient()
@@ -26,7 +27,7 @@ export default async function CategoryPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Category Management</h1>
       </div>
-      <CategoryManager initialCategories={categories || []} />
+      <CategoryManager initialCategories={categories as any} />
     </div>
   )
 }

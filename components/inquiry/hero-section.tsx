@@ -18,8 +18,8 @@ export function HeroSection() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const scrollToForm = () => {
-    const formElement = document.getElementById("inquiry-form")
+  const scrollToForm = (id: string) => {
+    const formElement = document.getElementById(id)
     if (formElement) {
       formElement.scrollIntoView({ behavior: "smooth" })
     }
@@ -62,7 +62,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <Button size="lg" onClick={scrollToForm} className="bg-white text-black hover:bg-white/90">
+          <Button size="lg" onClick={() => scrollToForm("notice-section")} className="bg-white text-black hover:bg-white/90">
             예약하기
           </Button>
         </motion.div>
@@ -75,7 +75,7 @@ export function HeroSection() {
         transition={{ duration: 0.3 }}
         className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
       >
-        <Button variant="ghost" size="icon" onClick={scrollToForm} className="text-white animate-bounce">
+        <Button variant="ghost" size="icon" onClick={() => scrollToForm("notice-section")} className="text-white animate-bounce">
           <ChevronDown className="h-6 w-6" />
         </Button>
       </motion.div>

@@ -3,13 +3,14 @@ export interface AvailableSlot {
   date: string // YYYY-MM-DD
   start_time: string // HH:MM
   end_time: string // HH:MM
-  duration_minutes: number
-  max_bookings: number
-  current_bookings: number
-  is_available: boolean
-  admin_id: string
-  created_at: string
-  updated_at: string
+  duration_minutes: number | null
+  is_available: boolean | null
+  admin_id: string | null
+  created_at: string | null
+  updated_at: string | null
+  // Legacy fields for backward compatibility
+  max_bookings?: number
+  current_bookings?: number
 }
 
 export interface SlotInput {
