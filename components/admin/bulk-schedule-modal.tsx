@@ -100,12 +100,12 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
 
   const handleCreateSchedule = async () => {
     if (schedule.daysOfWeek.length === 0) {
-      toast.error("Please select at least one day of the week")
+      toast.error("최소 하나의 요일을 선택해주세요")
       return
     }
 
     if (schedule.slots.length === 0) {
-      toast.error("Please add at least one time slot")
+      toast.error("최소 하나의 시간대를 추가해주세요")
       return
     }
 
@@ -135,15 +135,41 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
       }
 
       if (slotsToCreate.length === 0) {
-        toast.error("No slots would be created with the selected criteria")
+        toast.error("선택한 조건으로 생성할 수 있는 슬롯이 없습니다")
         return
       }
 
-      const { error } = await supabase.from("available_slots").insert(slotsToCreate)
+      // Check for existing slots to avoid unique constraint violation
+      const { data: existingSlots } = await supabase
+        .from("available_slots")
+        .select("date, start_time")
+        .eq("admin_id", adminId)
+        .in("date", [...new Set(slotsToCreate.map(s => s.date))])
+
+      const existingSlotKeys = new Set(
+        existingSlots?.map(slot => `${slot.date}_${slot.start_time}`) || []
+      )
+
+      // Filter out slots that already exist
+      const uniqueSlotsToCreate = slotsToCreate.filter(slot => 
+        !existingSlotKeys.has(`${slot.date}_${slot.start_time}`)
+      )
+
+      if (uniqueSlotsToCreate.length === 0) {
+        toast.error("선택한 시간대가 모두 이미 존재합니다")
+        return
+      }
+
+      if (uniqueSlotsToCreate.length < slotsToCreate.length) {
+        const duplicateCount = slotsToCreate.length - uniqueSlotsToCreate.length
+        toast.warning(`${duplicateCount}개의 중복된 시간대를 건너뛰었습니다`)
+      }
+
+      const { error } = await supabase.from("available_slots").insert(uniqueSlotsToCreate)
 
       if (error) throw error
 
-      toast.success(`Created ${slotsToCreate.length} time slots`)
+      toast.success(`${uniqueSlotsToCreate.length}개의 시간대가 생성되었습니다`)
       onScheduleCreated()
       onOpenChange(false)
 
@@ -161,9 +187,15 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
           },
         ],
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating schedule:", error)
-      toast.error("Failed to create schedule")
+      
+      // Check for unique constraint violation (duplicate slot)
+      if (error?.code === "23505" && error?.message?.includes("available_slots_date_start_time_admin_id_key")) {
+        toast.error("이미 이 시간에 추가된 일정이 있습니다")
+      } else {
+        toast.error("스케줄 생성에 실패했습니다")
+      }
     } finally {
       setIsCreating(false)
     }
@@ -171,15 +203,15 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Bulk Schedule</DialogTitle>
+          <DialogTitle>예약 가능 시간 설정</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Days of Week */}
           <div className="space-y-3">
-            <Label>Days of Week</Label>
+            <Label>요일</Label>
             <div className="grid grid-cols-4 gap-2">
               {daysOfWeek.map((day) => (
                 <div key={day.value} className="flex items-center space-x-2">
@@ -196,7 +228,7 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>시작일</Label>
               <Input
                 type="date"
                 value={schedule.startDate}
@@ -204,7 +236,7 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
               />
             </div>
             <div className="space-y-2">
-              <Label>End Date</Label>
+              <Label>종료일</Label>
               <Input
                 type="date"
                 value={schedule.endDate}
@@ -216,16 +248,16 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
           {/* Time Slots */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Time Slots</Label>
+              <Label>시간대</Label>
               <Button size="sm" onClick={handleAddSlot}>
                 <Plus className="h-4 w-4 mr-1" />
-                Add Slot
+                시간대 추가
               </Button>
             </div>
 
             <div className="space-y-3">
               {schedule.slots.map((slot, index) => (
-                <div key={index} className="grid grid-cols-5 gap-2 items-end p-3 border rounded-lg">
+                <div key={index} className="grid grid-cols-4 gap-2 items-end p-3 border rounded-lg">
                   <div className="space-y-1">
                     <Label className="text-xs">Start</Label>
                     <Select
@@ -281,15 +313,10 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Max</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={slot.maxBookings}
-                      onChange={(e) => handleSlotChange(index, "maxBookings", Number.parseInt(e.target.value) || 1)}
-                      className="h-8"
-                    />
+                    <Label className="text-xs">Available</Label>
+                    <div className="h-8 flex items-center px-3 text-xs bg-green-50 border border-green-200 rounded-md text-green-700">
+                      Yes
+                    </div>
                   </div>
 
                   <Button

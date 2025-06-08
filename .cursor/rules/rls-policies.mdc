@@ -18,16 +18,23 @@ Policies
 Public Access:
 
 View active categories, photos, keywords
-View available dates
+View available slots (is_available = true)
 Create inquiries
 
 
 Admin Access:
 
 Full CRUD on all tables (using public.is_admin())
+Manage available_slots for their own admin_id
 
 
 User Access:
 
 Create/update own admin_users record
 View all admin_users if admin
+
+Available Slots Specific:
+
+Public can only view available slots where is_available = true
+Admins can manage slots for their own admin_id
+Unique constraint: (date, start_time, admin_id) prevents duplicates

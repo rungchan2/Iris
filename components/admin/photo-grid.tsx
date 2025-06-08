@@ -31,6 +31,7 @@ interface PhotoGridProps {
   onLoadMore: () => void
   hasMore?: boolean
   isLoading: boolean
+  filterCategoryId?: string
 }
 
 export function PhotoGrid({
@@ -41,6 +42,7 @@ export function PhotoGrid({
   onLoadMore,
   hasMore,
   isLoading,
+  filterCategoryId,
 }: PhotoGridProps) {
   const { ref, inView } = useInView({
     threshold: 0,
@@ -111,23 +113,34 @@ export function PhotoGrid({
               {photo.photo_categories && photo.photo_categories.length > 0 && (
                 <div className="absolute bottom-2 right-2 left-2">
                   <div className="flex flex-wrap gap-1 justify-end">
-                    {photo.photo_categories.slice(0, 2).map((pc) => (
-                      <Badge
-                        key={pc.category_id}
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
-                      >
-                        {pc.categories.name}
-                      </Badge>
-                    ))}
-                    {photo.photo_categories.length > 2 && (
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
-                      >
-                        +{photo.photo_categories.length - 2}
-                      </Badge>
-                    )}
+                    {(() => {
+                      // If filter is applied, only show matching categories
+                      const categoriesToShow = filterCategoryId 
+                        ? photo.photo_categories.filter(pc => pc.category_id === filterCategoryId)
+                        : photo.photo_categories
+                      
+                      return (
+                        <>
+                          {categoriesToShow.slice(0, 2).map((pc) => (
+                            <Badge
+                              key={pc.category_id}
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
+                            >
+                              {pc.categories.name}
+                            </Badge>
+                          ))}
+                          {categoriesToShow.length > 2 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] px-1.5 py-0.5 h-5 bg-white/90 backdrop-blur text-gray-700"
+                            >
+                              +{categoriesToShow.length - 2}
+                            </Badge>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               )}
@@ -158,8 +171,8 @@ export function PhotoGrid({
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <ImageIcon className="w-8 h-8" />
             </div>
-            <p className="text-lg font-medium mb-2">No photos found</p>
-            <p className="text-sm">Upload some photos to get started, or adjust your filters.</p>
+            <p className="text-lg font-medium mb-2">사진이 없습니다.</p>
+            <p className="text-sm">사진을 업로드하거나 필터를 조정해주세요.</p>
           </div>
         </div>
       )}

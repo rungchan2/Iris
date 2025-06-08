@@ -53,9 +53,9 @@ export function ScheduleStats({ slots }: ScheduleStatsProps) {
 
   const stats = [
     {
-      title: "총 시간대",
+      title: "이번달 에약 가능 수",
       value: totalSlots.toString(),
-      description: "이번 달",
+      description: "총 예약 가능 시간대 갯수",
       icon: Calendar,
       color: "text-blue-600",
       bgColor: "bg-blue-50",

@@ -100,12 +100,12 @@ export function AddCategoryModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle>카테고리 추가</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="parent">Parent Category</Label>
+            <Label htmlFor="parent">부모 카테고리 선택</Label>
             <Select
               value={parentId || "root"}
               onValueChange={(value) =>
@@ -113,7 +113,7 @@ export function AddCategoryModal({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select parent category" />
+                <SelectValue placeholder="부모 카테고리 선택" />
               </SelectTrigger>
               <SelectContent>
                 {parentOptions.map((option) => (
@@ -129,22 +129,22 @@ export function AddCategoryModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Category Name</Label>
+            <Label htmlFor="name">카테고리 이름</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter category name"
+              placeholder="카테고리 이름 입력"
               required
             />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              취소
             </Button>
             <Button type="submit" disabled={!name.trim() || isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add Category"}
+              {isSubmitting ? "추가중..." : "카테고리 추가"}
             </Button>
           </div>
         </form>

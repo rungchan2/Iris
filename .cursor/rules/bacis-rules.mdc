@@ -25,9 +25,11 @@ A photo shoot inquiry management system where photographers can showcase their p
 - name: TEXT (NOT NULL)
 - created_at: TIMESTAMPTZ
 - updated_at: TIMESTAMPTZ
+```
 
-categories (Hierarchical, max 10 depth)
-sql- id: UUID (PK)
+#### categories (Hierarchical, max 10 depth)
+```sql
+- id: UUID (PK)
 - parent_id: UUID (FK to categories)
 - name: TEXT (NOT NULL)
 - depth: INT (1-10)
@@ -38,9 +40,11 @@ sql- id: UUID (PK)
 - representative_image_id: UUID (FK to photos)
 - created_at: TIMESTAMPTZ
 - updated_at: TIMESTAMPTZ
+```
 
-photos
-sql- id: UUID (PK)
+#### photos
+```sql
+- id: UUID (PK)
 - filename: TEXT (NOT NULL)
 - storage_url: TEXT (NOT NULL)
 - thumbnail_url: TEXT
@@ -51,16 +55,34 @@ sql- id: UUID (PK)
 - is_active: BOOLEAN
 - created_at: TIMESTAMPTZ
 - updated_at: TIMESTAMPTZ
+```
 
-photo_categories (Many-to-many)
-sql- id: UUID (PK)
+#### photo_categories (Many-to-many)
+```sql
+- id: UUID (PK)
 - photo_id: UUID (FK to photos)
 - category_id: UUID (FK to categories)
 - created_at: TIMESTAMPTZ
 - UNIQUE(photo_id, category_id)
+```
 
-inquiries
-sql- id: UUID (PK)
+#### available_slots **[UPDATED SCHEMA]**
+```sql
+- id: UUID (PK)
+- date: DATE (NOT NULL)
+- start_time: TIME (NOT NULL)
+- end_time: TIME (NOT NULL)
+- duration_minutes: INT (default: 45)
+- is_available: BOOLEAN (default: true)
+- admin_id: UUID (FK to admin_users)
+- created_at: TIMESTAMPTZ
+- updated_at: TIMESTAMPTZ
+- UNIQUE(date, start_time, admin_id) -- Prevents duplicate slots for same admin
+```
+
+#### inquiries
+```sql
+- id: UUID (PK)
 - name: TEXT (NOT NULL)
 - instagram_id: TEXT
 - gender: ENUM ('male', 'female', 'other')
@@ -73,24 +95,30 @@ sql- id: UUID (PK)
 - special_request: TEXT
 - difficulty_note: TEXT
 - selected_category_id: UUID (FK to categories)
+- selected_slot_id: UUID (FK to available_slots)
+- assigned_admin_id: UUID (FK to admin_users)
 - selection_path: TEXT[] (e.g., ['밝음', '청춘물', '자연'])
 - selection_history: JSONB
 - status: ENUM ('new', 'contacted', 'completed')
 - admin_note: TEXT
 - created_at: TIMESTAMPTZ
 - updated_at: TIMESTAMPTZ
+```
 
-keywords
-sql- id: UUID (PK)
+#### keywords
+```sql
+- id: UUID (PK)
 - type: TEXT ('current_mood' or 'desired_mood')
 - name: TEXT (NOT NULL)
 - display_order: INT
 - is_active: BOOLEAN
 - created_at: TIMESTAMPTZ
 - UNIQUE(type, name)
+```
 
-available_dates
-sql- id: UUID (PK)
+#### available_dates **[DEPRECATED - Use available_slots instead]**
+```sql
+- id: UUID (PK)
 - date: DATE (UNIQUE, NOT NULL)
 - is_available: BOOLEAN
 - max_bookings: INT

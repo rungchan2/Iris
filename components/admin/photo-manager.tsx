@@ -81,7 +81,26 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
         .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
 
       if (filterCategory) {
-        query = query.eq("photo_categories.category_id", filterCategory)
+        // Use inner join to only get photos that have the specific category
+        query = supabase
+          .from("photos")
+          .select(
+            `
+            *,
+            photo_categories!inner (
+              category_id,
+              categories (
+                id,
+                name,
+                path
+              )
+            )
+          `,
+          )
+          .eq("is_active", true)
+          .eq("photo_categories.category_id", filterCategory)
+          .order("created_at", { ascending: false })
+          .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
       }
 
       if (showUnassigned) {
@@ -254,6 +273,7 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
         onLoadMore={fetchNextPage}
         hasMore={hasNextPage}
         isLoading={isFetchingNextPage}
+        filterCategoryId={filterCategory}
       />
 
       {/* Category Assignment Modal */}

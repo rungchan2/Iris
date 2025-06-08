@@ -17,7 +17,7 @@ export interface SlotInput {
   startTime: string
   endTime: string
   duration: number
-  maxBookings: number
+  maxBookings?: number // Optional for backward compatibility, not used in DB
 }
 
 export interface RecurringSchedule {

@@ -34,7 +34,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
     setIsDirty(false) // Reset dirty state when moving to next step
 
     // Scroll to top for category selection
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    // window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleCategoryComplete = (category: Category, path: string[], history: SelectionHistoryStep[]) => {

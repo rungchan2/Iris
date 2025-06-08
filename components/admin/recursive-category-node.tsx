@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useSortable } from "@dnd-kit/sortable"
+import { useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +39,10 @@ export function RecursiveCategoryNode({
   const [editName, setEditName] = useState(category.name)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.id,
+  })
+
+  const { isOver, setNodeRef: setDropRef } = useDroppable({
     id: category.id,
   })
 
@@ -78,9 +83,19 @@ export function RecursiveCategoryNode({
   const indentWidth = depth * 24
 
   return (
-    <div ref={setNodeRef} style={style} className={cn("select-none", isDragging && "opacity-50")}>
+    <div 
+      ref={(node) => {
+        setNodeRef(node)
+        setDropRef(node)
+      }} 
+      style={style} 
+      className={cn("select-none", isDragging && "opacity-50")}
+    >
       <div
-        className="group flex items-center gap-2 py-2 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+        className={cn(
+          "group flex items-center gap-2 py-2 px-3 rounded-lg transition-colors",
+          isOver ? "bg-blue-100 border-2 border-blue-300" : "hover:bg-gray-50"
+        )}
         style={{ marginLeft: `${indentWidth}px` }}
       >
         {/* Drag Handle */}
@@ -134,12 +149,19 @@ export function RecursiveCategoryNode({
         </div>
 
         {/* Representative Image */}
-        {category.representative_image?.thumbnail_url && (
-          <img
-            src={category.representative_image.thumbnail_url || "/placeholder.svg"}
-            alt={`${category.name} representative`}
-            className="h-8 w-8 rounded object-cover"
-          />
+        {category.representative_image_url ? (
+          <div className="relative">
+            <img
+              src={category.representative_image_url}
+              alt={`${category.name} representative`}
+              className="h-8 w-8 rounded object-cover border border-gray-200"
+            />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
+          </div>
+        ) : (
+          <div className="h-8 w-8 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+            <ImageIcon className="h-4 w-4 text-gray-400" />
+          </div>
         )}
 
         {/* Actions */}

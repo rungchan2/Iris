@@ -1,7 +1,5 @@
 import { InquiryTable } from "@/components/admin/inquiry-table"
-import { SearchBar } from "@/components/admin/search-bar"
-import { FilterDropdown } from "@/components/admin/filter-dropdown"
-import { SortDropdown } from "@/components/admin/sort-dropdown"
+import { AdminFilters } from "@/components/admin/admin-filters"
 import { Pagination } from "@/components/admin/pagination"
 import { createClient } from "@/lib/supabase/server"
 
@@ -13,6 +11,10 @@ export default async function AdminPage({
     status?: string
     sort?: string
     search?: string
+    sortField?: string
+    sortOrder?: string
+    bookingFrom?: string
+    bookingTo?: string
   }>
 }) {
   const supabase = await createClient()
@@ -22,6 +24,10 @@ export default async function AdminPage({
   const status = params.status || "all"
   const sort = params.sort || "newest"
   const search = params.search || ""
+  const sortField = params.sortField
+  const sortOrder = params.sortOrder || "desc"
+  const bookingFrom = params.bookingFrom
+  const bookingTo = params.bookingTo
 
   const pageSize = 20
   const start = (page - 1) * pageSize
@@ -34,6 +40,12 @@ export default async function AdminPage({
         id,
         name,
         path
+      ),
+      selected_slot_id (
+        id,
+        date,
+        start_time,
+        end_time
       )
     `,
     { count: "exact" },
@@ -49,11 +61,32 @@ export default async function AdminPage({
     query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`)
   }
 
-  // Apply sorting
-  if (sort === "newest") {
-    query = query.order("created_at", { ascending: false })
+  // Apply booking date range filter
+  if (bookingFrom || bookingTo) {
+    // Only filter inquiries that have a selected slot
+    query = query.not('selected_slot_id', 'is', null)
+    
+    if (bookingFrom) {
+      query = query.gte('selected_slot_id.date', bookingFrom)
+    }
+    if (bookingTo) {
+      query = query.lte('selected_slot_id.date', bookingTo)
+    }
+  }
+
+  // Apply sorting - avoid booking_date sorting on server side due to Supabase limitations
+  if (sortField === 'created_at') {
+    query = query.order("created_at", { ascending: sortOrder === 'asc' })
+  } else if (!sortField || sortField === 'booking_date') {
+    // Default sorting or booking_date sorting (will be handled client-side)
+    if (sort === "newest") {
+      query = query.order("created_at", { ascending: false })
+    } else {
+      query = query.order("created_at", { ascending: true })
+    }
   } else {
-    query = query.order("created_at", { ascending: true })
+    // Fallback to created_at sorting
+    query = query.order("created_at", { ascending: false })
   }
 
   // Apply pagination
@@ -62,7 +95,7 @@ export default async function AdminPage({
   const { data: inquiries, count, error } = await query
 
   if (error) {
-    console.error("Error fetching inquiries:", error)
+    console.error("Error fetching inquiries:", error.message)
   }
 
   const totalPages = count ? Math.ceil(count / pageSize) : 0
@@ -73,15 +106,13 @@ export default async function AdminPage({
         <h1 className="text-2xl font-bold">문의 관리</h1>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <FilterDropdown currentStatus={status} />
-          <SortDropdown currentSort={sort} />
-        </div>
-        <SearchBar initialSearch={search} />
-      </div>
+      <AdminFilters
+        currentStatus={status}
+        currentSort={sort}
+        initialSearch={search}
+      />
 
-      <InquiryTable inquiries={inquiries as any} />
+      <InquiryTable inquiries={(inquiries || []) as any} />
 
       <Pagination currentPage={page} totalPages={totalPages} />
     </div>

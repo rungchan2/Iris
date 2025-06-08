@@ -8,7 +8,7 @@ const DndContextWrapper = dynamic(() => import("@dnd-kit/core").then((mod) => mo
   ssr: false,
   loading: () => <div className="animate-pulse">Loading drag and drop...</div>,
 })
-import { closestCenter, type DragEndEvent, DragOverlay, type DragStartEvent } from "@dnd-kit/core"
+import { closestCenter, type DragEndEvent, DragOverlay, type DragStartEvent, useDroppable } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Button } from "@/components/ui/button"
 import { Plus, Search } from "lucide-react"
@@ -19,6 +19,7 @@ import { AddCategoryModal } from "@/components/admin/add-category-modal"
 import { ImageSelectorModal } from "@/components/admin/image-selector-modal"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 export interface Category {
   id: string
@@ -237,68 +238,93 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
     }
 
     const activeCategory = categories.find((c) => c.id === active.id)
-    const overCategory = categories.find((c) => c.id === over.id)
-
-    if (!activeCategory || !overCategory) {
+    
+    if (!activeCategory) {
       setActiveId(null)
       return
     }
 
-    // Check if same parent
-    if (activeCategory.parent_id !== overCategory.parent_id) {
-      toast.error("Can only reorder within the same parent")
+    // Handle drop to root
+    if (over.id === 'root') {
+      await handleDropToRoot(activeCategory.id)
+      setActiveId(null)
+      return
+    }
+
+    const overCategory = categories.find((c) => c.id === over.id)
+
+    if (!overCategory) {
+      setActiveId(null)
+      return
+    }
+
+    // Check for circular dependency (prevent making a category a child of its own descendant)
+    if (isDescendant(overCategory.id, activeCategory.id)) {
+      toast.error("Cannot move a category to be a child of its own descendant")
       setActiveId(null)
       return
     }
 
     try {
-      // Get siblings in current order
-      const siblings = categories
-        .filter((c) => c.parent_id === activeCategory.parent_id)
-        .sort((a, b) => a.display_order - b.display_order)
+      // Moving active category to become a child of over category
+      const newParentId = overCategory.id
+      const newDepth = overCategory.depth + 1
 
-      // Calculate new order
-      const oldIndex = siblings.findIndex((s) => s.id === active.id)
-      const newIndex = siblings.findIndex((s) => s.id === over.id)
-
-      if (oldIndex === newIndex) {
+      // Check max depth
+      if (newDepth > 10) {
+        toast.error("Maximum depth of 10 levels reached")
         setActiveId(null)
         return
       }
 
-      // Reorder array
-      const reorderedSiblings = [...siblings]
-      const [removed] = reorderedSiblings.splice(oldIndex, 1)
-      reorderedSiblings.splice(newIndex, 0, removed)
+      // Calculate new path
+      const newPath = `${overCategory.path}/${activeCategory.name}`
 
-      // Update display_order for all affected categories
-      const updates = reorderedSiblings.map((cat, index) => ({
-        id: cat.id,
-        display_order: index,
-      }))
+      // Get new display order (add to end of siblings)
+      const newSiblings = categories.filter((c) => c.parent_id === newParentId)
+      const newDisplayOrder = Math.max(...newSiblings.map((s) => s.display_order), -1) + 1
 
-      // Optimistic update
-      const newCategories = categories.map((cat) => {
-        const update = updates.find((u) => u.id === cat.id)
-        return update ? { ...cat, display_order: update.display_order } : cat
-      })
+      // Update the category and all its descendants
+      await updateCategoryHierarchy(activeCategory.id, newParentId, newDepth, newPath, newDisplayOrder)
 
-      setCategories(newCategories)
-
-      // Persist to database using Promise.all
-      await Promise.all(
-        updates.map(({ id, display_order }) => supabase.from("categories").update({ display_order }).eq("id", id)),
-      )
-
-      toast.success("Order updated successfully")
+      toast.success("Category hierarchy updated successfully")
     } catch (error) {
-      // Rollback on error
-      setCategories(categories)
-      console.error("Error reordering categories:", error)
-      toast.error("Failed to update order")
+      console.error("Error updating hierarchy:", error)
+      toast.error("Failed to update hierarchy")
     }
 
     setActiveId(null)
+  }
+
+  // Helper function to check if targetId is a descendant of ancestorId
+  const isDescendant = (targetId: string, ancestorId: string): boolean => {
+    const target = categories.find((c) => c.id === targetId)
+    if (!target || !target.parent_id) return false
+    
+    if (target.parent_id === ancestorId) return true
+    return isDescendant(target.parent_id, ancestorId)
+  }
+
+  // Helper function to update category hierarchy
+  const updateCategoryHierarchy = async (categoryId: string, newParentId: string, newDepth: number, newPath: string, newDisplayOrder: number) => {
+    const category = categories.find((c) => c.id === categoryId)
+    if (!category) return
+
+    // Update the main category
+    await supabase.from("categories").update({
+      parent_id: newParentId,
+      depth: newDepth,
+      path: newPath,
+      display_order: newDisplayOrder,
+    }).eq("id", categoryId)
+
+    // Update all descendants recursively
+    const descendants = categories.filter((c) => c.parent_id === categoryId)
+    for (const descendant of descendants) {
+      const descendantNewPath = `${newPath}/${descendant.name}`
+      const descendantNewDepth = newDepth + 1
+      await updateCategoryHierarchy(descendant.id, categoryId, descendantNewDepth, descendantNewPath, descendant.display_order)
+    }
   }
 
   const handleSetRepresentativeImage = (categoryId: string) => {
@@ -412,6 +438,62 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
 
   const flattenedIds = flattenCategories(categories)
 
+  // Component for root drop zone
+  const RootDropZone = ({ children }: { children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({
+      id: 'root',
+    })
+
+    return (
+      <div 
+        ref={setNodeRef}
+        className={cn(
+          "min-h-[200px] rounded-lg transition-colors",
+          isOver ? "bg-blue-50 border-2 border-dashed border-blue-300" : ""
+        )}
+      >
+        {children}
+        {isOver && (
+          <div className="text-center py-8 text-blue-600 font-medium">
+            Drop here to move to root level
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Handle drop to root
+  const handleDropToRoot = async (categoryId: string) => {
+    try {
+      const category = categories.find((c) => c.id === categoryId)
+      if (!category) return
+
+      // Get new display order for root level
+      const rootCategories = categories.filter((c) => !c.parent_id)
+      const newDisplayOrder = Math.max(...rootCategories.map((s) => s.display_order), -1) + 1
+
+      await supabase.from("categories").update({
+        parent_id: null,
+        depth: 1,
+        path: category.name,
+        display_order: newDisplayOrder,
+      }).eq("id", categoryId)
+
+      // Update all descendants
+      const descendants = categories.filter((c) => c.parent_id === categoryId)
+      for (const descendant of descendants) {
+        const descendantNewPath = `${category.name}/${descendant.name}`
+        const descendantNewDepth = 2
+        await updateCategoryHierarchy(descendant.id, categoryId, descendantNewDepth, descendantNewPath, descendant.display_order)
+      }
+
+      toast.success("Category moved to root level")
+    } catch (error) {
+      console.error("Error moving to root:", error)
+      toast.error("Failed to move to root")
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center gap-4">
@@ -433,22 +515,31 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       <div className="border rounded-lg p-4 bg-white">
         <DndContextWrapper collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <SortableContext items={flattenedIds} strategy={verticalListSortingStrategy}>
-            <CategoryTree
-              categories={rootCategories}
-              allCategories={categories}
-              expandedNodes={expandedNodes}
-              onToggleExpanded={toggleExpanded}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-              onToggleStatus={handleToggleStatus}
-              onSetImage={handleSetRepresentativeImage}
-              buildTree={buildTree}
-            />
+            {/* Root drop zone */}
+            <RootDropZone>
+              <CategoryTree
+                categories={rootCategories}
+                allCategories={categories}
+                expandedNodes={expandedNodes}
+                onToggleExpanded={toggleExpanded}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+                onToggleStatus={handleToggleStatus}
+                onSetImage={handleSetRepresentativeImage}
+                buildTree={buildTree}
+              />
+            </RootDropZone>
           </SortableContext>
           <DragOverlay>
             {activeId ? (
-              <div className="bg-white border rounded-lg p-2 shadow-lg">
-                {categories.find((c) => c.id === activeId)?.name}
+              <div className="bg-white border-2 border-blue-300 rounded-lg p-2 shadow-lg opacity-90">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                  <span className="font-medium">
+                    {categories.find((c) => c.id === activeId)?.name}
+                  </span>
+                  <span className="text-xs text-gray-500">→ Drop on target category</span>
+                </div>
               </div>
             ) : null}
           </DragOverlay>

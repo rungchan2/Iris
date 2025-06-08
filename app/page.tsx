@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { InquiryForm } from "@/components/inquiry/inquiry-form"
 import { HeroSection } from "@/components/inquiry/hero-section"
 import { NoticeSection } from "@/components/inquiry/notice-section"
+import { FAQWidget } from "@/components/ui/faq-widget"
 import type { Category, MoodKeyword } from "@/types/inquiry.types"
 
 export default async function InquiryPage() {
@@ -56,6 +57,7 @@ export default async function InquiryPage() {
           availableDates={availableDates}
         />
       </div>
+      <FAQWidget />
     </div>
   )
 }

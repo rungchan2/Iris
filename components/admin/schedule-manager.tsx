@@ -86,12 +86,6 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
     const bookedSlots = daySlots.filter((slot) => !slot.is_available).length
     const availableSlots = daySlots.filter((slot) => slot.is_available).length
 
-    // 디버깅용 로그
-    if (daySlots.length > 0) {
-      console.log(`Date: ${dateStr}, Total: ${totalSlots}, Available: ${availableSlots}, Booked: ${bookedSlots}`, 
-        daySlots.map(slot => ({ start: slot.start_time, end: slot.end_time, available: slot.is_available })))
-    }
-
     if (bookedSlots === totalSlots) {
       return { fullyBooked: true }
     } else if (bookedSlots > 0 && availableSlots > 0) {

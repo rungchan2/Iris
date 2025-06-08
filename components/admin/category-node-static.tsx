@@ -115,12 +115,19 @@ export function CategoryNodeStatic({
         </div>
 
         {/* Representative Image */}
-        {category.representative_image?.thumbnail_url && (
-          <img
-            src={category.representative_image.thumbnail_url || "/placeholder.svg"}
-            alt={`${category.name} representative`}
-            className="h-8 w-8 rounded object-cover"
-          />
+        {category.representative_image_url ? (
+          <div className="relative">
+            <img
+              src={category.representative_image_url}
+              alt={`${category.name} representative`}
+              className="h-8 w-8 rounded object-cover border border-gray-200"
+            />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
+          </div>
+        ) : (
+          <div className="h-8 w-8 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
+            <ImageIcon className="h-4 w-4 text-gray-400" />
+          </div>
         )}
 
         {/* Actions */}
