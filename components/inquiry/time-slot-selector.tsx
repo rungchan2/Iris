@@ -95,8 +95,8 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
     return (
       <div className="text-center py-8 text-muted-foreground">
         <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p className="text-lg font-medium">No available slots</p>
-        <p className="text-sm">Please select a different date</p>
+        <p className="text-lg font-medium">예약 가능한 시간대가 없습니다.</p>
+        <p className="text-sm">다른 날짜를 선택해주세요.</p>
       </div>
     )
   }
@@ -112,6 +112,7 @@ export function TimeSlotSelector({ date, selectedSlotId, onSelect }: TimeSlotSel
 
           return (
             <Button
+              type="button"
               key={slot.id}
               variant={isSelected ? "default" : "outline"}
               className={`p-4 h-auto text-center transition-all hover:scale-105 w-full ${

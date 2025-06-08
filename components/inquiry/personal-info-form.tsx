@@ -279,8 +279,8 @@ export function PersonalInfoForm({
                       control={form.control}
                       name="selected_slot_id"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>시간대</FormLabel>
+                        <FormItem className="flex flex-col">
+                          <FormLabel>예약 시간</FormLabel>
                           <FormControl>
                             <TimeSlotSelector
                               date={form.watch("desired_date")}

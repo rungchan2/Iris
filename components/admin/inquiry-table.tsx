@@ -10,26 +10,7 @@ import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
-
-interface Inquiry {
-  id: string
-  name: string
-  phone: string
-  instagram_id?: string
-  gender?: "male" | "female" | "other"
-  desired_date?: string
-  people_count: number
-  selected_category_id?: string
-  selection_path?: string[]
-  status: "new" | "contacted" | "completed"
-  created_at: string
-  special_request?: string
-  categories?: {
-    id: string
-    name: string
-    path: string
-  }
-}
+import { Inquiry } from "@/types/inquiry.types"
 
 export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
   const router = useRouter()
@@ -60,7 +41,8 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
             <TableHead>Phone</TableHead>
             <TableHead className="hidden md:table-cell">Category</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="hidden md:table-cell">Date</TableHead>
+            <TableHead className="hidden md:table-cell">예약일</TableHead>
+            <TableHead className="hidden md:table-cell">신청일</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -114,6 +96,11 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {inquiry.desired_date && inquiry.selected_slot_id
+                    ? formatDate(inquiry.desired_date + " " + inquiry.selected_slot_id.start_time)
+                    : "-"}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{formatDate(inquiry.created_at)}</TableCell>
                 <TableCell className="text-right">
