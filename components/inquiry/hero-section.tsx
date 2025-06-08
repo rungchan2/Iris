@@ -25,6 +25,7 @@ export function HeroSection() {
     }
   }
 
+
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
@@ -32,7 +33,7 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 z-10" />
         <Image
           src="/sunset.jpg"
-          alt="Photography Studio"
+          alt="sunset.jpg"
           className="w-full h-full object-cover"
           width={1920}
           height={1080}
