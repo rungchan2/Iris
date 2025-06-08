@@ -32,8 +32,8 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 z-10" />
         <Image
-          src="/sunset.jpg"
-          alt="sunset.jpg"
+          src="/sunset.JPG"
+          alt="sunset.JPG"
           className="w-full h-full object-cover"
           width={1920}
           height={1080}
