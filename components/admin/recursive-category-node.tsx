@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "@/components/admin/category-manager"
+import type { Category } from "@/lib/hooks/use-categories"
 
 interface RecursiveCategoryNodeProps {
   category: Category
@@ -18,7 +18,7 @@ interface RecursiveCategoryNodeProps {
   depth: number
   expandedNodes: Set<string>
   onToggleExpanded: (nodeId: string) => void
-  onEdit: (id: string, updates: Partial<Category>) => void
+  onEdit: (category: Category) => void
   onDelete: (id: string) => void
   onToggleStatus: (id: string, isActive: boolean) => void
   onSetImage: (categoryId: string) => void
@@ -35,9 +35,6 @@ export function RecursiveCategoryNode({
   onToggleStatus,
   onSetImage,
 }: RecursiveCategoryNodeProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(category.name)
-
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
   })
@@ -56,28 +53,7 @@ export function RecursiveCategoryNode({
   const isExpanded = expandedNodes.has(category.id)
 
   const handleEdit = () => {
-    setIsEditing(true)
-    setEditName(category.name)
-  }
-
-  const handleSaveEdit = () => {
-    if (editName.trim() && editName !== category.name) {
-      onEdit(category.id, { name: editName.trim() })
-    }
-    setIsEditing(false)
-  }
-
-  const handleCancelEdit = () => {
-    setEditName(category.name)
-    setIsEditing(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSaveEdit()
-    } else if (e.key === "Escape") {
-      handleCancelEdit()
-    }
+    onEdit(category)
   }
 
   const indentWidth = depth * 24
@@ -126,26 +102,15 @@ export function RecursiveCategoryNode({
 
         {/* Category Info */}
         <div className="flex-1 min-w-0">
-          {isEditing ? (
-            <Input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onBlur={handleSaveEdit}
-              onKeyDown={handleKeyDown}
-              className="h-8 text-sm"
-              autoFocus
-            />
-          ) : (
-            <div>
-              <span className={cn("font-medium", !category.is_active && "text-gray-400 line-through")}>
-                {category.name}
-              </span>
-              <div className="text-xs text-gray-500 mt-1">
-                Depth: {category.depth} | Order: {category.display_order}
-                {hasChildren && ` | Children: ${children.length}`}
-              </div>
+          <div>
+            <span className={cn("font-medium", !category.is_active && "text-gray-400 line-through")}>
+              {category.name}
+            </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Depth: {category.depth} | Order: {category.display_order}
+              {hasChildren && ` | Children: ${children.length}`}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Representative Image */}
@@ -175,7 +140,7 @@ export function RecursiveCategoryNode({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => onToggleStatus(category.id, category.is_active)}
+            onClick={() => onToggleStatus(category.id, !category.is_active)}
             title={category.is_active ? "Deactivate" : "Activate"}
           >
             {category.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -196,7 +161,7 @@ export function RecursiveCategoryNode({
       {isExpanded && hasChildren && (
         <div>
           {children
-            .sort((a, b) => a.display_order - b.display_order)
+            .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
             .map((child) => (
               <RecursiveCategoryNode
                 key={child.id}

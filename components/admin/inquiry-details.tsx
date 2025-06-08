@@ -15,9 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Heart } from "lucide-react";
 import { Inquiry } from "@/types/inquiry.types";
 import { formatTime } from "@/lib/date-fns";
+import { useRouter } from "next/navigation";
 
 const getGenderLabel = (gender: string) => {
   const genderMap = {
@@ -29,9 +29,10 @@ const getGenderLabel = (gender: string) => {
 };
 
 export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
+  const router = useRouter();
   const supabase = createClient();
   const [status, setStatus] = useState(inquiry.status);
-  const [adminNotes, setAdminNotes] = useState(inquiry.admin_notes || "");
+  const [adminNotes, setAdminNotes] = useState(inquiry.admin_note || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleStatusChange = async (
@@ -64,10 +65,26 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
     setIsSaving(false);
   };
 
+  const handleDeleteInquiry = async () => {
+    if (confirm("문의를 삭제하시겠습니까?")) {
+      const { error } = await supabase
+        .from("inquiries")
+        .delete()
+        .eq("id", inquiry.id);
+      if (error) {
+        console.error("Error deleting inquiry:", error);
+      }
+      router.push("/admin");
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>문의 정보</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          문의 날짜: {formatDate(inquiry.created_at)}
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
@@ -118,7 +135,7 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
               </p>
               <p className="text-lg font-medium">
                 {inquiry.desired_date}{" "}
-                {/* {inquiry.selected_slot_id.start_time ? (
+                {inquiry.selected_slot_id?.start_time ? (
                   <>
                     {formatTime(inquiry.selected_slot_id.start_time)}
                     {" ~ "}
@@ -126,19 +143,10 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
                   </>
                 ) : (
                   <></>
-                )} */}
+                )}
               </p>
             </div>
           )}
-
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              생성 날짜
-            </p>
-            <p className="text-lg font-medium">
-              {formatDate(inquiry.created_at)}
-            </p>
-          </div>
 
           {inquiry.selection_path && inquiry.selection_path.length > 0 && (
             <div>
@@ -166,13 +174,20 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
               <p className="text-lg">{inquiry.special_request}</p>
             </div>
           )}
+          {inquiry.difficulty_note && (
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                어려운 점
+              </p>
+              <p className="text-lg">{inquiry.difficulty_note}</p>
+            </div>
+          )}
 
           {/* Mood Keywords */}
           {(inquiry.current_mood_keywords.length > 0 ||
             inquiry.desired_mood_keywords.length > 0) && (
             <div className="pt-4 border-t">
               <div className="flex items-center gap-2 mb-4">
-                <Heart className="h-4 w-4" />
                 <p className="text-sm font-medium text-muted-foreground">
                   분위기 키워드
                 </p>
@@ -256,13 +271,20 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
             <Textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Add notes about this inquiry..."
+              placeholder="문의 내용을 입력해주세요."
               rows={4}
             />
             <Button onClick={saveNotes} disabled={isSaving} className="w-full">
               {isSaving ? "저장중..." : "메모 저장"}
             </Button>
           </div>
+          <Button
+            onClick={handleDeleteInquiry}
+            disabled={isSaving}
+            className="w-full border-red-500 border-1 text-red-500 bg-transparent hover:text-white hover:bg-red-500"
+          >
+            문의 삭제
+          </Button>
         </div>
       </CardContent>
     </Card>

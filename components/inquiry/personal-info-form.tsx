@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { CalendarIcon, ChevronRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,7 @@ import {
   type MoodKeyword,
 } from "@/types/inquiry.types";
 import { TimeSlotSelector } from "@/components/inquiry/time-slot-selector";
+import { toast } from "sonner";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -46,6 +48,8 @@ export function PersonalInfoForm({
   const [activeSection, setActiveSection] = useState<
     "personal" | "mood" | "additional"
   >("personal");
+  const [dateSlotCounts, setDateSlotCounts] = useState<Record<string, { total: number; available: number }>>({});
+  const supabase = createClient();
 
   const form = useForm<InquiryFormValues>({
     resolver: zodResolver(inquiryFormSchema),
@@ -72,6 +76,37 @@ export function PersonalInfoForm({
     return () => subscription.unsubscribe();
   }, [form, onFormChange]);
 
+  // Fetch slot counts for available dates
+  useEffect(() => {
+    const fetchSlotCounts = async () => {
+      if (availableDates.length === 0) return;
+
+      const { data: slots, error } = await supabase
+        .from("available_slots")
+        .select("date, is_available")
+        .in("date", availableDates);
+
+      if (error) {
+        console.error("Error fetching slot counts:", error);
+        return;
+      }
+
+      const counts: Record<string, { total: number; available: number }> = {};
+      
+      for (const date of availableDates) {
+        const dateSlots = slots?.filter(slot => slot.date === date) || [];
+        counts[date] = {
+          total: dateSlots.length,
+          available: dateSlots.filter(slot => slot.is_available).length
+        };
+      }
+
+      setDateSlotCounts(counts);
+    };
+
+    fetchSlotCounts();
+  }, [availableDates, supabase]);
+
   const currentMoodKeywords = moodKeywords.filter(
     (keyword) => keyword.type === "current_mood"
   );
@@ -83,6 +118,24 @@ export function PersonalInfoForm({
   const isDateAvailable = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     return availableDates.includes(dateStr);
+  };
+
+  // Get date modifiers for calendar styling
+  const getDateModifiers = (date: Date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const slotCount = dateSlotCounts[dateStr];
+    
+    if (!slotCount || slotCount.total === 0) {
+      return { available: false, partiallyBooked: false, fullyBooked: false };
+    }
+    
+    if (slotCount.available === 0) {
+      return { available: false, partiallyBooked: false, fullyBooked: true };
+    } else if (slotCount.available < slotCount.total) {
+      return { available: false, partiallyBooked: true, fullyBooked: false };
+    } else {
+      return { available: true, partiallyBooked: false, fullyBooked: false };
+    }
   };
 
   const handleSubmit = (data: InquiryFormValues) => {
@@ -267,7 +320,50 @@ export function PersonalInfoForm({
                               date < new Date() || // Can't select past dates
                               !isDateAvailable(date) // Only show available dates
                           }
+                          modifiers={{
+                            available: (date) => {
+                              const modifiers = getDateModifiers(date)
+                              return modifiers.available === true
+                            },
+                            partiallyBooked: (date) => {
+                              const modifiers = getDateModifiers(date)
+                              return modifiers.partiallyBooked === true
+                            },
+                            fullyBooked: (date) => {
+                              const modifiers = getDateModifiers(date)
+                              return modifiers.fullyBooked === true
+                            },
+                          }}
+                          modifiersStyles={{
+                            available: { 
+                              backgroundColor: "hsl(142, 76%, 36%)", 
+                              color: "white",
+                              fontWeight: "bold"
+                            },
+                            partiallyBooked: { 
+                              backgroundColor: "hsl(48, 96%, 53%)", 
+                              color: "black",
+                              fontWeight: "bold"
+                            },
+                            fullyBooked: { 
+                              backgroundColor: "hsl(0, 84%, 60%)", 
+                              color: "white",
+                              fontWeight: "bold"
+                            },
+                          }}
                         />
+
+                        {/* Calendar Legend */}
+                        <div className="flex flex-wrap gap-4 mt-3 text-xs">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-green-600"></div>
+                            <span>예약 가능</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-yellow-500"></div>
+                            <span>일부 예약됨</span>
+                          </div>
+                        </div>
 
                         <FormMessage />
                       </FormItem>
@@ -307,7 +403,9 @@ export function PersonalInfoForm({
                           max={10}
                           {...field}
                           onChange={(e) =>
-                            field.onChange(Number.parseInt(e.target.value) || "")
+                            field.onChange(
+                              Number.parseInt(e.target.value) || ""
+                            )
                           }
                         />
                       </FormControl>
@@ -508,11 +606,18 @@ export function PersonalInfoForm({
                   )}
                 />
 
-                <div className="flex justify-between pt-4">
+                <div className="flex justify-between pt-4 items-center">
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
-                  <Button type="submit">다음</Button>
+                  {form.formState.isValid ? null : (
+                    <span className="text-sm text-red-500">
+                      모든 필수 필드를 입력해주세요.
+                    </span>
+                  )}
+                  <Button type="submit">
+                    다음
+                  </Button>
                 </div>
               </motion.div>
             </form>

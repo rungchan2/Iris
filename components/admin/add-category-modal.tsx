@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Category } from "@/components/admin/category-manager";
+import type { Category } from "@/lib/hooks/use-categories";
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -72,7 +72,7 @@ export function AddCategoryModal({
     const addCategoryOptions = (cats: Category[], prefix = "") => {
       cats
         .filter((cat) => cat.depth < 10) // Only allow parents that won't exceed max depth
-        .sort((a, b) => a.display_order - b.display_order)
+        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
         .forEach((cat) => {
           options.push({
             id: cat.id,

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CategoryTree } from "@/components/admin/category-tree"
-import type { Category } from "@/components/admin/category-manager"
+import type { Category } from "@/lib/hooks/use-categories"
 
 interface CategoryNodeProps {
   category: Category
@@ -154,7 +154,7 @@ export function CategoryNode({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => onToggleStatus(category.id, category.is_active)}
+            onClick={() => onToggleStatus(category.id, category.is_active || false)}
             title={category.is_active ? "Deactivate" : "Activate"}
           >
             {category.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -178,7 +178,7 @@ export function CategoryNode({
           allCategories={allCategories}
           expandedNodes={new Set()}
           onToggleExpanded={onToggleExpanded}
-          onEdit={onEdit}
+          onEdit={(category) => onEdit(category.id, { name: category.name })}
           onDelete={onDelete}
           onToggleStatus={onToggleStatus}
           onSetImage={onSetImage}

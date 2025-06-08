@@ -4,17 +4,16 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "@/components/admin/category-manager"
+import type { Category } from "@/lib/hooks/use-categories"
 
 interface CategoryNodeStaticProps {
   category: Category
   allCategories: Category[]
   isExpanded: boolean
   onToggleExpanded: (nodeId: string) => void
-  onEdit: (id: string, updates: Partial<Category>) => void
+  onEdit: (category: Category) => void
   onDelete: (id: string) => void
   onToggleStatus: (id: string, isActive: boolean) => void
   onSetImage: (categoryId: string) => void
@@ -34,35 +33,11 @@ export function CategoryNodeStatic({
   buildTree,
   depth,
 }: CategoryNodeStaticProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(category.name)
-
   const children = buildTree(category.id)
   const hasChildren = children.length > 0
 
   const handleEdit = () => {
-    setIsEditing(true)
-    setEditName(category.name)
-  }
-
-  const handleSaveEdit = () => {
-    if (editName.trim() && editName !== category.name) {
-      onEdit(category.id, { name: editName.trim() })
-    }
-    setIsEditing(false)
-  }
-
-  const handleCancelEdit = () => {
-    setEditName(category.name)
-    setIsEditing(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSaveEdit()
-    } else if (e.key === "Escape") {
-      handleCancelEdit()
-    }
+    onEdit(category)
   }
 
   const indentWidth = depth * 24
@@ -92,42 +67,24 @@ export function CategoryNodeStatic({
 
         {/* Category Info */}
         <div className="flex-1 min-w-0">
-          {isEditing ? (
-            <Input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onBlur={handleSaveEdit}
-              onKeyDown={handleKeyDown}
-              className="h-8 text-sm"
-              autoFocus
-            />
-          ) : (
-            <div>
-              <span className={cn("font-medium", !category.is_active && "text-gray-400 line-through")}>
-                {category.name}
-              </span>
-              <div className="text-xs text-gray-500 mt-1">
-                Depth: {category.depth} | Order: {category.display_order}
-                {hasChildren && ` | Children: ${children.length}`}
-              </div>
+          <div>
+            <span className={cn("font-medium", !category.is_active && "text-gray-400 line-through")}>
+              {category.name}
+            </span>
+            <div className="text-xs text-gray-500 mt-1">
+              Depth: {category.depth} | Order: {category.display_order}
+              {hasChildren && ` | Children: ${children.length}`}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Representative Image */}
-        {category.representative_image_url ? (
-          <div className="relative">
-            <img
-              src={category.representative_image_url}
-              alt={`${category.name} representative`}
-              className="h-8 w-8 rounded object-cover border border-gray-200"
-            />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
-          </div>
-        ) : (
-          <div className="h-8 w-8 rounded border border-gray-200 bg-gray-100 flex items-center justify-center">
-            <ImageIcon className="h-4 w-4 text-gray-400" />
-          </div>
+        {category.representative_image?.thumbnail_url && (
+          <img
+            src={category.representative_image.thumbnail_url || "/placeholder.svg"}
+            alt={`${category.name} representative`}
+            className="h-8 w-8 rounded object-cover"
+          />
         )}
 
         {/* Actions */}
@@ -141,7 +98,7 @@ export function CategoryNodeStatic({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => onToggleStatus(category.id, category.is_active)}
+            onClick={() => onToggleStatus(category.id, !category.is_active)}
             title={category.is_active ? "Deactivate" : "Activate"}
           >
             {category.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -158,7 +115,7 @@ export function CategoryNodeStatic({
         </div>
       </div>
 
-      {/* Children - Recursive rendering */}
+      {/* Children */}
       {hasChildren && isExpanded && (
         <div>
           {children.map((child) => (

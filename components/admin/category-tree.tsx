@@ -1,14 +1,14 @@
 "use client"
 
 import { RecursiveCategoryNode } from "@/components/admin/recursive-category-node"
-import type { Category } from "@/components/admin/category-manager"
+import type { Category } from "@/lib/hooks/use-categories"
 
 interface CategoryTreeProps {
   categories: Category[]
   allCategories: Category[]
   expandedNodes: Set<string>
   onToggleExpanded: (nodeId: string) => void
-  onEdit: (id: string, updates: Partial<Category>) => void
+  onEdit: (category: Category) => void
   onDelete: (id: string) => void
   onToggleStatus: (id: string, isActive: boolean) => void
   onSetImage: (categoryId: string) => void

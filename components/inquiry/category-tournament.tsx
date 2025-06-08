@@ -170,11 +170,10 @@ export function CategoryTournament({
               >
                 {currentCategories.map((category) => (
                   <motion.div key={category.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Card
-                      className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg"
+                    <div className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl rounded-lg shadow-lg border shadow-accent/80 border-gray-300"
                       onClick={() => !isSubmitting && handleSelectCategory(category)}
                     >
-                      <AspectRatio ratio={4 / 3}>
+                      <AspectRatio ratio={16 / 9}>
                         {category.representative_image_url ? (
                           <>
                             {!loadedImages[category.id] && (
@@ -199,17 +198,21 @@ export function CategoryTournament({
                           <h3 className="text-white text-2xl font-bold">{category.name}</h3>
                         </div>
                       </AspectRatio>
-                    </Card>
+                    </div>
                   </motion.div>
                 ))}
               </motion.div>
             </AnimatePresence>
 
             {isSubmitting && (
-              <div className="text-center py-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-4"
+              >
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
                 <p className="mt-2 text-muted-foreground">제출하는 중입니다...</p>
-              </div>
+              </motion.div>
             )}
           </motion.div>
         </div>

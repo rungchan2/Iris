@@ -71,14 +71,15 @@ export interface Inquiry {
   phone: string
   instagram_id?: string
   gender?: "male" | "female" | "other"
-  desired_date?: string
+  desired_date: string
   people_count: number
   selected_category_id?: string
   selection_path?: string[]
   status: "new" | "contacted" | "completed"
   created_at: string
   special_request?: string
-  admin_notes?: string
+  admin_note?: string
+  difficulty_note?: string
   categories?: {
     id: string
     name: string

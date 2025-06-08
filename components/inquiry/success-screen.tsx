@@ -5,10 +5,10 @@ import { format } from "date-fns"
 import { CheckCircle, Calendar, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import type { InquiryFormValues, Category } from "@/types/inquiry.types"
+import type { InquiryFormValues, Category, Inquiry } from "@/types/inquiry.types"
 
 interface SuccessScreenProps {
-  formData: InquiryFormValues
+  formData: Inquiry
   category: Category
   onStartOver: () => void
 }
@@ -16,10 +16,9 @@ interface SuccessScreenProps {
 export function SuccessScreen({ formData, category, onStartOver }: SuccessScreenProps) {
   const addToCalendar = () => {
     const date = formData.desired_date
-    const title = `Photo Shoot Inquiry - ${formData.name}`
-    const details = `Photo shoot inquiry for ${formData.name}. Style: ${category.name}`
+    const title = `Sunset Cinema - ${formData.name}`
+    const details = `Sunset Cinema for ${formData.name}.`
 
-    // Format for Google Calendar
     const startDate = format(date, "yyyyMMdd")
     const endDate = format(date, "yyyyMMdd")
 
@@ -62,19 +61,19 @@ export function SuccessScreen({ formData, category, onStartOver }: SuccessScreen
                 <div className="text-muted-foreground">예약 날짜:</div>
                 <div className="font-medium">{format(formData.desired_date, "yyyy년 MM월 dd일")}</div>
 
+                <div className="text-muted-foreground">예약 시간:</div>
+                <div className="font-medium">{formData.selected_slot_id.start_time} - {formData.selected_slot_id.end_time}</div>
+
                 <div className="text-muted-foreground">인원:</div>
                 <div className="font-medium">{formData.people_count}</div>
-
-                <div className="text-muted-foreground">선택한 스타일:</div>
-                <div className="font-medium">{category.name}</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="space-y-2 text-muted-foreground">
-          <p>우리는 당신의 예약을 검토하고 24-48시간 이내에 당신에게 연락드립니다.</p>
-          <p>업데이트를 위해 전화를 확인해주세요.</p>
+          <p>신청 후 영업일 기준 2-3일 이내에 예약 연락을 드립니다. (카카오톡 메시지 확인)</p>
+          <p>예약 확정을 위해 상담 후 아래 계좌로 예약금 3만원을 입금해 주세요. </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">

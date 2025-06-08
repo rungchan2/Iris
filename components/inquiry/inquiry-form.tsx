@@ -8,7 +8,7 @@ import { CategoryTournament } from "@/components/inquiry/category-tournament"
 import { SuccessScreen } from "@/components/inquiry/success-screen"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-import type { InquiryFormValues, Category, MoodKeyword, SelectionHistoryStep } from "@/types/inquiry.types"
+import type { InquiryFormValues, Category, MoodKeyword, SelectionHistoryStep, Inquiry } from "@/types/inquiry.types"
 
 interface InquiryFormProps {
   rootCategories: Category[]
@@ -25,6 +25,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
   const [selectionHistory, setSelectionHistory] = useState<SelectionHistoryStep[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
+  const [newInquiry, setNewInquiry] = useState<Inquiry | null>(null)
 
   const supabase = createClient()
 
@@ -75,7 +76,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
         } as any)
         .select()
         .single()
-
+      setNewInquiry(newInquiry as any)
       if (error) throw error
 
       // If a slot was selected, mark it as booked
@@ -93,11 +94,11 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
 
       setStep("success")
       setIsDirty(false) // Reset dirty state after successful submission
-      window.scrollTo({ top: 0, behavior: "smooth" })
       toast.success("문의가 성공적으로 접수되었습니다!")
     } catch (error) {
       console.error("Error submitting inquiry:", error)
       toast.error("문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.")
+      setNewInquiry(null)
     } finally {
       setIsSubmitting(false)
     }
@@ -110,6 +111,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
     setSelectionPath([])
     setSelectionHistory([])
     setIsDirty(false)
+    setNewInquiry(null)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -163,7 +165,7 @@ export function InquiryForm({ rootCategories, allCategories, moodKeywords, avail
 
       {step === "success" && formData && selectedCategory && (
         <div className="min-h-[100dvh] flex items-center justify-center">
-          <SuccessScreen formData={formData} category={selectedCategory} onStartOver={handleStartOver} />
+          <SuccessScreen formData={newInquiry as Inquiry} category={selectedCategory} onStartOver={handleStartOver} />
         </div>
       )}
     </div>
