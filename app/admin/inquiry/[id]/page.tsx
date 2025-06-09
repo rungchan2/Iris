@@ -1,12 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft } from "lucide-react"
-import { InquiryDetails } from "@/components/admin/inquiry-details"
 import { Inquiry } from "@/types/inquiry.types"
-import { PhotoGallery } from "@/components/admin/photo-gallery"
-
+import { InquiryDetailClient } from "@/components/admin/inquiry-detail-client"
 
 export default async function InquiryDetailPage({
   params,
@@ -77,27 +72,9 @@ export default async function InquiryDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Link href="/admin">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold">문의 상세</h1>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <InquiryDetails inquiry={transformedInquiry as Inquiry} />
-        </div>
-        <div className="lg:col-span-2">
-          <PhotoGallery photos={photos} />
-        </div>
-      </div>
-    </div>
+    <InquiryDetailClient 
+      inquiry={transformedInquiry as Inquiry} 
+      photos={photos} 
+    />
   )
 }

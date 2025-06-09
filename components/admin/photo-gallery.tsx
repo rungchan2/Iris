@@ -6,18 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Download, X } from "lucide-react"
 import { AspectImage } from "../ui/aspect-image"
 import Image from "next/image"
+import { handleDownload, Photo } from "@/app/gallery/gallery-client"
 
-interface Photo {
-  id: string
-  filename: string
-  storage_url: string
-  thumbnail_url?: string
-  width?: number
-  height?: number
-  size_kb?: number
-}
 
-export function PhotoGallery({ photos }: { photos: Photo[] }) {
+export function PhotoGallery({ photos, isForExport = false }: { photos: Photo[], isForExport?: boolean }) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
 
   if (photos.length === 0) {
@@ -44,10 +36,12 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
             <span className="text-sm text-muted-foreground">
               {photos.length} {photos.length === 1 ? "사진" : "사진들"}
             </span>
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <Download className="h-4 w-4" />
-              Download All
-            </Button>
+            {!isForExport && (
+              <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={() => handleDownload(photos)}>
+                <Download className="h-4 w-4" />
+                Download All
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>

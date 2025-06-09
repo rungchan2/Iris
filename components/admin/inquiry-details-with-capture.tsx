@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { format } from "date-fns"
-import html2canvas from "html2canvas"
+import html2canvas from "html2canvas-pro"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

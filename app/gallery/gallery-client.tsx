@@ -15,6 +15,10 @@ export interface Photo {
   filename: string
   storage_url: string
   created_at: string
+  thumbnail_url?: string
+  width?: number
+  height?: number
+  size_kb?: number
   photo_categories?: {
     categories: {
       id: string
@@ -22,6 +26,29 @@ export interface Photo {
       path: string
     }
   }[]
+}
+export const handleDownload = async (photo: Photo | Photo[]) => {
+  if (Array.isArray(photo)) {
+    photo.forEach(async (p) => {
+      await handleDownload(p)
+    })
+    return
+  }
+  try {
+    const response = await fetch(photo.storage_url)
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = photo.filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    toast.success("사진이 다운로드되었습니다.")
+  } catch (error) {
+    toast.error("다운로드 중 오류가 발생했습니다.")
+  }
 }
 
 export function GalleryClient({ initialPhotos }: { initialPhotos: Photo[] }) {
@@ -81,23 +108,7 @@ export function GalleryClient({ initialPhotos }: { initialPhotos: Photo[] }) {
     }
   }
 
-  const handleDownload = async (photo: Photo) => {
-    try {
-      const response = await fetch(photo.storage_url)
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = photo.filename
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      toast.success("사진이 다운로드되었습니다.")
-    } catch (error) {
-      toast.error("다운로드 중 오류가 발생했습니다.")
-    }
-  }
+  
 
   return (
     <>

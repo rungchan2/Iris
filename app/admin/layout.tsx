@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { QueryProvider } from "@/components/query-provider";
 import { DynamicBreadcrumb } from "@/components/admin/dynamic-breadcrumb";
 import { Metadata } from "next";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "어드민 페이지 | Sunset Cinema",
@@ -46,6 +47,7 @@ export default async function AdminLayout({
 
   return (
     <QueryProvider>
+      <Toaster position="top-right" richColors />
       <SidebarProvider>
         <AppSidebar user={adminUser as any} />
         <SidebarInset>

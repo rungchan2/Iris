@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "로그인 | Sunset Cinema",
@@ -18,6 +19,8 @@ export default async function Page() {
     redirect("/admin");
   }
   return (
+    <>
+      <Toaster position="top-right" richColors />
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <Tabs defaultValue="account" className="w-[400px]">
@@ -34,5 +37,6 @@ export default async function Page() {
         </Tabs>
       </div>
     </div>
+    </>
   );
 }
