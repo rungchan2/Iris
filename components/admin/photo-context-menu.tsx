@@ -66,10 +66,10 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
 
       if (dbError) throw dbError
 
-      toast.success("Photo deleted successfully")
+      toast.success("사진 삭제 성공")
       onDelete?.()
     } catch (error) {
-      toast.error("Failed to delete photo")
+      toast.error("사진 삭제 실패")
       console.error(error)
     } finally {
       setDeleting(false)

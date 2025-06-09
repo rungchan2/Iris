@@ -14,8 +14,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sunset Cinema",
-  description: "Sunset Cinema",
+  title: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
+  description: "촬영이 처음인 사람도, 전문 배우도 찍고 가는 개인맞춤형 프로필 사진",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    images: "/og-image.jpg",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
+    description: "촬영이 처음인 사람도, 전문 배우도 찍고 가는 개인맞춤형 프로필 사진",
+    images: "/og-image.jpg",
+  },
 };
 
 export default function RootLayout({

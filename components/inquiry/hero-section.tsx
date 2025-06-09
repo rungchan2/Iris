@@ -30,10 +30,10 @@ export function HeroSection() {
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 z-10" />
+        <div className="absolute inset-0 bg-black/10 z-10" />
         <Image
-          src="/sunset.JPG"
-          alt="sunset.JPG"
+          src="/og-image.jpg"
+          alt="Sunset Cinema"
           className="w-full h-full object-cover"
           width={1920}
           height={1080}
@@ -51,12 +51,13 @@ export function HeroSection() {
           Sunset Cinema
         </motion.h1>
         <motion.p
+          style={{ fontWeight: "bold" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-xl text-white/90 mb-8"
         >
-          일상을 영화처럼
+          "일상을 영화처럼"
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

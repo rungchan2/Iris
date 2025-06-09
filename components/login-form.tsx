@@ -38,7 +38,7 @@ export function LoginForm({
     }
 
     if (data.user) {
-      router.push("/");
+      router.push("/admin");
     }
   };
 

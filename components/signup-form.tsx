@@ -11,14 +11,13 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signUpNewUser, getSession } from "@/lib/login"
+import { signUpNewUser } from "@/lib/login"
 import { validateInvitationCode } from "@/lib/actions/code"
 import { useForm } from "react-hook-form"
 import { createUser } from "@/lib/user"
 
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Toaster, toast } from 'sonner';
 
@@ -42,16 +41,6 @@ export function SignupForm({
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const password = watch("password");
-
-  useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await getSession();
-      if (data.session) {
-        router.push("/");
-      }
-    }
-    fetchSession();
-  }, [router]);
 
   const onSubmit = async (data: SignupFormData) => {
     const { email, password, name, code } = data;
