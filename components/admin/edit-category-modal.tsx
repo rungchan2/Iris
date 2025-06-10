@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -22,7 +23,14 @@ import type { Category } from "@/lib/hooks/use-categories"
 interface EditCategoryModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (id: string, updates: { name: string; parent_id: string | null }) => void
+  onSave: (id: string, updates: { 
+    name: string
+    parent_id: string | null
+    place_recommendation?: string
+    male_clothing_recommendation?: string
+    female_clothing_recommendation?: string
+    accessories_recommendation?: string
+  }) => void
   category: Category | null
   categories: Category[]
 }
@@ -36,18 +44,27 @@ export function EditCategoryModal({
 }: EditCategoryModalProps) {
   const [name, setName] = useState("")
   const [parentId, setParentId] = useState<string | null>(null)
+  const [maleClothingRecommendation, setMaleClothingRecommendation] = useState("")
+  const [femaleClothingRecommendation, setFemaleClothingRecommendation] = useState("")
+  const [accessoriesRecommendation, setAccessoriesRecommendation] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (category) {
       setName(category.name)
       setParentId(category.parent_id)
+      setMaleClothingRecommendation(category.male_clothing_recommendation || "")
+      setFemaleClothingRecommendation(category.female_clothing_recommendation || "")
+      setAccessoriesRecommendation(category.accessories_recommendation || "")
     }
   }, [category])
 
   const handleClose = () => {
     setName("")
     setParentId(null)
+    setMaleClothingRecommendation("")
+    setFemaleClothingRecommendation("")
+    setAccessoriesRecommendation("")
     setIsSubmitting(false)
     onClose()
   }
@@ -59,9 +76,12 @@ export function EditCategoryModal({
     setIsSubmitting(true)
 
     try {
-      await onSave(category.id, {
+      onSave(category.id, {
         name: name.trim(),
         parent_id: parentId,
+        male_clothing_recommendation: maleClothingRecommendation.trim() || undefined,
+        female_clothing_recommendation: femaleClothingRecommendation.trim() || undefined,
+        accessories_recommendation: accessoriesRecommendation.trim() || undefined,
       })
       handleClose()
     } catch (error) {
@@ -123,7 +143,7 @@ export function EditCategoryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>카테고리 수정</DialogTitle>
         </DialogHeader>
@@ -165,6 +185,40 @@ export function EditCategoryModal({
             <div className="text-xs text-muted-foreground">
               현재 깊이: {category.depth} → 새 깊이: {parentId ? (parentOptions.find(opt => opt.id === parentId)?.depth || 0) + 1 : 1}
             </div>
+          </div>
+
+
+          <div className="space-y-2">
+            <Label htmlFor="male-clothing">남자 의상 추천</Label>
+            <Textarea
+              id="male-clothing"
+              value={maleClothingRecommendation}
+              onChange={(e) => setMaleClothingRecommendation(e.target.value)}
+              placeholder="남성에게 추천하는 의상을 입력하세요"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="female-clothing">여자 의상 추천</Label>
+            <Textarea
+              id="female-clothing"
+              value={femaleClothingRecommendation}
+              onChange={(e) => setFemaleClothingRecommendation(e.target.value)}
+              placeholder="여성에게 추천하는 의상을 입력하세요"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="accessories">소품 추천</Label>
+            <Textarea
+              id="accessories"
+              value={accessoriesRecommendation}
+              onChange={(e) => setAccessoriesRecommendation(e.target.value)}
+              placeholder="촬영에 필요한 소품들을 입력하세요"
+              rows={3}
+            />
           </div>
 
           <div className="flex justify-end gap-2">

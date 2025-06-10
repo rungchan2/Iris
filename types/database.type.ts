@@ -135,40 +135,55 @@ export type Database = {
       }
       categories: {
         Row: {
+          accessories_recommendation: string | null
+          cloth_recommendation: string | null
           created_at: string | null
           depth: number
           display_order: number | null
+          female_clothing_recommendation: string | null
           id: string
           is_active: boolean | null
+          male_clothing_recommendation: string | null
           name: string
           parent_id: string | null
           path: string
+          place_recommendation: string | null
           representative_image_id: string | null
           representative_image_url: string | null
           updated_at: string | null
         }
         Insert: {
+          accessories_recommendation?: string | null
+          cloth_recommendation?: string | null
           created_at?: string | null
           depth: number
           display_order?: number | null
+          female_clothing_recommendation?: string | null
           id?: string
           is_active?: boolean | null
+          male_clothing_recommendation?: string | null
           name: string
           parent_id?: string | null
           path: string
+          place_recommendation?: string | null
           representative_image_id?: string | null
           representative_image_url?: string | null
           updated_at?: string | null
         }
         Update: {
+          accessories_recommendation?: string | null
+          cloth_recommendation?: string | null
           created_at?: string | null
           depth?: number
           display_order?: number | null
+          female_clothing_recommendation?: string | null
           id?: string
           is_active?: boolean | null
+          male_clothing_recommendation?: string | null
           name?: string
           parent_id?: string | null
           path?: string
+          place_recommendation?: string | null
           representative_image_id?: string | null
           representative_image_url?: string | null
           updated_at?: string | null
@@ -205,6 +220,7 @@ export type Database = {
           name: string
           people_count: number | null
           phone: string
+          place_recommendation: string | null
           relationship: string | null
           selected_category_id: string | null
           selected_slot_id: string | null
@@ -228,6 +244,7 @@ export type Database = {
           name: string
           people_count?: number | null
           phone: string
+          place_recommendation?: string | null
           relationship?: string | null
           selected_category_id?: string | null
           selected_slot_id?: string | null
@@ -251,6 +268,7 @@ export type Database = {
           name?: string
           people_count?: number | null
           phone?: string
+          place_recommendation?: string | null
           relationship?: string | null
           selected_category_id?: string | null
           selected_slot_id?: string | null

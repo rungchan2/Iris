@@ -14,6 +14,10 @@ export interface Category {
   representative_image_id: string | null
   created_at: string | null
   updated_at: string | null
+  place_recommendation: string | null
+  male_clothing_recommendation: string | null
+  female_clothing_recommendation: string | null
+  accessories_recommendation: string | null
   representative_image?: {
     id: string
     storage_url: string
@@ -133,7 +137,14 @@ export function useUpdateCategory() {
       updates 
     }: { 
       id: string
-      updates: { name: string; parent_id: string | null } 
+      updates: { 
+        name: string
+        parent_id: string | null
+        place_recommendation?: string
+        male_clothing_recommendation?: string
+        female_clothing_recommendation?: string
+        accessories_recommendation?: string
+      } 
     }) => {
       const currentCategories = queryClient.getQueryData<Category[]>(categoryKeys.lists()) || []
       const category = currentCategories.find((c) => c.id === id)
@@ -168,13 +179,29 @@ export function useUpdateCategory() {
       }
 
       // Update the category
-      const { error } = await supabase.from("categories").update({
+      const updateData: any = {
         name: updates.name,
         parent_id: updates.parent_id,
         depth: newDepth,
         path: newPath,
         display_order: newDisplayOrder,
-      }).eq("id", id)
+      }
+
+      // Add recommendation fields if provided
+      if (updates.place_recommendation !== undefined) {
+        updateData.place_recommendation = updates.place_recommendation
+      }
+      if (updates.male_clothing_recommendation !== undefined) {
+        updateData.male_clothing_recommendation = updates.male_clothing_recommendation
+      }
+      if (updates.female_clothing_recommendation !== undefined) {
+        updateData.female_clothing_recommendation = updates.female_clothing_recommendation
+      }
+      if (updates.accessories_recommendation !== undefined) {
+        updateData.accessories_recommendation = updates.accessories_recommendation
+      }
+
+      const { error } = await supabase.from("categories").update(updateData).eq("id", id)
 
       if (error) throw error
 

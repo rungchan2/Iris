@@ -79,12 +79,16 @@ export interface Inquiry {
   created_at: string
   special_request?: string
   admin_note?: string
+  place_recommendation?: string
   difficulty_note?: string
   categories?: {
     id: string
     name: string
     path: string
     representative_image_url?: string
+    male_clothing_recommendation?: string
+    female_clothing_recommendation?: string
+    accessories_recommendation?: string
   }
   current_mood_keywords: {
     id: string
@@ -99,5 +103,13 @@ export interface Inquiry {
     date: string
     start_time: string
     end_time: string
+  }
+  selection_history?: {
+    steps: {
+      level: number
+      selected_id: string
+      options: string[]
+    }[]
+    completed_at: string
   }
 }

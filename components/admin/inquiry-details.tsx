@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -29,12 +29,28 @@ const getGenderLabel = (gender: string) => {
   return genderMap[gender as keyof typeof genderMap] || gender;
 };
 
-export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
+export function InquiryDetails({
+  inquiry,
+  onUpdate,
+}: {
+  inquiry: Inquiry;
+  onUpdate?: (updates: Partial<Inquiry>) => void;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [status, setStatus] = useState(inquiry.status);
   const [adminNotes, setAdminNotes] = useState(inquiry.admin_note || "");
+  const [placeRecommendation, setPlaceRecommendation] = useState(
+    inquiry.place_recommendation || ""
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [isPlaceRecommendationSaving, setIsPlaceRecommendationSaving] =
+    useState(false);
+  const [categoryRecommendations, setCategoryRecommendations] = useState<{
+    male_clothing_recommendation?: string | null;
+    female_clothing_recommendation?: string | null;
+    accessories_recommendation?: string | null;
+  }>({});
 
   const handleStatusChange = async (
     newStatus: "new" | "contacted" | "completed"
@@ -49,6 +65,9 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
 
     if (error) {
       console.error("Error updating status:", error);
+    } else {
+      // 상위 컴포넌트에 업데이트 알림
+      onUpdate?.({ status: newStatus });
     }
     setIsSaving(false);
   };
@@ -62,9 +81,29 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
 
     if (error) {
       toast.error("메모 저장 실패");
+    } else {
+      toast.success("메모 저장 성공");
+      // 상위 컴포넌트에 업데이트 알림
+      onUpdate?.({ admin_note: adminNotes });
     }
-    toast.success("메모 저장 성공");
     setIsSaving(false);
+  };
+
+  const savePlaceRecommendation = async () => {
+    setIsPlaceRecommendationSaving(true);
+    const { error } = await supabase
+      .from("inquiries")
+      .update({ place_recommendation: placeRecommendation } as any)
+      .eq("id", inquiry.id);
+
+    if (error) {
+      toast.error("장소 추천 저장 실패");
+    } else {
+      toast.success("장소 추천 저장 성공");
+      // 상위 컴포넌트에 업데이트 알림
+      onUpdate?.({ place_recommendation: placeRecommendation });
+    }
+    setIsPlaceRecommendationSaving(false);
   };
 
   const handleDeleteInquiry = async () => {
@@ -79,6 +118,32 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
       router.push("/admin");
     }
   };
+
+  // 카테고리 추천 정보 로드
+  useEffect(() => {
+    const fetchCategoryRecommendations = async () => {
+      if (!inquiry.selection_path || inquiry.selection_path.length === 0)
+        return;
+
+      const lastCategoryId = inquiry.selected_category_id || "";
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select(
+          "male_clothing_recommendation, female_clothing_recommendation, accessories_recommendation"
+        )
+        .eq("id", lastCategoryId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching category recommendations:", error);
+      } else {
+        setCategoryRecommendations(data);
+      }
+    };
+
+    fetchCategoryRecommendations();
+  }, [inquiry.selected_category_id, supabase]);
 
   return (
     <>
@@ -192,16 +257,48 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
               </div>
             )}
 
+            {/* 의상/악세서리 추천 - 성별에 따라 조건부 렌더링 */}
+            {inquiry.gender &&
+              inquiry.gender !== "other" &&
+              categoryRecommendations && (
+                <>
+                  {/* 의상 추천 */}
+                  {((inquiry.gender === "male" &&
+                    categoryRecommendations.male_clothing_recommendation) ||
+                    (inquiry.gender === "female" &&
+                      categoryRecommendations.female_clothing_recommendation)) && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {inquiry.gender === "male"
+                          ? "남성 의상 추천"
+                          : "여성 의상 추천"}
+                      </p>
+                        <p className="text-lg">
+                          {inquiry.gender === "male"
+                            ? categoryRecommendations.male_clothing_recommendation
+                            : categoryRecommendations.female_clothing_recommendation}
+                        </p>
+                    </div>
+                  )}
+
+                  {/* 악세서리 추천 */}
+                  {categoryRecommendations.accessories_recommendation && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        악세서리 추천
+                      </p>
+                        <p className="text-lg">
+                          {categoryRecommendations.accessories_recommendation}
+                        </p>
+                    </div>
+                  )}
+                </>
+              )}
+
             {/* Mood Keywords */}
             {(inquiry.current_mood_keywords.length > 0 ||
               inquiry.desired_mood_keywords.length > 0) && (
               <div className="pt-4 border-t">
-                <div className="flex items-center gap-2 mb-4">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    분위기 키워드
-                  </p>
-                </div>
-
                 <div className="space-y-3">
                   {inquiry.current_mood_keywords.length > 0 && (
                     <div>
@@ -291,6 +388,27 @@ export function InquiryDetails({ inquiry }: { inquiry: Inquiry }) {
                 {isSaving ? "저장중..." : "메모 저장"}
               </Button>
             </div>
+
+            <div className="space-y-2 pt-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                장소 추천
+              </p>
+              <Textarea
+                value={placeRecommendation}
+                onChange={(e) => setPlaceRecommendation(e.target.value)}
+                placeholder="추천 촬영 장소를 입력해주세요."
+                rows={4}
+              />
+              <Button
+                onClick={savePlaceRecommendation}
+                disabled={isPlaceRecommendationSaving}
+                className="w-full"
+              >
+                {isPlaceRecommendationSaving ? "저장중..." : "장소 추천 저장"}
+              </Button>
+            </div>
+
+            
             <Button
               onClick={handleDeleteInquiry}
               disabled={isSaving}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -14,6 +14,7 @@ import { Inquiry } from "@/types/inquiry.types"
 import { Photo } from "@/app/gallery/gallery-client"
 import { StatusBadge } from "./status-badge"
 import { toast } from "sonner"
+import { createClient } from "@/lib/supabase/client"
 
 interface InquiryExportPopupProps {
   inquiry: Inquiry
@@ -39,6 +40,11 @@ const getGenderLabel = (gender: string) => {
 
 export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: InquiryExportPopupProps) {
   const captureRef = useRef<HTMLDivElement>(null)
+  const [categoryRecommendations, setCategoryRecommendations] = useState<{
+    male_clothing_recommendation?: string | null;
+    female_clothing_recommendation?: string | null;
+    accessories_recommendation?: string | null;
+  }>({})
   
   // 내보낼 수 있는 필드들 정의
   const fieldOptions: FieldOption[] = [
@@ -54,6 +60,10 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
     { key: "special_request", label: "특별 요청", section: "notes" },
     { key: "difficulty_note", label: "어려운 점", section: "notes" },
     { key: "admin_note", label: "작가 메모", section: "notes" },
+    { key: "place_recommendation", label: "장소 추천", section: "notes" },
+    { key: "male_clothing_recommendation", label: "남성 의상 추천", section: "notes" },
+    { key: "female_clothing_recommendation", label: "여성 의상 추천", section: "notes" },
+    { key: "accessories_recommendation", label: "악세서리 추천", section: "notes" },
     { key: "status", label: "상태", section: "basic" },
     { key: "created_at", label: "문의 날짜", section: "basic" },
   ]
@@ -64,16 +74,56 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
   const [includePhotos, setIncludePhotos] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
 
+  // 카테고리 추천 정보 로드
+  useEffect(() => {
+    const fetchCategoryRecommendations = async () => {
+      if (!inquiry.selected_category_id) return;
+      
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("categories")
+        .select("male_clothing_recommendation, female_clothing_recommendation, accessories_recommendation")
+        .eq("id", inquiry.selected_category_id)
+        .single();
+      
+      if (error) {
+        console.dir(error, { depth: null });
+      } else {
+        console.log("Category recommendations loaded:", data);
+        setCategoryRecommendations(data);
+      }
+    };
+
+    if (isOpen) {
+      fetchCategoryRecommendations();
+    }
+  }, [isOpen, inquiry.selected_category_id])
+
   const handleFieldToggle = (fieldKey: string) => {
-    setSelectedFields(prev => 
-      prev.includes(fieldKey) 
+    console.log("Toggling field:", fieldKey);
+    setSelectedFields(prev => {
+      const newFields = prev.includes(fieldKey) 
         ? prev.filter(f => f !== fieldKey)
-        : [...prev, fieldKey]
-    )
+        : [...prev, fieldKey];
+      console.log("New selected fields:", newFields);
+      return newFields;
+    })
   }
 
   const handleSelectAll = (section: "basic" | "details" | "notes") => {
-    const sectionFields = fieldOptions.filter(f => f.section === section).map(f => f.key)
+    let sectionFields = fieldOptions.filter(f => f.section === section).map(f => f.key)
+    
+    // 성별에 따라 해당하는 의상 추천만 포함
+    if (section === "notes") {  
+      if (inquiry.gender === "male") {
+        sectionFields = sectionFields.filter(f => f !== "female_clothing_recommendation")
+      } else if (inquiry.gender === "female") {
+        sectionFields = sectionFields.filter(f => f !== "male_clothing_recommendation")
+      } else if (inquiry.gender === "other" || !inquiry.gender) {
+        sectionFields = sectionFields.filter(f => f !== "male_clothing_recommendation" && f !== "female_clothing_recommendation" && f !== "accessories_recommendation")
+      }
+    }
+    
     const allSelected = sectionFields.every(field => selectedFields.includes(field))
     
     if (allSelected) {
@@ -232,6 +282,17 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
         return inquiry.difficulty_note ? <p className="text-lg">{inquiry.difficulty_note}</p> : null
       case "admin_note":
         return inquiry.admin_note ? <p className="text-lg">{inquiry.admin_note}</p> : null
+      case "place_recommendation":
+        return inquiry.place_recommendation ? <p className="text-lg">{inquiry.place_recommendation}</p> : null
+      case "male_clothing_recommendation":
+        console.log("Rendering male clothing:", categoryRecommendations.male_clothing_recommendation);
+        return categoryRecommendations.male_clothing_recommendation ? <p className="text-lg">{categoryRecommendations.male_clothing_recommendation}</p> : null
+      case "female_clothing_recommendation":
+        console.log("Rendering female clothing:", categoryRecommendations.female_clothing_recommendation);
+        return categoryRecommendations.female_clothing_recommendation ? <p className="text-lg">{categoryRecommendations.female_clothing_recommendation}</p> : null
+      case "accessories_recommendation":
+        console.log("Rendering accessories:", categoryRecommendations.accessories_recommendation);
+        return categoryRecommendations.accessories_recommendation ? <p className="text-lg">{categoryRecommendations.accessories_recommendation}</p> : null
       case "status":
         return <StatusBadge status={inquiry.status} />
       case "created_at":
@@ -284,7 +345,7 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
                     </div>
                   ))}
                 </div>
-              </div>
+              </div>  
 
               {/* 상세 정보 */}
               <div>
@@ -327,7 +388,19 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {fieldOptions.filter(f => f.section === "notes").map((field) => (
+                  {fieldOptions.filter(f => f.section === "notes").filter(field => {
+                    // 성별에 따라 해당하는 의상 추천만 표시
+                    if (field.key === "male_clothing_recommendation") {
+                      return inquiry.gender === "male"
+                    }
+                    if (field.key === "female_clothing_recommendation") {
+                      return inquiry.gender === "female"
+                    }
+                    if (field.key === "accessories_recommendation") {
+                      return inquiry.gender !== "other" && inquiry.gender
+                    }
+                    return true
+                  }).map((field) => (
                     <div key={field.key} className="flex items-center space-x-2">
                       <Checkbox
                         id={field.key}
@@ -375,6 +448,15 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
                 <div className="grid gap-4">
                   {selectedFields.map((fieldKey) => {
                     const field = fieldOptions.find(f => f.key === fieldKey)
+                    
+                    // 카테고리 추천 필드들은 데이터가 로드된 후에만 렌더링
+                    if ((fieldKey === "male_clothing_recommendation" || 
+                         fieldKey === "female_clothing_recommendation" || 
+                         fieldKey === "accessories_recommendation") && 
+                        !categoryRecommendations) {
+                      return null
+                    }
+                    
                     const content = renderFieldContent(fieldKey)
                     
                     if (!field || !content) return null

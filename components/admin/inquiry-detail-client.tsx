@@ -15,8 +15,21 @@ interface InquiryDetailClientProps {
   photos: Photo[]
 }
 
-export function InquiryDetailClient({ inquiry, photos }: InquiryDetailClientProps) {
+export function InquiryDetailClient({ inquiry: initialInquiry, photos }: InquiryDetailClientProps) {
   const [isExportPopupOpen, setIsExportPopupOpen] = useState(false)
+  const [inquiry, setInquiry] = useState<Inquiry>(initialInquiry)
+  const [popupKey, setPopupKey] = useState(0)
+
+  // inquiry 업데이트 함수
+  const handleInquiryUpdate = (updates: Partial<Inquiry>) => {
+    setInquiry(prev => ({ ...prev, ...updates }))
+  }
+
+  // 팝업 열기 (새로운 key로 리렌더링)
+  const handleOpenPopup = () => {
+    setPopupKey(prev => prev + 1)
+    setIsExportPopupOpen(true)
+  }
 
   return (
     <div className="space-y-6">
@@ -30,7 +43,7 @@ export function InquiryDetailClient({ inquiry, photos }: InquiryDetailClientProp
           <h1 className="text-2xl font-bold">문의 상세</h1>
         </div>
         <Button 
-          onClick={() => setIsExportPopupOpen(true)}
+          onClick={handleOpenPopup}
           className="flex items-center gap-2"
         >
           <Download className="h-4 w-4" />
@@ -40,7 +53,10 @@ export function InquiryDetailClient({ inquiry, photos }: InquiryDetailClientProp
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <InquiryDetails inquiry={inquiry} />
+          <InquiryDetails 
+            inquiry={inquiry} 
+            onUpdate={handleInquiryUpdate}
+          />
         </div>
         <div className="lg:col-span-2">
           <PhotoGallery photos={photos} />
@@ -48,6 +64,7 @@ export function InquiryDetailClient({ inquiry, photos }: InquiryDetailClientProp
       </div>
 
       <InquiryExportPopup
+        key={popupKey}
         inquiry={inquiry}
         photos={photos}
         isOpen={isExportPopupOpen}

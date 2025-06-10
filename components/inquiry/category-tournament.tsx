@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Category, SelectionHistoryStep } from "@/types/inquiry.types"
@@ -37,6 +36,7 @@ export function CategoryTournament({
   const [selectedPath, setSelectedPath] = useState<Category[]>([])
   const [selectionHistory, setSelectionHistory] = useState<SelectionHistoryStep[]>([])
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({})
+  const [isProcessing, setIsProcessing] = useState(false) // 중복 처리 방지
 
   // Preload images for current categories
   useEffect(() => {
@@ -52,37 +52,80 @@ export function CategoryTournament({
   }, [currentCategories, loadedImages])
 
   const handleSelectCategory = (category: Category) => {
-    // Record this selection in history
-    setSelectionHistory((prev) => [
-      ...prev,
-      {
-        level: currentLevel,
-        selected_id: category.id,
-        options: currentCategories.map((c) => c.id),
-      },
-    ])
+    // 중복 처리 방지
+    if (isProcessing || isSubmitting) {
+      return
+    }
 
-    // Add to path
-    const newPath = [...selectedPath, category]
-    setSelectedPath(newPath)
+    // 이미 선택된 카테고리인지 확인 (순환 참조 방지)
+    if (selectedPath.some(selected => selected.id === category.id)) {
+      console.warn('Already selected category:', category.name)
+      return
+    }
 
-    // Find children categories
-    const children = allCategories.filter((c) => c.parent_id === category.id)
-
-    if (children.length > 0) {
-      // Go to next level
-      setCurrentCategories(children)
-      setCurrentLevel(currentLevel + 1)
-    } else {
-      // This is a leaf category, complete the selection
-      const categoryNames = newPath.map((c) => c.name)
-      const categoryIds = newPath.map((c) => c.id)
+    // 최대 depth 제한 (10단계까지만)
+    if (currentLevel > 10) {
+      console.warn('Maximum depth reached')
+      // 강제로 완료 처리
+      const categoryNames = [...selectedPath, category].map((c) => c.name)
       onComplete(category, categoryNames, selectionHistory)
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      // Record this selection in history
+      const newHistory = [
+        ...selectionHistory,
+        {
+          level: currentLevel,
+          selected_id: category.id,
+          options: currentCategories.map((c) => c.id),
+        },
+      ]
+      setSelectionHistory(newHistory)
+
+      // Add to path
+      const newPath = [...selectedPath, category]
+      setSelectedPath(newPath)
+
+      // Find children categories (이미 선택된 카테고리들 제외)
+      const selectedIds = new Set(newPath.map(c => c.id))
+      const children = allCategories.filter((c) => 
+        c.parent_id === category.id && !selectedIds.has(c.id)
+      )
+
+      console.log(`Level ${currentLevel}: Selected "${category.name}", Children found: ${children.length}`)
+
+      if (children.length > 0) {
+        // Go to next level
+        setCurrentCategories(children)
+        setCurrentLevel(currentLevel + 1)
+      } else {
+        // This is a leaf category, complete the selection
+        const categoryNames = newPath.map((c) => c.name)
+        console.log('Tournament completed with path:', categoryNames)
+        onComplete(category, categoryNames, newHistory)
+      }
+    } catch (error) {
+      console.error('Error in handleSelectCategory:', error)
+    } finally {
+      // 짧은 딜레이 후 처리 상태 해제 (터치 이벤트 중복 방지)
+      setTimeout(() => {
+        setIsProcessing(false)
+      }, 300)
     }
   }
 
   const handleGoBack = () => {
-    if (selectedPath.length > 0) {
+    if (isProcessing || isSubmitting || selectedPath.length === 0) {
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
       // Remove the last selection from history
       setSelectionHistory((prev) => prev.slice(0, -1))
 
@@ -96,12 +139,23 @@ export function CategoryTournament({
         setCurrentCategories(rootCategories)
         setCurrentLevel(1)
       } else {
-        // Get parent's children
+        // Get parent's children (이미 선택된 카테고리들 제외)
         const parentId = newPath[newPath.length - 1].id
-        const siblings = allCategories.filter((c) => c.parent_id === parentId)
+        const selectedIds = new Set(newPath.map(c => c.id))
+        const siblings = allCategories.filter((c) => 
+          c.parent_id === parentId && !selectedIds.has(c.id)
+        )
         setCurrentCategories(siblings)
         setCurrentLevel(newPath.length + 1)
       }
+
+      console.log('Went back to level:', newPath.length + 1)
+    } catch (error) {
+      console.error('Error in handleGoBack:', error)
+    } finally {
+      setTimeout(() => {
+        setIsProcessing(false)
+      }, 100)
     }
   }
 
@@ -139,7 +193,13 @@ export function CategoryTournament({
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {selectedPath.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={handleGoBack} disabled={isSubmitting} className="mr-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleGoBack} 
+                    disabled={isSubmitting || isProcessing} 
+                    className="mr-2"
+                  >
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Back
                   </Button>
@@ -170,8 +230,10 @@ export function CategoryTournament({
               >
                 {currentCategories.map((category) => (
                   <motion.div key={category.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <div className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl rounded-lg shadow-lg border shadow-accent/80 border-gray-300"
-                      onClick={() => !isSubmitting && handleSelectCategory(category)}
+                    <div className={`group cursor-pointer overflow-hidden transition-all hover:shadow-xl rounded-lg shadow-lg border shadow-accent/80 border-gray-300 ${
+                        isProcessing || isSubmitting ? 'pointer-events-none opacity-75' : ''
+                      }`}
+                      onClick={() => !isSubmitting && !isProcessing && handleSelectCategory(category)}
                     >
                       <AspectRatio ratio={16 / 9}>
                         {category.representative_image_url ? (

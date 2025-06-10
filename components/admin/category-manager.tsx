@@ -75,7 +75,14 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
     setIsAddModalOpen(false)
   }
 
-  const handleEditCategory = async (id: string, updates: { name: string; parent_id: string | null }) => {
+  const handleEditCategory = async (id: string, updates: { 
+    name: string
+    parent_id: string | null
+    place_recommendation?: string
+    male_clothing_recommendation?: string
+    female_clothing_recommendation?: string
+    accessories_recommendation?: string
+  }) => {
     await updateCategoryMutation.mutateAsync({ id, updates })
     setIsEditModalOpen(false)
     setSelectedCategoryForEdit(null)
@@ -153,11 +160,11 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   }
 
   if (!mounted) {
-    return <div className="animate-pulse">Loading categories...</div>
+    return <div className="animate-pulse">Loading...</div>
   }
 
   if (isLoading) {
-    return <div className="animate-pulse">Loading categories...</div>
+    return <div className="animate-pulse">Loading...</div>
   }
 
   // Helper to flatten categories for DnD sorting
