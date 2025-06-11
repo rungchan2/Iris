@@ -15,6 +15,13 @@ import type {
   SelectionHistoryStep,
   Inquiry,
 } from "@/types/inquiry.types";
+import { sendEmail } from "@/lib/send-email";
+import { getSlot } from "@/lib/available-slots";
+
+const EMAIL_TO = [
+  "chajimmy1214@gmail.com",
+  "mingoyoung809@gmail.com"
+]
 
 interface InquiryFormProps {
   rootCategories: Category[];
@@ -109,11 +116,15 @@ export function InquiryForm({
             .select()
             .single();
 
-          if (error) {
+          const { data: getSlotData, error: slotError } = await getSlot(formData.selected_slot_id || "");
+
+
+            
+          if (error || slotError) {
             insertError = error;
             console.log(`Insert attempt ${retryCount + 1} failed:`, error);
 
-            if (error.code === "42501") {
+            if (error && error.code === "42501") {
               // RLS 오류의 경우 잠시 대기 후 재시도
               await new Promise((resolve) =>
                 setTimeout(resolve, 1000 * (retryCount + 1))
@@ -124,6 +135,231 @@ export function InquiryForm({
               throw error;
             }
           }
+
+          const emailBody = `
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>새로운 촬영 문의</title>
+              <style>
+                body {
+                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                  line-height: 1.6;
+                  color: #333;
+                  max-width: 600px;
+                  margin: 0 auto;
+                  padding: 20px;
+                  background-color: #f8f9fa;
+                }
+                .container {
+                  background-color: white;
+                  border-radius: 12px;
+                  padding: 30px;
+                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                  text-align: center;
+                  border-bottom: 3px solid #e74c3c;
+                  padding-bottom: 20px;
+                  margin-bottom: 30px;
+                }
+                .header h1 {
+                  color: #2c3e50;
+                  margin: 0;
+                  font-size: 28px;
+                  font-weight: 600;
+                }
+                .header p {
+                  color: #7f8c8d;
+                  margin: 5px 0 0 0;
+                  font-size: 16px;
+                }
+                .section {
+                  margin-bottom: 25px;
+                  padding: 20px;
+                  background-color: #f8f9fa;
+                  border-radius: 8px;
+                  border-left: 4px solid #3498db;
+                }
+                .section h2 {
+                  color: #2c3e50;
+                  margin: 0 0 15px 0;
+                  font-size: 20px;
+                  font-weight: 600;
+                }
+                .info-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 15px;
+                  margin-bottom: 15px;
+                }
+                .info-item {
+                  background-color: white;
+                  padding: 12px;
+                  border-radius: 6px;
+                  border: 1px solid #e9ecef;
+                }
+                .info-label {
+                  font-weight: 600;
+                  color: #495057;
+                  font-size: 14px;
+                  margin-bottom: 4px;
+                }
+                .info-value {
+                  color: #2c3e50;
+                  font-size: 16px;
+                }
+                .full-width {
+                  grid-column: 1 / -1;
+                }
+                .mood-keywords {
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                  margin-top: 8px;
+                }
+                .keyword-tag {
+                  background-color: #e3f2fd;
+                  color: #1976d2;
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  font-size: 14px;
+                  font-weight: 500;
+                }
+                .category-path {
+                  background-color: #fff3cd;
+                  border: 1px solid #ffeaa7;
+                  padding: 12px;
+                  border-radius: 6px;
+                  font-weight: 500;
+                  color: #856404;
+                }
+                .category-path .arrow {
+                  color: #6c757d;
+                  margin: 0 8px;
+                }
+                .status-badge {
+                  display: inline-block;
+                  background-color: #d4edda;
+                  color: #155724;
+                  padding: 8px 16px;
+                  border-radius: 20px;
+                  font-weight: 600;
+                  font-size: 14px;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 30px;
+                  padding-top: 20px;
+                  border-top: 1px solid #dee2e6;
+                  color: #6c757d;
+                  font-size: 14px;
+                }
+                @media (max-width: 480px) {
+                  .info-grid {
+                    grid-template-columns: 1fr;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>📸 새로운 촬영 문의</h1>
+                  <p>새로운 문의가 접수되었습니다</p>
+                </div>
+
+                <div class="section">
+                  <h2>👤 기본 정보</h2>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <div class="info-label">이름</div>
+                      <div class="info-value">${formData.name}</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">전화번호</div>
+                      <div class="info-value">${formData.phone}</div>
+                    </div>
+                    ${formData.instagram_id ? `
+                    <div class="info-item">
+                      <div class="info-label">인스타그램</div>
+                      <div class="info-value">@${formData.instagram_id}</div>
+                    </div>` : ''}
+                    <div class="info-item">
+                      <div class="info-label">성별</div>
+                      <div class="info-value">${formData.gender === 'male' ? '남성' : formData.gender === 'female' ? '여성' : '기타'}</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="info-label">인원수</div>
+                      <div class="info-value">${formData.people_count}명</div>
+                    </div>
+                    ${formData.relationship ? `
+                    <div class="info-item">
+                      <div class="info-label">관계</div>
+                      <div class="info-value">${formData.relationship}</div>
+                    </div>` : ''}
+                  </div>
+                </div>
+
+                <div class="section">
+                  <h2>📅 예약 정보</h2>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <div class="info-label">희망 날짜</div>
+                      <div class="info-value">${formData.desired_date.toLocaleDateString('ko-KR')}</div>
+                    </div>
+                    ${formData.selected_slot_id ? `
+                    <div class="info-item">
+                      <div class="info-label">선택한 시간대</div>
+                      <div class="info-value">${getSlotData?.start_time} - ${getSlotData?.end_time}</div>
+                    </div>` : ''}
+                  </div>
+                </div>
+
+                <div class="section">
+                  <h2>🎨 선택한 카테고리</h2>
+                  <div class="category-path">
+                    ${path.map(item => item).join(' <span class="arrow">▶</span> ')}
+                  </div>
+                </div>
+
+                ${formData.special_request || formData.difficulty_note ? `
+                <div class="section">
+                  <h2>📝 추가 정보</h2>
+                  ${formData.special_request ? `
+                  <div class="info-item full-width">
+                    <div class="info-label">특별 요청사항</div>
+                    <div class="info-value">${formData.special_request}</div>
+                  </div>` : ''}
+                  ${formData.difficulty_note ? `
+                  <div class="info-item full-width" style="margin-top: 15px;">
+                    <div class="info-label">촬영 시 어려운 점</div>
+                    <div class="info-value">${formData.difficulty_note}</div>
+                  </div>` : ''}
+                </div>` : ''}
+
+                <div class="section">
+                  <h2>📊 문의 상태</h2>
+                  <div class="info-item">
+                    <div class="info-label">상태</div>
+                    <div class="info-value">
+                      <span class="status-badge">신규 문의</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="footer">
+                  <p>이 문의는 ${new Date().toLocaleString('ko-KR')}에 접수되었습니다.</p>
+                  <p>빠른 시일 내에 연락드리겠습니다. 감사합니다! 🎉</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          sendEmail(EMAIL_TO, "[sunset-cinema] 새로운 문의가 접수되었습니다.", emailBody);
 
           // 추가 데이터 조회하여 완전한 Inquiry 객체 구성
           let slotData = null;
@@ -163,20 +399,7 @@ export function InquiryForm({
 
       setNewInquiry(insertResult);
 
-      // If a slot was selected, mark it as booked
-      if (formData.selected_slot_id) {
-        const { error: slotError } = await supabase
-          .from("available_slots")
-          .update({ is_available: false })
-          .eq("id", formData.selected_slot_id);
-
-        if (slotError) {
-          console.error("Error booking slot:", slotError);
-          toast.error(
-            "슬롯 예약 중 오류가 발생했지만 문의는 정상적으로 접수되었습니다."
-          );
-        }
-      }
+      // Note: 슬롯 예약은 데이터베이스 트리거에서 자동으로 처리됩니다
 
       setStep("success");
       setIsDirty(false); // Reset dirty state after successful submission
@@ -195,10 +418,9 @@ export function InquiryForm({
           "알 수 없는 오류가 발생하였습니다. 페이지를 새로고침합니다."
         );
 
-        // 3초 후 강제 리프레시
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 3000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       } else {
         toast.error("문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
