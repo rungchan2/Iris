@@ -15,16 +15,6 @@ interface CategoryTournamentProps {
   isSubmitting: boolean
 }
 
-// Add this function at the top of the component, before the useEffect
-const getImageUrl = (category: Category) => {
-  if (category.representative_image_url) {
-    return category.representative_image_url
-  }
-  // Use category ID to get consistent random image
-  const seed = category.id.substring(0, 8)
-  return `https://picsum.photos/seed/${seed}/800/600`
-}
-
 export function CategoryTournament({
   rootCategories,
   allCategories,
@@ -244,7 +234,7 @@ export function CategoryTournament({
                               </div>
                             )}
                             <img
-                              src={getImageUrl(category) || "/placeholder.svg"}
+                              src={category.representative_image_url || category.representative_image?.storage_url || "/placeholder.svg"}
                               alt={category.name}
                               className={`object-cover w-full h-full transition-transform group-hover:scale-105 ${
                                 loadedImages[category.id] ? "opacity-100" : "opacity-0"

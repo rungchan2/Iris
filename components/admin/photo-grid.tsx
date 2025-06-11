@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, ImageIcon } from "lucide-react"
 import { PhotoContextMenu } from "@/components/admin/photo-context-menu"
+import Image from "next/image"
 
 interface Photo {
   id: string
@@ -101,11 +102,12 @@ export function PhotoGrid({
 
               {/* Image - 150x150 */}
               <div className="w-[150px] h-[150px] overflow-hidden rounded-lg bg-muted">
-                <img
+                <Image
+                  width={150}
+                  height={150}
                   src={photo.thumbnail_url || photo.storage_url}
                   alt={photo.filename}
                   className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                  loading="lazy"
                 />
               </div>
 

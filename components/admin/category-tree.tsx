@@ -1,7 +1,7 @@
 "use client"
 
 import { RecursiveCategoryNode } from "@/components/admin/recursive-category-node"
-import type { Category } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface CategoryTreeProps {
   categories: Category[]

@@ -2,11 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface CategoryNodeStaticProps {
   category: Category

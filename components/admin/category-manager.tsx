@@ -27,8 +27,8 @@ import {
   useToggleCategoryStatus,
   useUpdateCategoryOrder,
   useUpdateRepresentativeImage,
-  type Category,
 } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface CategoryManagerProps {
   initialCategories: Category[]
@@ -89,7 +89,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
   }
 
   const handleDeleteCategory = async (id: string) => {
-    if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
+    if (confirm("정말로 삭제 하시겠습니까? 삭제 후 복구가 불가능합니다.")) {
       await deleteCategoryMutation.mutateAsync(id)
     }
   }
@@ -141,6 +141,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       await updateImageMutation.mutateAsync({
         categoryId: selectedCategoryForImage,
         imageId,
+        imageUrl,
       })
       setIsImageModalOpen(false)
       setSelectedCategoryForImage(null)

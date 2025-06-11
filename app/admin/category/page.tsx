@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { CategoryManager } from "@/components/admin/category-manager"
-import { Category } from "@/types/inquiry.types"
 
 export default async function CategoryPage() {
   const supabase = await createClient()

@@ -8,9 +8,10 @@ import { useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Category } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface RecursiveCategoryNodeProps {
   category: Category
@@ -35,6 +36,8 @@ export function RecursiveCategoryNode({
   onToggleStatus,
   onSetImage,
 }: RecursiveCategoryNodeProps) {
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: category.id,
   })
@@ -114,12 +117,13 @@ export function RecursiveCategoryNode({
         </div>
 
         {/* Representative Image */}
-        {category.representative_image_url ? (
+        {category.representative_image_url || category.representative_image?.storage_url ? (
           <div className="relative">
             <img
-              src={category.representative_image_url}
+              src={category.representative_image_url || category.representative_image?.storage_url || ""}
               alt={`${category.name} representative`}
-              className="h-8 w-8 rounded object-cover border border-gray-200"
+              className="h-8 w-8 rounded object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setIsImageDialogOpen(true)}
             />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
           </div>
@@ -178,6 +182,22 @@ export function RecursiveCategoryNode({
             ))}
         </div>
       )}
+
+      {/* Image Dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{category.name} 대표이미지</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center">
+            <img
+              src={category.representative_image_url || category.representative_image?.storage_url || ""}
+              alt={`${category.name} representative`}
+              className="max-w-full max-h-[400px] object-contain rounded-lg"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

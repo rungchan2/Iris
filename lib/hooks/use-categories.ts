@@ -1,29 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-
-export interface Category {
-  id: string
-  parent_id: string | null
-  name: string
-  depth: number
-  path: string
-  display_order: number | null
-  is_active: boolean | null
-  representative_image_url: string | null
-  representative_image_id: string | null
-  created_at: string | null
-  updated_at: string | null
-  place_recommendation: string | null
-  male_clothing_recommendation: string | null
-  female_clothing_recommendation: string | null
-  accessories_recommendation: string | null
-  representative_image?: {
-    id: string
-    storage_url: string
-    thumbnail_url: string | null
-  } | null
-}
+import type { Category } from "@/types/inquiry.types"
 
 // Query key factory
 export const categoryKeys = {
@@ -353,10 +331,10 @@ export function useUpdateRepresentativeImage() {
   const supabase = createClient()
 
   return useMutation({
-    mutationFn: async ({ categoryId, imageId }: { categoryId: string; imageId: string }) => {
+    mutationFn: async ({ categoryId, imageId, imageUrl }: { categoryId: string; imageId: string; imageUrl: string }) => {
       const { error } = await supabase
         .from("categories")
-        .update({ representative_image_id: imageId })
+        .update({ representative_image_id: imageId, representative_image_url: imageUrl })
         .eq("id", categoryId)
 
       if (error) throw error

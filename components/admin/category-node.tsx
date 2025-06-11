@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CategoryTree } from "@/components/admin/category-tree"
-import type { Category } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface CategoryNodeProps {
   category: Category

@@ -30,10 +30,21 @@ export interface Category {
   name: string
   depth: number
   path: string
-  display_order: number
-  is_active: boolean
+  display_order: number | null
+  is_active: boolean | null
   representative_image_url: string | null
   representative_image_id: string | null
+  created_at: string | null
+  updated_at: string | null
+  place_recommendation: string | null
+  male_clothing_recommendation: string | null
+  female_clothing_recommendation: string | null
+  accessories_recommendation: string | null
+  representative_image?: {
+    id: string
+    storage_url: string
+    thumbnail_url: string | null
+  } | null
 }
 
 export interface MoodKeyword {
@@ -113,3 +124,4 @@ export interface Inquiry {
     completed_at: string
   }
 }
+

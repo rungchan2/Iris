@@ -1,7 +1,7 @@
 "use client"
 
 import { CategoryNodeStatic } from "@/components/admin/category-node-static"
-import type { Category } from "@/lib/hooks/use-categories"
+import type { Category } from "@/types/inquiry.types"
 
 interface CategoryTreeStaticProps {
   categories: Category[]
