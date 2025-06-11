@@ -658,7 +658,7 @@ export function PersonalInfoForm({
                   name="difficulty_note"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>2. 촬영 관련 우려사항</FormLabel>
+                      <FormLabel>2. 촬영 관련 우려사항 (선택사항)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="촬영과 관련해 걱정되거나 신경쓰이는 부분을 적어주세요."

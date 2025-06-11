@@ -25,12 +25,6 @@ export function AspectImage({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  // Generate consistent fallback image based on src
-  const getFallbackUrl = (originalSrc: string) => {
-    const seed = originalSrc.split("/").pop()?.split(".")[0] || "fallback"
-    return `https://picsum.photos/seed/${seed}/800/450`
-  }
-
   return (
     <AspectRatio ratio={ratio} className={cn("bg-muted overflow-hidden", className)}>
       {isLoading && !error && (
@@ -49,7 +43,6 @@ export function AspectImage({
           isLoading ? "opacity-0" : "opacity-100",
         )}
         onLoad={() => {
-          console.log("loaded")
           setIsLoading(false)
         }}
         onError={() => {

@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useInView } from "react-intersection-observer"
 import { X, Download } from "lucide-react"
 import { toast } from "sonner"
+import { AspectRatio } from "@/components/ui/aspect-ratio"
+import Image from "next/image"
 
 export interface Photo {
   id: string
@@ -117,13 +119,16 @@ export function GalleryClient({ initialPhotos }: { initialPhotos: Photo[] }) {
         {photos.map((photo) => (
           <div key={photo.id} className="break-inside-avoid">
             <div className="group relative">
-              <AspectImage
+              <AspectRatio ratio={16 / 9}>
+              <Image
                 src={photo.storage_url}
                 alt={photo.filename}
-                ratio={16 / 9}
-                className="rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                width={1000}
+                height={1000}
+                className="rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 object-cover"
                 onClick={() => setSelectedPhoto(photo)}
               />
+              </AspectRatio>
 
               {/* Category badges overlay */}
               {photo.photo_categories && photo.photo_categories.length > 0 && (
@@ -182,7 +187,7 @@ export function GalleryClient({ initialPhotos }: { initialPhotos: Photo[] }) {
         <DialogContent className="max-w-6xl max-h-[90vh] p-0">
           <DialogTitle className="sr-only">{selectedPhoto?.filename || "Photo"}</DialogTitle>
           {selectedPhoto && (
-            <div className="relative">
+            <div className="relative rounded-lg overflow-hidden">
               {/* Close button */}
               <Button
                 variant="ghost"
@@ -204,13 +209,15 @@ export function GalleryClient({ initialPhotos }: { initialPhotos: Photo[] }) {
               </Button>
 
               {/* Image */}
-              <AspectImage
+              <AspectRatio ratio={16 / 9}>
+              <Image
                 src={selectedPhoto.storage_url}
                 alt={selectedPhoto.filename}
-                ratio={16 / 9}
-                objectFit="contain"
-                className="w-full max-h-[90vh]"
+                width={1000}
+                height={1000}
+                className="rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 object-cover"
               />
+              </AspectRatio>
 
               {/* Photo info */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
