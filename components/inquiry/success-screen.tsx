@@ -73,7 +73,6 @@ export function SuccessScreen({ formData, category, onStartOver }: SuccessScreen
 
         <div className="space-y-2 text-muted-foreground">
           <p>신청 후 영업일 기준 2-3일 이내에 예약 연락을 드립니다. (카카오톡 메시지 확인)</p>
-          <p>예약 확정을 위해 상담 후 아래 계좌로 예약금 3만원을 입금해 주세요. </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">

@@ -48,6 +48,10 @@ const faqData: FAQItem[] = [
   {
     question: "미성년자도 촬영에 참여할 수 있나요?",
     answer: "예약자분이 성인이실 경우 가능합니다."
+  },
+  {
+    question: "스튜디오 촬영도 가능한가요?",
+    answer: "스튜디오 촬영을 희망하시는 경우, 직접 검색 및 예약을 진행해주시면 됩니다"
   }
 ]
 
@@ -90,7 +94,7 @@ export function FAQWidget() {
         )}
       >
         <Card className="shadow-lg border-gray-200">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">자주 질문주시는 부분들은 이렇답니다!</CardTitle>
               <Button
@@ -103,13 +107,13 @@ export function FAQWidget() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="max-h-[50vh] overflow-y-auto space-y-2">
+          <CardContent className="max-h-[50vh] overflow-y-auto space-y-2 p-2 md:p-4">
             {faqData.map((item, index) => (
               <FAQItem key={index} item={item} />
             ))}
             
             {/* Contact Section */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="mt-6 pt-4 border-t border-gray-200 p-2 md:p-4">
               <h4 className="font-medium text-sm mb-3">문의하기</h4>
               <p className="text-sm text-gray-600 mb-3">
                 추가 문의는 아래 채널로 부탁드립니다.
@@ -132,12 +136,12 @@ export function FAQWidget() {
       <Button
         onClick={() => setIsOpen(!isOpen)}
         size="icon"
-        className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 transition-colors duration-300"
+        className="h-14 w-14 rounded-full shadow-lg bg-orange-400 hover:bg-orange-500 transition-colors duration-300"
       >
         {isOpen ? (
-          <X className="h-6 w-6 text-white" />
+          <X className="h-8 w-8 text-white" />
         ) : (
-          <HelpCircle className="h-6 w-6 text-white" />
+          <span className="text-black font-bold">FAQ</span>
         )}
       </Button>
     </div>

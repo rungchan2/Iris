@@ -28,6 +28,24 @@ export function HeroSection() {
 
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* Navigation Links */}
+      <div className="absolute top-8 right-8 z-20 flex flex-col items-end space-y-2">
+        <a
+          href="/gallery"
+          className="text-white text-sm hover:underline hover:underline-offset-4 transition-all duration-200"
+        >
+          Gallery
+        </a>
+        <a
+          href="https://www.instagram.com/sunset_cinematic/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white text-sm hover:underline hover:underline-offset-4 transition-all duration-200"
+        >
+          Instagram
+        </a>
+      </div>
+
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/10 z-10" />
@@ -46,12 +64,12 @@ export function HeroSection() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-4xl md:text-6xl font-bold text-white mb-6"
+          className="text-5xl md:text-7xl font-bold text-white mb-6"
         >
           Sunset Cinema
         </motion.h1>
         <motion.p
-          style={{ fontWeight: "bold" }}
+          style={{ fontWeight: "bold", fontSize: "1.5rem" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}

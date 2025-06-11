@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { CalendarIcon, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ import {
   type MoodKeyword,
 } from "@/types/inquiry.types";
 import { TimeSlotSelector } from "@/components/inquiry/time-slot-selector";
-import { toast } from "sonner";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -48,7 +47,9 @@ export function PersonalInfoForm({
   const [activeSection, setActiveSection] = useState<
     "personal" | "mood" | "additional"
   >("personal");
-  const [dateSlotCounts, setDateSlotCounts] = useState<Record<string, { total: number; available: number }>>({});
+  const [dateSlotCounts, setDateSlotCounts] = useState<
+    Record<string, { total: number; available: number }>
+  >({});
   const supabase = createClient();
 
   const form = useForm<InquiryFormValues>({
@@ -92,12 +93,12 @@ export function PersonalInfoForm({
       }
 
       const counts: Record<string, { total: number; available: number }> = {};
-      
+
       for (const date of availableDates) {
-        const dateSlots = slots?.filter(slot => slot.date === date) || [];
+        const dateSlots = slots?.filter((slot) => slot.date === date) || [];
         counts[date] = {
           total: dateSlots.length,
-          available: dateSlots.filter(slot => slot.is_available).length
+          available: dateSlots.filter((slot) => slot.is_available).length,
         };
       }
 
@@ -124,11 +125,11 @@ export function PersonalInfoForm({
   const getDateModifiers = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const slotCount = dateSlotCounts[dateStr];
-    
+
     if (!slotCount || slotCount.total === 0) {
       return { available: false, partiallyBooked: false, fullyBooked: false };
     }
-    
+
     if (slotCount.available === 0) {
       return { available: false, partiallyBooked: false, fullyBooked: true };
     } else if (slotCount.available < slotCount.total) {
@@ -142,11 +143,30 @@ export function PersonalInfoForm({
     onSubmit(data);
   };
 
-  const nextSection = () => {
+  const nextSection = async () => {
     if (activeSection === "personal") {
-      setActiveSection("mood");
+      // Validate personal section fields
+      const isValid = await form.trigger([
+        "name",
+        "phone",
+        "gender",
+        "desired_date",
+        "people_count",
+      ]);
+
+      if (isValid) {
+        setActiveSection("mood");
+      }
     } else if (activeSection === "mood") {
-      setActiveSection("additional");
+      // Validate mood section fields
+      const isValid = await form.trigger([
+        "current_mood_keywords",
+        "desired_mood_keywords",
+      ]);
+
+      if (isValid) {
+        setActiveSection("additional");
+      }
     }
   };
 
@@ -170,7 +190,7 @@ export function PersonalInfoForm({
             촬영 예약 문의
           </h2>
           <p className="text-muted-foreground text-center mb-8">
-            자신에 대해 알려주세요.
+            신청자님에 대해 알려주세요!
           </p>
 
           {/* Progress Indicator */}
@@ -256,7 +276,7 @@ export function PersonalInfoForm({
                   name="instagram_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instagram ID (카카오톡 아이디)</FormLabel>
+                      <FormLabel>인스타그램 ID</FormLabel>
                       <FormControl>
                         <Input placeholder="@yourusername" {...field} />
                       </FormControl>
@@ -322,33 +342,33 @@ export function PersonalInfoForm({
                           }
                           modifiers={{
                             available: (date) => {
-                              const modifiers = getDateModifiers(date)
-                              return modifiers.available === true
+                              const modifiers = getDateModifiers(date);
+                              return modifiers.available === true;
                             },
                             partiallyBooked: (date) => {
-                              const modifiers = getDateModifiers(date)
-                              return modifiers.partiallyBooked === true
+                              const modifiers = getDateModifiers(date);
+                              return modifiers.partiallyBooked === true;
                             },
                             fullyBooked: (date) => {
-                              const modifiers = getDateModifiers(date)
-                              return modifiers.fullyBooked === true
+                              const modifiers = getDateModifiers(date);
+                              return modifiers.fullyBooked === true;
                             },
                           }}
                           modifiersStyles={{
-                            available: { 
-                              backgroundColor: "hsl(142, 76%, 36%)", 
+                            available: {
+                              backgroundColor: "hsl(142, 76%, 36%)",
                               color: "white",
-                              fontWeight: "bold"
+                              fontWeight: "bold",
                             },
-                            partiallyBooked: { 
-                              backgroundColor: "hsl(48, 96%, 53%)", 
+                            partiallyBooked: {
+                              backgroundColor: "hsl(48, 96%, 53%)",
                               color: "black",
-                              fontWeight: "bold"
+                              fontWeight: "bold",
                             },
-                            fullyBooked: { 
-                              backgroundColor: "hsl(0, 84%, 60%)", 
+                            fullyBooked: {
+                              backgroundColor: "hsl(0, 84%, 60%)",
                               color: "white",
-                              fontWeight: "bold"
+                              fontWeight: "bold",
                             },
                           }}
                         />
@@ -395,12 +415,12 @@ export function PersonalInfoForm({
                   name="people_count"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>인원</FormLabel>
+                      <FormLabel>인원 (최대 6명)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
-                          max={10}
+                          max={6}
                           {...field}
                           onChange={(e) =>
                             field.onChange(
@@ -435,6 +455,13 @@ export function PersonalInfoForm({
                     type="button"
                     onClick={nextSection}
                     className="w-full"
+                    disabled={
+                      !form.watch("name") ||
+                      !form.watch("phone") ||
+                      !form.watch("desired_date") ||
+                      !form.watch("selected_slot_id") ||
+                      !form.watch("people_count")
+                    }
                   >
                     다음 <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -467,7 +494,9 @@ export function PersonalInfoForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        현재 스타일을 설명해주세요 (최소 하나 선택)
+                        1. 내가 생각하는 나는 어떤 분위기인가요?{" "}
+                        <br className="md:hidden" />
+                        (1~3개 선택)
                       </FormLabel>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                         {currentMoodKeywords.map((keyword) => (
@@ -478,6 +507,10 @@ export function PersonalInfoForm({
                             <FormControl>
                               <Checkbox
                                 checked={field.value?.includes(keyword.id)}
+                                disabled={
+                                  !field.value?.includes(keyword.id) &&
+                                  field.value?.length >= 3
+                                }
                                 onCheckedChange={(checked) => {
                                   return checked
                                     ? field.onChange([
@@ -492,12 +525,22 @@ export function PersonalInfoForm({
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel
+                              className={cn(
+                                "font-normal",
+                                !field.value?.includes(keyword.id) &&
+                                  field.value?.length >= 3 &&
+                                  "text-muted-foreground"
+                              )}
+                            >
                               {keyword.name}
                             </FormLabel>
                           </FormItem>
                         ))}
                       </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        선택된 항목: {field.value?.length || 0}/3
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -509,7 +552,8 @@ export function PersonalInfoForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        원하는 스타일을 설명해주세요 (최소 하나 선택)
+                        2. 사진에 담겼으면 하는 분위기를 골라주세요.{" "}
+                        <br className="md:hidden" /> (1~3개 선택)
                       </FormLabel>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                         {desiredMoodKeywords.map((keyword) => (
@@ -520,6 +564,10 @@ export function PersonalInfoForm({
                             <FormControl>
                               <Checkbox
                                 checked={field.value?.includes(keyword.id)}
+                                disabled={
+                                  !field.value?.includes(keyword.id) &&
+                                  field.value?.length >= 3
+                                }
                                 onCheckedChange={(checked) => {
                                   return checked
                                     ? field.onChange([
@@ -534,12 +582,22 @@ export function PersonalInfoForm({
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel
+                              className={cn(
+                                "font-normal",
+                                !field.value?.includes(keyword.id) &&
+                                  field.value?.length >= 3 &&
+                                  "text-muted-foreground"
+                              )}
+                            >
                               {keyword.name}
                             </FormLabel>
                           </FormItem>
                         ))}
                       </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        선택된 항목: {field.value?.length || 0}/3
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -549,7 +607,14 @@ export function PersonalInfoForm({
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
-                  <Button type="button" onClick={nextSection}>
+                  <Button
+                    type="button"
+                    onClick={nextSection}
+                    disabled={
+                      !form.watch("current_mood_keywords")?.length ||
+                      !form.watch("desired_mood_keywords")?.length
+                    }
+                  >
                     다음 <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
@@ -575,10 +640,10 @@ export function PersonalInfoForm({
                   name="special_request"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>특별 요청 (선택사항)</FormLabel>
+                      <FormLabel>1. 요청 사항 (선택사항)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="특별한 요청이나 특별한 부분이 있으신가요?"
+                          placeholder="추가적으로 촬영에 담겼으면 하는 점이나 나누고 싶으신 말씀을 적어주세요. 촬영 시 희망하시는 사항, 궁금하신 사항, 좋아하시는 작품 등 뭐든 좋습니다!"
                           className="resize-none"
                           {...field}
                         />
@@ -593,10 +658,10 @@ export function PersonalInfoForm({
                   name="difficulty_note"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>걱정사항 또는 어려움 (선택사항)</FormLabel>
+                      <FormLabel>2. 촬영 관련 우려사항</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="촬영 시 걱정되는 점이나 특별히 알아야 할 점이 있으신가요?"
+                          placeholder="촬영과 관련해 걱정되거나 신경쓰이는 부분을 적어주세요."
                           className="resize-none"
                           {...field}
                         />
@@ -610,12 +675,12 @@ export function PersonalInfoForm({
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
-                  {form.formState.isValid ? null : (
+                  {!form.formState.isValid && (
                     <span className="text-sm text-red-500">
                       모든 필수 필드를 입력해주세요.
                     </span>
                   )}
-                  <Button type="submit">
+                  <Button type="submit" disabled={!form.formState.isValid}>
                     다음
                   </Button>
                 </div>

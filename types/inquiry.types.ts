@@ -10,7 +10,7 @@ export const inquiryFormSchema = z.object({
     .regex(/^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/, { message: "유효한 전화번호를 입력해주세요 (예: 010-1234-5678)" }),
   desired_date: z.date({ required_error: "날짜를 선택해주세요" }),
   selected_slot_id: z.string().optional(), // Add this field
-  people_count: z.number().int().min(1),
+  people_count: z.number().int().min(1).max(6, { message: "최대 6명까지 가능합니다." }),
   relationship: z.string().optional(),
 
   // Mood Keywords
