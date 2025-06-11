@@ -89,8 +89,7 @@ export function NoticeSection() {
               <div className="flex items-start space-x-3">
                 <span className="text-green-600 text-xl">✔</span>
                 <div>
-                  <strong>컨셉:</strong> 개인 맞춤 연출로 아래 구글폼을
-                  작성해주시면 구체적인 컨셉 조율을 도와드립니다.
+                  <strong>컨셉:</strong> 원하시는 느낌과 컨셉에 맞게 장소, 의상 등의 조율을 도와드립니다. 
                 </div>
               </div>
 
@@ -142,7 +141,7 @@ export function NoticeSection() {
                 </span>
                 <div>
                   <p>
-                    예약 확정을 위해 <strong>상담 후</strong> 아래 계좌로 예약금
+                    예약 확정을 위해 <strong className="text-red-500">상담 후</strong> 아래 계좌로 예약금
                     3만원을 입금해 주세요.
                   </p>
                   <div className="bg-gray-100 rounded p-3 mt-2 border border-gray-200">
@@ -160,7 +159,7 @@ export function NoticeSection() {
                 않습니다.
               </p>
               <p>
-                * 카카오톡 아이디를 기재해주셔도{" "}
+                * 카카오톡 {" "}
                 <strong className="text-black">"친구추가 허용"</strong>을 하지 않으신 상태라면 연락을
                 드릴 수 없습니다. 기재시 카카오톡 친구추가를 허용해주시면
                 감사드리겠습니다 😊
@@ -184,7 +183,7 @@ export function NoticeSection() {
               <div>
                 <p className="text-gray-700">
                   <strong className="text-red-600">일정 변경:</strong> 무료 일정
-                  변경은 촬영일 기준 2주 전까지, 우천 및 기상 악화로 인한 일정
+                  변경은 촬영일 기준 2주 전까지, 우천으로 인한 일정
                   변경은 촬영일 기준 3일전까지 가능합니다. (촬영까지 남은 기간이
                   14일 이하일 경우 변경시 3만원 요금이 추가 발생합니다.)
                 </p>
