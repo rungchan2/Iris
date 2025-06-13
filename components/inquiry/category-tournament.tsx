@@ -176,7 +176,6 @@ export function CategoryTournament({
           >
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold">원하시는 스타일을 <br className="md:hidden" />선택해주세요</h2>
-              <p className="text-muted-foreground hidden md:block">다음은 촬영을 하는데 가장 자신을 잘 나타내는 키워드를 고르는 것입니다.</p>
             </div>
 
             {/* Breadcrumb & Back Button */}
