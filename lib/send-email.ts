@@ -1,11 +1,18 @@
 import { createClient } from "@/lib/supabase/client";
 
+const isEmailEnabled = process.env.NODE_ENV === "production";
+
 
 export const sendEmail = async (
   email: string | string[],
   subject: string,
   body: string,
 ) => {
+  if (!isEmailEnabled) {
+    console.log("이메일 전송 비활성화");
+    return { data: null, error: null };
+  }
+
   const supabase = createClient();
   const emails = Array.isArray(email) ? email : [email];
   try {

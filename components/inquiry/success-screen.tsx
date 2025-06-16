@@ -1,28 +1,43 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { format } from "date-fns"
 import { CheckCircle, Calendar, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import type { InquiryFormValues, Category, Inquiry } from "@/types/inquiry.types"
-
+import type { Category, Inquiry } from "@/types/inquiry.types"
+import { formatDate, formatTime, formatDateWithSeparator } from "@/lib/date-fns"
+import { format } from "date-fns"
 interface SuccessScreenProps {
   formData: Inquiry
   category: Category
   onStartOver: () => void
 }
 
-export function SuccessScreen({ formData, category, onStartOver }: SuccessScreenProps) {
+export function SuccessScreen({ formData, onStartOver }: SuccessScreenProps) {
   const addToCalendar = () => {
     const date = formData.desired_date
     const title = `Sunset Cinema - ${formData.name}`
     const details = `Sunset Cinema for ${formData.name}.`
 
-    const startDate = format(date, "yyyyMMdd")
-    const endDate = format(date, "yyyyMMdd")
+    // Create start and end dates
+    const startTime = formData.selected_slot_id?.start_time || '10:00'
+    const endTime = formData.selected_slot_id?.end_time || '11:00'
 
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent(details)}`
+    const baseDate = new Date(date)
+    const [startHour, startMinute] = startTime.split(':').map(Number)
+    const [endHour, endMinute] = endTime.split(':').map(Number)
+    
+    const startDate = new Date(baseDate)
+    startDate.setHours(startHour, startMinute, 0, 0)
+    
+    const endDate = new Date(baseDate)
+    endDate.setHours(endHour, endMinute, 0, 0)
+
+    // Format for Google Calendar
+    const startDateFormatted = startDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+    const endDateFormatted = endDate.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDateFormatted}/${endDateFormatted}&details=${encodeURIComponent(details)}`
 
     window.open(googleCalendarUrl, "_blank")
   }
@@ -59,10 +74,10 @@ export function SuccessScreen({ formData, category, onStartOver }: SuccessScreen
                 <div className="font-medium">{formData.phone}</div>
 
                 <div className="text-muted-foreground">예약 날짜:</div>
-                <div className="font-medium">{format(formData.desired_date, "yyyy년 MM월 dd일")}</div>
+                <div className="font-medium">{formatDate(formData.desired_date)}</div>
 
                 <div className="text-muted-foreground">예약 시간:</div>
-                <div className="font-medium">{formData.selected_slot_id.start_time} - {formData.selected_slot_id.end_time}</div>
+                <div className="font-medium">{formatTime(formData.selected_slot_id.start_time)} - {formatTime(formData.selected_slot_id.end_time)}</div>
 
                 <div className="text-muted-foreground">인원:</div>
                 <div className="font-medium">{formData.people_count}</div>

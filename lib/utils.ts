@@ -5,9 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(dateString: string): string {
+export function formatDate(dateString: string | Date): string {
   try {
-    const date = new Date(dateString)
+    const date = dateString instanceof Date ? dateString : new Date(dateString)
     if (isNaN(date.getTime())) {
       return "Invalid Date"
     }

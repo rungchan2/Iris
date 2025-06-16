@@ -13,12 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Inquiry } from "@/types/inquiry.types";
-import { formatTime } from "@/lib/date-fns";
+import { formatDate, formatTime } from "@/lib/date-fns";
 import { useRouter } from "next/navigation";
-import { Toaster, toast } from "sonner";
+import { toast } from "sonner";
 
 const getGenderLabel = (gender: string) => {
   const genderMap = {
@@ -145,13 +144,15 @@ export function InquiryDetails({
     fetchCategoryRecommendations();
   }, [inquiry.selected_category_id, supabase]);
 
+  console.log(inquiry);
+
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>문의 정보</CardTitle>
           <p className="text-sm text-muted-foreground">
-            문의 날짜: {formatDate(inquiry.created_at)}
+            문의 날짜: {formatDate(new Date(inquiry.created_at), true)}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -176,7 +177,7 @@ export function InquiryDetails({
                 <p className="text-sm font-medium text-muted-foreground">
                   인스타그램
                 </p>
-                <p className="text-lg font-medium">@{inquiry.instagram_id}</p>
+                <p className="text-lg font-medium">{inquiry.instagram_id}</p>
               </div>
             )}
 
@@ -206,7 +207,7 @@ export function InquiryDetails({
                   예약 날짜
                 </p>
                 <p className="text-lg font-medium">
-                  {inquiry.desired_date}{" "}
+                  {inquiry.selected_slot_id?.date ? formatDate(inquiry.selected_slot_id?.date) : "날짜 미정"} {" / "}
                   {inquiry.selected_slot_id?.start_time ? (
                     <>
                       {formatTime(inquiry.selected_slot_id.start_time)}

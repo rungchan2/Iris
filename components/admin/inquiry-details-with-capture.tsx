@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import { format } from "date-fns"
+import { formatDate, formatTime } from "@/lib/date-fns"
 import html2canvas from "html2canvas-pro"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +40,7 @@ export function InquiryDetailsWithCapture({
 
       // Download the image
       const link = document.createElement("a")
-      link.download = `inquiry-${inquiry.name}-${format(new Date(), "yyyyMMdd")}.png`
+      link.download = `inquiry-${inquiry.name}-${formatDate(new Date(), true)}.png`
       link.href = dataUrl
       link.click()
 
@@ -51,17 +51,8 @@ export function InquiryDetailsWithCapture({
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "yyyy년 MM월 dd일")
-  }
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":")
-    const hour = Number.parseInt(hours)
-    const ampm = hour >= 12 ? "오후" : "오전"
-    const displayHour = hour % 12 || 12
-    return `${ampm} ${displayHour}:${minutes}`
-  }
+
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
@@ -99,7 +90,7 @@ export function InquiryDetailsWithCapture({
           <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
             <span>문의번호: {inquiry.id.slice(0, 8)}</span>
             <span>•</span>
-            <span>접수일: {format(new Date(inquiry.created_at), "yyyy.MM.dd")}</span>
+            <span>접수일: {formatDate(inquiry.created_at)}</span>
             <Badge {...getStatusBadge(inquiry.status)}>{getStatusBadge(inquiry.status).label}</Badge>
           </div>
         </div>

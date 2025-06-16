@@ -1,14 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { X, Download } from "lucide-react"
 import html2canvas from "html2canvas-pro"
-import { formatDate } from "@/lib/utils"
-import { formatTime } from "@/lib/date-fns"
+import { formatDate, formatTime } from "@/lib/date-fns"
 import { PhotoGallery } from "./photo-gallery"
 import { Inquiry } from "@/types/inquiry.types"
 import { Photo } from "@/app/gallery/gallery-client"
@@ -227,7 +225,7 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
       case "desired_date":
         return (
           <p className="text-lg font-medium">
-            {inquiry.desired_date}{" "}
+            {formatDate(inquiry.desired_date)}{" "}
             {inquiry.selected_slot_id?.start_time && (
               <>
                 {formatTime(inquiry.selected_slot_id.start_time)}

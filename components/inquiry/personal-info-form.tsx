@@ -69,6 +69,7 @@ export function PersonalInfoForm({
     },
   });
 
+
   // Add this after the form initialization
   useEffect(() => {
     const subscription = form.watch(() => {
@@ -76,6 +77,35 @@ export function PersonalInfoForm({
     });
     return () => subscription.unsubscribe();
   }, [form, onFormChange]);
+
+  // Phone number formatting
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "phone" && value.phone) {
+        // Remove non-digits
+        const digitsOnly = value.phone.replace(/\D/g, "");
+
+        // Format based on length
+        let formatted = "";
+        if (digitsOnly.length <= 3) {
+          formatted = digitsOnly;
+        } else if (digitsOnly.length <= 7) {
+          formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
+        } else {
+          formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(
+            3,
+            7
+          )}-${digitsOnly.slice(7, 11)}`;
+        }
+
+        // Only update if it's different to avoid cursor jumping
+        if (formatted !== value.phone) {
+          form.setValue("phone", formatted);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Fetch slot counts for available dates
   useEffect(() => {

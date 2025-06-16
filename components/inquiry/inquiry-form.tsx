@@ -17,6 +17,7 @@ import type {
 } from "@/types/inquiry.types";
 import { sendEmail } from "@/lib/send-email";
 import { getSlot } from "@/lib/available-slots";
+import { format } from "date-fns";
 
 const EMAIL_TO = [
   "chajimmy1214@gmail.com",
@@ -97,7 +98,7 @@ export function InquiryForm({
               instagram_id: formData.instagram_id || null,
               gender: formData.gender,
               phone: formData.phone,
-              desired_date: formData.desired_date.toISOString().split("T")[0],
+              desired_date: format(formData.desired_date, "yyyy-MM-dd"),
               selected_slot_id: formData.selected_slot_id || null,
               people_count: formData.people_count,
               relationship: formData.relationship || null,
@@ -381,6 +382,7 @@ export function InquiryForm({
               steps: history,
               completed_at: new Date().toISOString(),
             } as any,
+            desired_date: newInquiry.desired_date,
           } as Inquiry;
           break;
         } catch (error) {
@@ -445,6 +447,7 @@ export function InquiryForm({
   const handleFormChange = () => {
     setIsDirty(true);
   };
+
 
   // Navigation warning for unsaved changes
   React.useEffect(() => {
