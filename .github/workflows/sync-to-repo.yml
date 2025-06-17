@@ -34,14 +34,45 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/repos/sunsetcinematic/sunset-cinema || echo "API 접근 실패"
           
-          # 레포지토리 접근 테스트
-          echo "🔍 Git으로 레포지토리 접근 테스트 중..."
-          git ls-remote https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git || echo "Git 접근 실패"
+          # Git credential 설정
+          echo "🔧 Git credential 설정..."
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com" > ~/.git-credentials
           
-          # 성공하면 push 진행
-          echo "📤 레포지토리에 푸시 중..."
-          git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
-          git push friend main --force
+          # 대안 URL 형식들 테스트
+          echo "🔍 다양한 URL 형식으로 테스트..."
+          
+          # 방법 1: 표준 x-access-token
+          echo "방법 1: x-access-token 형식"
+          git ls-remote https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git || echo "방법 1 실패"
+          
+          # 방법 2: 토큰을 사용자명으로 사용
+          echo "방법 2: 토큰을 사용자명으로 사용"
+          git ls-remote https://${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git || echo "방법 2 실패"
+          
+          # 방법 3: rungchan2 사용자명과 토큰
+          echo "방법 3: rungchan2 사용자명 사용"
+          git ls-remote https://rungchan2:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git || echo "방법 3 실패"
+          
+          # 성공한 방법으로 push 시도
+          echo "📤 성공한 인증 방식으로 레포지토리에 푸시 시도..."
+          
+          # 먼저 방법 1로 시도
+          if git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
+            echo "✅ 표준 x-access-token 방식으로 remote 추가 성공"
+            git push friend main --force
+          # 방법 1 실패시 방법 2 시도  
+          elif git remote add friend2 https://${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
+            echo "✅ 토큰-only 방식으로 remote 추가 성공"
+            git push friend2 main --force
+          # 방법 2 실패시 방법 3 시도
+          elif git remote add friend3 https://rungchan2:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
+            echo "✅ 사용자명 방식으로 remote 추가 성공"
+            git push friend3 main --force
+          else
+            echo "❌ 모든 인증 방식 실패"
+            exit 1
+          fi
         
         # SSH 방식 대안 (필요시 사용):
         # git remote add friend git@github.com:sunsetcinematic/sunset-cinema.git
