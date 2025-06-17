@@ -1,4 +1,4 @@
-name: 협업자 방식 동기화
+name: 진짜 간단 동기화
 
 on:
   push:
@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        
-      - name: Push to target repo
-        run: |
-          # 여러분의 PAT 사용 (collaborator이므로 가능)
-          git remote add target https://${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
-          git push target main --force
+        with:
+          token: ${{ secrets.MY_PAT }}
+          
+      - run: |
+          git remote add friend https://${{ secrets.MY_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
+          git push friend main --force
