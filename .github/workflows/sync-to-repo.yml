@@ -20,5 +20,7 @@ jobs:
 
       - name: Add friend's repo and push
         run: |
+          # 재영님께 정확한 레포지토리 이름을 확인받으세요
+          # 예: sunsetcinematic/sunset-gallery 또는 다른 정확한 이름
           git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
           git push friend main --force
