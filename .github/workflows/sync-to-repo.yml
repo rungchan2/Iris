@@ -13,11 +13,6 @@ jobs:
       - name: Checkout your code
         uses: actions/checkout@v3
 
-      - name: Set git identity
-        run: |
-          git config --global user.name "heechan"
-          git config --global user.email "leeh09077@gmail.com"
-
       - name: Add friend's repo and push
         run: |
           # 디버깅: 토큰이 설정되어 있는지 확인 (실제 값은 표시하지 않음)
@@ -28,65 +23,32 @@ jobs:
             echo "✅ FRIEND_PAT이 설정되어 있습니다."
           fi
           
-          # GitHub API로 레포지토리 접근 권한 테스트 및 temp_clone_token 추출
-          echo "🔍 GitHub API로 레포지토리 접근 테스트..."
-          API_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.FRIEND_PAT }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/repos/sunsetcinematic/sunset-cinema)
+          # Public 레포지토리 접근 테스트
+          echo "🔍 Public 레포지토리 접근 테스트..."
           
-          echo "$API_RESPONSE"
-          
-          # jq 설치 (JSON 파싱용)
-          sudo apt-get update && sudo apt-get install -y jq
-          
-          # temp_clone_token 추출 (jq 사용)
-          TEMP_TOKEN=$(echo "$API_RESPONSE" | jq -r '.temp_clone_token // empty')
-          
-          if [ -n "$TEMP_TOKEN" ] && [ "$TEMP_TOKEN" != "null" ]; then
-            echo "🎯 temp_clone_token 발견: ${TEMP_TOKEN:0:10}..."
-            
-            # temp_clone_token으로 시도
-            echo "🔍 temp_clone_token으로 접근 테스트..."
-            if git ls-remote https://x-access-token:$TEMP_TOKEN@github.com/sunsetcinematic/sunset-cinema.git; then
-              echo "✅ temp_clone_token으로 접근 성공!"
-              git remote add friend https://x-access-token:$TEMP_TOKEN@github.com/sunsetcinematic/sunset-cinema.git
-              git push friend main --force
-              exit 0
-            else
-              echo "❌ temp_clone_token으로도 실패"
-            fi
+          # Public 레포는 토큰 없이도 읽기 가능하지만, push를 위해서는 토큰 필요
+          if git ls-remote https://github.com/sunsetcinematic/sunset-cinema.git; then
+            echo "✅ 레포지토리 접근 성공! (Public 모드)"
           else
-            echo "❌ temp_clone_token을 찾을 수 없습니다"
+            echo "❌ 레포지토리 접근 실패"
+            exit 1
           fi
           
-          # 🚀 완전히 다른 접근법: GitHub API를 통한 파일 업로드
-          echo "🚀 GitHub API를 통한 직접 파일 업로드 시도..."
+          # Git 설정
+          echo "🔧 Git 설정 중..."
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           
-          # 현재 레포지토리의 모든 파일 목록 가져오기
-          echo "📁 현재 레포지토리 파일 목록 수집 중..."
-          find . -type f -not -path './.git/*' -not -path './node_modules/*' | head -10 | while read file; do
-            if [ -f "$file" ]; then
-              echo "📄 파일: $file"
-              # 파일 내용을 base64로 인코딩
-              CONTENT=$(base64 -w 0 "$file")
-              FILE_PATH=${file#./}  # ./ 제거
-              
-              echo "🔄 $FILE_PATH 업로드 시도..."
-              
-              # GitHub API로 파일 생성/업데이트
-              curl -X PUT \
-                -H "Authorization: token ${{ secrets.FRIEND_PAT }}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                -d "{
-                  \"message\": \"Sync from sunset-gallery: $FILE_PATH\",
-                  \"content\": \"$CONTENT\"
-                }" \
-                "https://api.github.com/repos/sunsetcinematic/sunset-cinema/contents/$FILE_PATH" || echo "❌ $FILE_PATH 업로드 실패"
-            fi
-          done
+          # Friend 레포지토리 추가 및 푸시
+          echo "📤 Friend 레포지토리에 푸시 중..."
           
-          echo "✅ GitHub API를 통한 파일 업로드 완료!"
-          exit 0
+          # Public 레포지토리에 토큰으로 푸시
+          git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
+          
+          # 강제 푸시로 완전 동기화
+          git push friend main --force
+          
+          echo "✅ 성공적으로 sunsetcinematic/sunset-cinema에 동기화 완료!"
         
         # SSH 방식 대안 (필요시 사용):
         # git remote add friend git@github.com:sunsetcinematic/sunset-cinema.git
