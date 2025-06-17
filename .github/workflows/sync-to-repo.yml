@@ -20,7 +20,23 @@ jobs:
 
       - name: Add friend's repo and push
         run: |
-          # 재영님께 정확한 레포지토리 이름을 확인받으세요
-          # 예: sunsetcinematic/sunset-gallery 또는 다른 정확한 이름
+          # 디버깅: 토큰이 설정되어 있는지 확인 (실제 값은 표시하지 않음)
+          if [ -z "${{ secrets.FRIEND_PAT }}" ]; then
+            echo "❌ FRIEND_PAT이 설정되지 않았습니다!"
+            exit 1
+          else
+            echo "✅ FRIEND_PAT이 설정되어 있습니다."
+          fi
+          
+          # 레포지토리 접근 테스트
+          echo "🔍 레포지토리 접근 테스트 중..."
+          git ls-remote https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
+          
+          # 성공하면 push 진행
+          echo "📤 레포지토리에 푸시 중..."
           git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
           git push friend main --force
+        
+        # SSH 방식 대안 (필요시 사용):
+        # git remote add friend git@github.com:sunsetcinematic/sunset-cinema.git
+        # (SSH 키 설정 필요)
