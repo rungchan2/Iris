@@ -28,9 +28,15 @@ jobs:
             echo "✅ FRIEND_PAT이 설정되어 있습니다."
           fi
           
+          # GitHub API로 레포지토리 접근 권한 테스트
+          echo "🔍 GitHub API로 레포지토리 접근 테스트..."
+          curl -H "Authorization: token ${{ secrets.FRIEND_PAT }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/sunsetcinematic/sunset-cinema || echo "API 접근 실패"
+          
           # 레포지토리 접근 테스트
-          echo "🔍 레포지토리 접근 테스트 중..."
-          git ls-remote https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
+          echo "🔍 Git으로 레포지토리 접근 테스트 중..."
+          git ls-remote https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git || echo "Git 접근 실패"
           
           # 성공하면 push 진행
           echo "📤 레포지토리에 푸시 중..."
