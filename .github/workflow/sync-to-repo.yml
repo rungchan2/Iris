@@ -1,0 +1,24 @@
+name: 재영레포에 복제
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync-to-fork:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your code
+        uses: actions/checkout@v3
+
+      - name: Set git identity
+        run: |
+          git config --global user.name "heechan"
+          git config --global user.email "leeh09077@gmail.com"
+
+      - name: Add friend's repo and push
+        run: |
+          git remote add friend https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git
+          git push friend main --force
