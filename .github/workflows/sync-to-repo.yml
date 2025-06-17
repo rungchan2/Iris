@@ -1,4 +1,4 @@
-name: 재영레포에 복제
+name: Vercel 배포용 레포 동기화
 
 on:
   push:
@@ -6,92 +6,37 @@ on:
       - main
 
 jobs:
-  sync-to-fork:
+  sync-to-vercel-repo:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout your code
-        uses: actions/checkout@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Add friend's repo and push
+      # GitHub App 토큰 생성
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: sunsetcinematic
+
+      - name: Sync to friend's repository
+        env:
+          TARGET_REPO: sunsetcinematic/sunset-cinema
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          # 디버깅: 토큰이 설정되어 있는지 확인 (실제 값은 표시하지 않음)
-          if [ -z "${{ secrets.FRIEND_PAT }}" ]; then
-            echo "❌ FRIEND_PAT이 설정되지 않았습니다!"
-            exit 1
-          else
-            echo "✅ FRIEND_PAT이 설정되어 있습니다."
-          fi
+          # Git 설정
+          git config --global user.name "vercel-sync-bot"
+          git config --global user.email "noreply@github.com"
           
-          # 🔍 PAT 토큰이 어떤 사용자인지 확인
-          echo "🔍 PAT 토큰 사용자 확인 중..."
-          TOKEN_USER=$(curl -s -H "Authorization: token ${{ secrets.FRIEND_PAT }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/user | jq -r '.login // "토큰 오류"')
-          echo "🎯 토큰 소유자: $TOKEN_USER"
+          # 원격 저장소 설정
+          git remote add target https://x-access-token:$GH_TOKEN@github.com/$TARGET_REPO.git
           
-          # Git credential 강제 설정 (github-actions[bot] 우회)
-          echo "🔧 Git credential 강제 설정 중..."
-          git config --global credential.helper ""
-          git config --global --unset-all credential.helper || true
+          # 강제 푸시 (Vercel 배포 트리거)
+          git push target main --force
           
-          # 명시적으로 credential 설정
-          git config --global credential.helper store
-          echo "https://$TOKEN_USER:${{ secrets.FRIEND_PAT }}@github.com" > ~/.git-credentials
-          
-          # Git 사용자 정보 설정
-          git config --global user.name "$TOKEN_USER"
-          git config --global user.email "actions@github.com"
-          
-          # Public 레포지토리 접근 테스트
-          echo "🔍 Public 레포지토리 접근 테스트..."
-          if git ls-remote https://github.com/sunsetcinematic/sunset-cinema.git; then
-            echo "✅ 레포지토리 접근 성공! (Public 모드)"
-          else
-            echo "❌ 레포지토리 접근 실패"
-            exit 1
-          fi
-          
-          # Friend 레포지토리 추가 및 푸시
-          echo "📤 Friend 레포지토리에 푸시 중..."
-          
-          # 방법 1: credential helper 사용 (추천)
-          echo "🔄 방법 1: Git credential helper 사용"
-          if git remote add friend https://github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
-            if git push friend main --force; then
-              echo "✅ 방법 1 성공! (credential helper)"
-              exit 0
-            else
-              echo "❌ 방법 1 푸시 실패"
-              git remote remove friend || true
-            fi
-          fi
-          
-          # 방법 2: URL에 토큰 직접 포함
-          echo "🔄 방법 2: URL에 토큰 직접 포함"
-          if git remote add friend2 https://$TOKEN_USER:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
-            if git push friend2 main --force; then
-              echo "✅ 방법 2 성공! (URL 토큰)"
-              exit 0
-            else
-              echo "❌ 방법 2 푸시 실패"
-            fi
-          fi
-          
-          # 방법 3: x-access-token 방식
-          echo "🔄 방법 3: x-access-token 방식"
-          if git remote add friend3 https://x-access-token:${{ secrets.FRIEND_PAT }}@github.com/sunsetcinematic/sunset-cinema.git 2>/dev/null; then
-            if git push friend3 main --force; then
-              echo "✅ 방법 3 성공! (x-access-token)"
-              exit 0
-            else
-              echo "❌ 방법 3 푸시 실패"
-            fi
-          fi
-          
-          echo "❌ 모든 방법 실패 - 토큰 권한을 다시 확인해주세요"
-          exit 1
-        
-        # SSH 방식 대안 (필요시 사용):
-        # git remote add friend git@github.com:sunsetcinematic/sunset-cinema.git
-        # (SSH 키 설정 필요)
+          echo "✅ Vercel 배포용 레포에 동기화 완료!"
