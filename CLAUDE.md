@@ -194,3 +194,9 @@ This project evolved from `sunset-cinema` (film photography booking) to Photo4Yo
 - **Maintained**: TypeScript strict mode, Tailwind styling, Supabase infrastructure
 
 Refer to detailed specifications in `specs/` directory for comprehensive feature requirements and implementation guidance.
+
+## Debugging and Development Notes
+
+- **Tools for Debugging and Schema Modification**:
+  - Use Supabase MCP (Managed Control Panel) to inspect and modify database schema
+  - Utilize Playwright MCP tools for comprehensive testing and debugging across different scenarios
