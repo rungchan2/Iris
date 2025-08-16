@@ -37,6 +37,12 @@ export function LandingHeroSection() {
           Gallery
         </Link>
         <Link
+          href="/photographers"
+          className="text-gray-700 text-sm hover:text-orange-600 hover:underline hover:underline-offset-4 transition-all duration-200"
+        >
+          작가 목록
+        </Link>
+        <Link
           href="/booking"
           className="text-gray-700 text-sm hover:text-orange-600 hover:underline hover:underline-offset-4 transition-all duration-200"
         >
@@ -110,7 +116,7 @@ export function LandingHeroSection() {
             onClick={scrollToFeatures}
             className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-orange-200 text-orange-600 hover:bg-orange-50 transition-all duration-200"
           >
-            서비스 알아보기
+            바로 예약하기
           </Button>
         </motion.div>
 

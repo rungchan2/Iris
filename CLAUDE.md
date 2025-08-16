@@ -200,3 +200,15 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
 - **Tools for Debugging and Schema Modification**:
   - Use Supabase MCP (Managed Control Panel) to inspect and modify database schema
   - Utilize Playwright MCP tools for comprehensive testing and debugging across different scenarios
+
+## Development Guidelines
+
+- **New Development Note**: Saved development guide at @specs/development-guide.md
+
+## Tools and Workflow Notes
+
+- If needed, use Supabase MCP to:
+  - Change database schema
+  - Modify table policies
+  - Utilize supabase-heechan tool for project with ID `kypwcsgwjtnkiiwjedcn`
+- and everytime you done your work, mark as checked in the @specs/feature.md file. it is important to keep track of the work that is finished and not finished that needs to worked on.

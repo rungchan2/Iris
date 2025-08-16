@@ -415,6 +415,341 @@ export type Database = {
           },
         ]
       }
+      personality_types: {
+        Row: {
+          ai_preview_prompt: string | null
+          code: string
+          created_at: string | null
+          description: string
+          display_order: number | null
+          example_person: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          recommended_locations: string[] | null
+          recommended_props: string[] | null
+          style_keywords: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_preview_prompt?: string | null
+          code: string
+          created_at?: string | null
+          description: string
+          display_order?: number | null
+          example_person?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          recommended_locations?: string[] | null
+          recommended_props?: string[] | null
+          style_keywords?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_preview_prompt?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string
+          display_order?: number | null
+          example_person?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          recommended_locations?: string[] | null
+          recommended_props?: string[] | null
+          style_keywords?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          part: string
+          question_image_url: string | null
+          question_text: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean | null
+          part: string
+          question_image_url?: string | null
+          question_text: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          part?: string
+          question_image_url?: string | null
+          question_text?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quiz_choices: {
+        Row: {
+          choice_image_url: string | null
+          choice_text: string
+          created_at: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          question_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          choice_image_url?: string | null
+          choice_text: string
+          created_at?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean | null
+          question_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          choice_image_url?: string | null
+          choice_text?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          question_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_choices_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      choice_weights: {
+        Row: {
+          choice_id: string
+          created_at: string | null
+          id: string
+          personality_code: string
+          updated_at: string | null
+          weight: number
+        }
+        Insert: {
+          choice_id: string
+          created_at?: string | null
+          id?: string
+          personality_code: string
+          updated_at?: string | null
+          weight: number
+        }
+        Update: {
+          choice_id?: string
+          created_at?: string | null
+          id?: string
+          personality_code?: string
+          updated_at?: string | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "choice_weights_choice_id_fkey"
+            columns: ["choice_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_choices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "choice_weights_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          }
+        ]
+      }
+      quiz_sessions: {
+        Row: {
+          calculated_personality_code: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          started_at: string | null
+          total_score_data: Json | null
+          updated_at: string | null
+          user_agent: string | null
+          user_ip: string | null
+        }
+        Insert: {
+          calculated_personality_code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          started_at?: string | null
+          total_score_data?: Json | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_ip?: string | null
+        }
+        Update: {
+          calculated_personality_code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          started_at?: string | null
+          total_score_data?: Json | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_sessions_calculated_personality_code_fkey"
+            columns: ["calculated_personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          }
+        ]
+      }
+      quiz_responses: {
+        Row: {
+          choice_id: string
+          created_at: string | null
+          question_id: string
+          response_time_ms: number | null
+          session_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          choice_id: string
+          created_at?: string | null
+          question_id: string
+          response_time_ms?: number | null
+          session_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          choice_id?: string
+          created_at?: string | null
+          question_id?: string
+          response_time_ms?: number | null
+          session_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_responses_choice_id_fkey"
+            columns: ["choice_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_choices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ai_image_generations: {
+        Row: {
+          api_provider: string
+          api_request_payload: Json | null
+          api_response_data: Json | null
+          created_at: string | null
+          error_message: string | null
+          generated_image_url: string | null
+          generated_prompt: string
+          generation_status: string
+          id: string
+          is_shared: boolean | null
+          personality_code: string
+          processing_time_seconds: number | null
+          quiz_session_id: string | null
+          updated_at: string | null
+          user_rating: number | null
+          user_uploaded_image_url: string
+        }
+        Insert: {
+          api_provider: string
+          api_request_payload?: Json | null
+          api_response_data?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_image_url?: string | null
+          generated_prompt: string
+          generation_status: string
+          id?: string
+          is_shared?: boolean | null
+          personality_code: string
+          processing_time_seconds?: number | null
+          quiz_session_id?: string | null
+          updated_at?: string | null
+          user_rating?: number | null
+          user_uploaded_image_url: string
+        }
+        Update: {
+          api_provider?: string
+          api_request_payload?: Json | null
+          api_response_data?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_image_url?: string | null
+          generated_prompt?: string
+          generation_status?: string
+          id?: string
+          is_shared?: boolean | null
+          personality_code?: string
+          processing_time_seconds?: number | null
+          quiz_session_id?: string | null
+          updated_at?: string | null
+          user_rating?: number | null
+          user_uploaded_image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_image_generations_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ai_image_generations_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

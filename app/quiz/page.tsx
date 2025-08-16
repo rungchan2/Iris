@@ -14,14 +14,8 @@ export default function QuizPage() {
   const router = useRouter();
   const [hasStarted, setHasStarted] = useState(false);
 
-  const handleQuizComplete = (personalityType: PersonalityType, scores: Record<PersonalityType, number>) => {
-    // 결과 페이지로 이동 (URL 파라미터로 데이터 전달)
-    const scoresParam = encodeURIComponent(JSON.stringify(scores));
-    router.push(`/quiz/result?type=${personalityType}&scores=${scoresParam}`);
-  };
-
   if (hasStarted) {
-    return <QuizFlow onComplete={handleQuizComplete} />;
+    return <QuizFlow />;
   }
 
   return (

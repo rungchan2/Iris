@@ -2,9 +2,9 @@ import { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
-    short_name: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
-    description: "촬영이 처음인 사람도, 전문 배우도 찍고 가는 개인맞춤형 프로필 사진",
+    name: "Iris | 나만의 성향을 찾아가는 포토 여정",
+    short_name: "Iris",
+    description: "AI 성향 진단으로 당신에게 딱 맞는 사진 스타일과 전문 작가를 추천해드립니다",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

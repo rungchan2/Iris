@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { QuizResult } from "@/components/quiz/quiz-result";
 import { personalityTypes, type PersonalityType } from "@/lib/quiz-data";
 import { motion } from "framer-motion";
 import { Brain } from "lucide-react";
 
-export default function QuizResultPage() {
+function QuizResultComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [personalityType, setPersonalityType] = useState<PersonalityType | null>(null);
@@ -97,5 +97,37 @@ export default function QuizResultPage() {
     return null;
   }
 
-  return <QuizResult personalityType={personalityType} scores={scores} />;
+  return <QuizResult personalityType={personalityType} scores={scores} sessionId="legacy" />;
+}
+
+export default function QuizResultPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center shadow-lg"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <Brain className="w-10 h-10 text-white" />
+          </motion.div>
+          
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            성향 분석 결과 로딩 중...
+          </h1>
+          <p className="text-gray-600">
+            잠시만 기다려주세요
+          </p>
+        </motion.div>
+      </div>
+    }>
+      <QuizResultComponent />
+    </Suspense>
+  );
 }

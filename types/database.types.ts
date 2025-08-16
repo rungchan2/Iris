@@ -1,258 +1,852 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
-      inquiries: {
+      admin_portfolio_photos: {
         Row: {
-          id: string
-          name: string
-          phone: string
-          instagram_id: string | null
-          gender: "male" | "female" | "other" | null
-          desired_date: string | null
-          selected_slot_id: string | null
-          people_count: number
-          relationship: string | null
-          current_mood_keywords: string[] | null
-          desired_mood_keywords: string[] | null
-          selected_category_id: string | null
-          selection_path: string[] | null
-          selection_history: Json | null
-          status: "new" | "contacted" | "completed"
-          created_at: string
-          special_request: string | null
-          difficulty_note: string | null
-          admin_notes: string | null
-        }
-        Insert: {
-          id?: string
-          name: string
-          phone: string
-          instagram_id?: string | null
-          gender?: "male" | "female" | "other" | null
-          desired_date?: string | null
-          selected_slot_id?: string | null
-          people_count: number
-          relationship?: string | null
-          current_mood_keywords?: string[] | null
-          desired_mood_keywords?: string[] | null
-          selected_category_id?: string | null
-          selection_path?: string[] | null
-          selection_history?: Json | null
-          status?: "new" | "contacted" | "completed"
-          created_at?: string
-          special_request?: string | null
-          difficulty_note?: string | null
-          admin_notes?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          phone?: string
-          instagram_id?: string | null
-          gender?: "male" | "female" | "other" | null
-          desired_date?: string | null
-          selected_slot_id?: string | null
-          people_count?: number
-          relationship?: string | null
-          current_mood_keywords?: string[] | null
-          desired_mood_keywords?: string[] | null
-          selected_category_id?: string | null
-          selection_path?: string[] | null
-          selection_history?: Json | null
-          status?: "new" | "contacted" | "completed"
-          created_at?: string
-          special_request?: string | null
-          difficulty_note?: string | null
-          admin_notes?: string | null
-        }
-      }
-      categories: {
-        Row: {
-          id: string
-          parent_id: string | null
-          name: string
-          depth: number
-          path: string
+          admin_id: string | null
+          created_at: string | null
+          description: string | null
           display_order: number
-          is_active: boolean
-          representative_image_url: string | null
-          representative_image_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          parent_id?: string | null
-          name: string
-          depth: number
-          path: string
-          display_order: number
-          is_active?: boolean
-          representative_image_url?: string | null
-          representative_image_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          parent_id?: string | null
-          name?: string
-          depth?: number
-          path?: string
-          display_order?: number
-          is_active?: boolean
-          representative_image_url?: string | null
-          representative_image_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      photos: {
-        Row: {
           id: string
-          filename: string
-          storage_url: string
+          is_public: boolean | null
+          is_representative: boolean | null
+          photo_url: string
+          style_tags: string[] | null
           thumbnail_url: string | null
-          width: number | null
-          height: number | null
-          size_kb: number | null
-          uploaded_by: string | null
-          is_active: boolean
-          created_at: string
+          title: string | null
+          updated_at: string | null
+          view_count: number | null
         }
         Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order: number
           id?: string
-          filename: string
-          storage_url: string
+          is_public?: boolean | null
+          is_representative?: boolean | null
+          photo_url: string
+          style_tags?: string[] | null
           thumbnail_url?: string | null
-          width?: number | null
-          height?: number | null
-          size_kb?: number | null
-          uploaded_by?: string | null
-          is_active?: boolean
-          created_at?: string
+          title?: string | null
+          updated_at?: string | null
+          view_count?: number | null
         }
         Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number
           id?: string
-          filename?: string
-          storage_url?: string
+          is_public?: boolean | null
+          is_representative?: boolean | null
+          photo_url?: string
+          style_tags?: string[] | null
           thumbnail_url?: string | null
-          width?: number | null
-          height?: number | null
-          size_kb?: number | null
-          uploaded_by?: string | null
-          is_active?: boolean
-          created_at?: string
+          title?: string | null
+          updated_at?: string | null
+          view_count?: number | null
         }
-      }
-      photo_categories: {
-        Row: {
-          id: string
-          photo_id: string
-          category_id: string
-        }
-        Insert: {
-          id?: string
-          photo_id: string
-          category_id: string
-        }
-        Update: {
-          id?: string
-          photo_id?: string
-          category_id?: string
-        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_portfolio_photos_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_users: {
         Row: {
-          id: string
+          created_at: string | null
           email: string
+          id: string
           name: string
-          created_at: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          id: string
+          created_at?: string | null
           email: string
+          id: string
           name: string
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
+          created_at?: string | null
           email?: string
+          id?: string
           name?: string
-          created_at?: string
-          updated_at?: string
+          updated_at?: string | null
         }
+        Relationships: []
+      }
+      ai_image_generations: {
+        Row: {
+          api_provider: string
+          api_request_payload: Json | null
+          api_response_data: Json | null
+          created_at: string | null
+          error_message: string | null
+          generated_image_url: string | null
+          generated_prompt: string
+          generation_status: string | null
+          id: string
+          is_shared: boolean | null
+          personality_code: string | null
+          processing_time_seconds: number | null
+          quiz_session_id: string | null
+          updated_at: string | null
+          user_rating: number | null
+          user_uploaded_image_url: string
+        }
+        Insert: {
+          api_provider: string
+          api_request_payload?: Json | null
+          api_response_data?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_image_url?: string | null
+          generated_prompt: string
+          generation_status?: string | null
+          id?: string
+          is_shared?: boolean | null
+          personality_code?: string | null
+          processing_time_seconds?: number | null
+          quiz_session_id?: string | null
+          updated_at?: string | null
+          user_rating?: number | null
+          user_uploaded_image_url: string
+        }
+        Update: {
+          api_provider?: string
+          api_request_payload?: Json | null
+          api_response_data?: Json | null
+          created_at?: string | null
+          error_message?: string | null
+          generated_image_url?: string | null
+          generated_prompt?: string
+          generation_status?: string | null
+          id?: string
+          is_shared?: boolean | null
+          personality_code?: string | null
+          processing_time_seconds?: number | null
+          quiz_session_id?: string | null
+          updated_at?: string | null
+          user_rating?: number | null
+          user_uploaded_image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_image_generations_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "ai_image_generations_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       available_slots: {
         Row: {
-          id: string
+          admin_id: string | null
+          created_at: string | null
           date: string
-          start_time: string
+          duration_minutes: number | null
           end_time: string
-          duration_minutes: number
-          max_bookings: number
-          current_bookings: number
-          is_available: boolean
-          admin_id: string
-          created_at: string
-          updated_at: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+          updated_at: string | null
         }
         Insert: {
-          id?: string
+          admin_id?: string | null
+          created_at?: string | null
           date: string
-          start_time: string
+          duration_minutes?: number | null
           end_time: string
-          duration_minutes: number
-          max_bookings: number
-          current_bookings?: number
-          is_available?: boolean
-          admin_id: string
-          created_at?: string
-          updated_at?: string
+          id?: string
+          is_available?: boolean | null
+          start_time: string
+          updated_at?: string | null
         }
         Update: {
-          id?: string
+          admin_id?: string | null
+          created_at?: string | null
           date?: string
-          start_time?: string
+          duration_minutes?: number | null
           end_time?: string
-          duration_minutes?: number
-          max_bookings?: number
-          current_bookings?: number
-          is_available?: boolean
-          admin_id?: string
-          created_at?: string
-          updated_at?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+          updated_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "available_slots_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      mood_keywords: {
+      categories: {
         Row: {
+          created_at: string | null
+          depth: number | null
+          display_order: number | null
           id: string
+          is_active: boolean | null
           name: string
-          type: "current" | "desired"
-          display_order: number
-          created_at: string
-          updated_at: string
+          parent_id: string | null
+          path: string | null
+          representative_image_id: string | null
+          representative_image_url: string | null
+          updated_at: string | null
         }
         Insert: {
+          created_at?: string | null
+          depth?: number | null
+          display_order?: number | null
           id?: string
+          is_active?: boolean | null
           name: string
-          type: "current" | "desired"
-          display_order?: number
-          created_at?: string
-          updated_at?: string
+          parent_id?: string | null
+          path?: string | null
+          representative_image_id?: string | null
+          representative_image_url?: string | null
+          updated_at?: string | null
         }
         Update: {
+          created_at?: string | null
+          depth?: number | null
+          display_order?: number | null
           id?: string
+          is_active?: boolean | null
           name?: string
-          type?: "current" | "desired"
-          display_order?: number
-          created_at?: string
-          updated_at?: string
+          parent_id?: string | null
+          path?: string | null
+          representative_image_id?: string | null
+          representative_image_url?: string | null
+          updated_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_representative_image_id_fkey"
+            columns: ["representative_image_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      choice_weights: {
+        Row: {
+          choice_id: string | null
+          created_at: string | null
+          id: string
+          personality_code: string | null
+          weight: number
+        }
+        Insert: {
+          choice_id?: string | null
+          created_at?: string | null
+          id?: string
+          personality_code?: string | null
+          weight: number
+        }
+        Update: {
+          choice_id?: string | null
+          created_at?: string | null
+          id?: string
+          personality_code?: string | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "choice_weights_choice_id_fkey"
+            columns: ["choice_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_choices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "choice_weights_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          admin_note: string | null
+          ai_generation_id: string | null
+          created_at: string | null
+          current_mood_keywords: string[] | null
+          desired_date: string | null
+          desired_mood_keywords: string[] | null
+          difficulty_note: string | null
+          gender: string | null
+          id: string
+          instagram_id: string | null
+          matched_admin_id: string | null
+          name: string
+          people_count: number | null
+          phone: string
+          quiz_session_id: string | null
+          relationship: string | null
+          selected_category_id: string | null
+          selected_personality_code: string | null
+          selected_slot_id: string | null
+          selection_history: Json | null
+          selection_path: string[] | null
+          special_request: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          ai_generation_id?: string | null
+          created_at?: string | null
+          current_mood_keywords?: string[] | null
+          desired_date?: string | null
+          desired_mood_keywords?: string[] | null
+          difficulty_note?: string | null
+          gender?: string | null
+          id?: string
+          instagram_id?: string | null
+          matched_admin_id?: string | null
+          name: string
+          people_count?: number | null
+          phone: string
+          quiz_session_id?: string | null
+          relationship?: string | null
+          selected_category_id?: string | null
+          selected_personality_code?: string | null
+          selected_slot_id?: string | null
+          selection_history?: Json | null
+          selection_path?: string[] | null
+          special_request?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          ai_generation_id?: string | null
+          created_at?: string | null
+          current_mood_keywords?: string[] | null
+          desired_date?: string | null
+          desired_mood_keywords?: string[] | null
+          difficulty_note?: string | null
+          gender?: string | null
+          id?: string
+          instagram_id?: string | null
+          matched_admin_id?: string | null
+          name?: string
+          people_count?: number | null
+          phone?: string
+          quiz_session_id?: string | null
+          relationship?: string | null
+          selected_category_id?: string | null
+          selected_personality_code?: string | null
+          selected_slot_id?: string | null
+          selection_history?: Json | null
+          selection_path?: string[] | null
+          special_request?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_ai_generation_id_fkey"
+            columns: ["ai_generation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_image_generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_matched_admin_id_fkey"
+            columns: ["matched_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_quiz_session_id_fkey"
+            columns: ["quiz_session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_selected_category_id_fkey"
+            columns: ["selected_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_selected_personality_code_fkey"
+            columns: ["selected_personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "inquiries_selected_slot_id_fkey"
+            columns: ["selected_slot_id"]
+            isOneToOne: false
+            referencedRelation: "available_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keywords: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      personality_admin_mapping: {
+        Row: {
+          admin_id: string | null
+          compatibility_score: number | null
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          notes: string | null
+          personality_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          compatibility_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          personality_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          compatibility_score?: number | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          personality_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personality_admin_mapping_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personality_admin_mapping_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      personality_photos: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_representative: boolean | null
+          personality_code: string | null
+          photo_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_representative?: boolean | null
+          personality_code?: string | null
+          photo_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_representative?: boolean | null
+          personality_code?: string | null
+          photo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personality_photos_personality_code_fkey"
+            columns: ["personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "personality_photos_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      personality_types: {
+        Row: {
+          ai_preview_prompt: string
+          code: string
+          created_at: string | null
+          description: string
+          display_order: number | null
+          example_person: string | null
+          is_active: boolean | null
+          name: string
+          recommended_locations: string[] | null
+          recommended_props: string[] | null
+          representative_image_url: string | null
+          style_keywords: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_preview_prompt: string
+          code: string
+          created_at?: string | null
+          description: string
+          display_order?: number | null
+          example_person?: string | null
+          is_active?: boolean | null
+          name: string
+          recommended_locations?: string[] | null
+          recommended_props?: string[] | null
+          representative_image_url?: string | null
+          style_keywords?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_preview_prompt?: string
+          code?: string
+          created_at?: string | null
+          description?: string
+          display_order?: number | null
+          example_person?: string | null
+          is_active?: boolean | null
+          name?: string
+          recommended_locations?: string[] | null
+          recommended_props?: string[] | null
+          representative_image_url?: string | null
+          style_keywords?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      photo_categories: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          photo_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          photo_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          photo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_categories_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photos: {
+        Row: {
+          created_at: string | null
+          filename: string
+          height: number | null
+          id: string
+          is_active: boolean | null
+          size_kb: number | null
+          storage_url: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          filename: string
+          height?: number | null
+          id?: string
+          is_active?: boolean | null
+          size_kb?: number | null
+          storage_url: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          filename?: string
+          height?: number | null
+          id?: string
+          is_active?: boolean | null
+          size_kb?: number | null
+          storage_url?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_choices: {
+        Row: {
+          choice_image_url: string | null
+          choice_text: string
+          created_at: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          question_id: string | null
+        }
+        Insert: {
+          choice_image_url?: string | null
+          choice_text: string
+          created_at?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean | null
+          question_id?: string | null
+        }
+        Update: {
+          choice_image_url?: string | null
+          choice_text?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_choices_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: string
+          is_active: boolean | null
+          part: string
+          question_image_url: string | null
+          question_text: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order: number
+          id?: string
+          is_active?: boolean | null
+          part: string
+          question_image_url?: string | null
+          question_text: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean | null
+          part?: string
+          question_image_url?: string | null
+          question_text?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quiz_responses: {
+        Row: {
+          choice_id: string | null
+          created_at: string | null
+          id: string
+          question_id: string | null
+          response_time_ms: number | null
+          session_id: string | null
+        }
+        Insert: {
+          choice_id?: string | null
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          response_time_ms?: number | null
+          session_id?: string | null
+        }
+        Update: {
+          choice_id?: string | null
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          response_time_ms?: number | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_responses_choice_id_fkey"
+            columns: ["choice_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_choices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_sessions: {
+        Row: {
+          calculated_personality_code: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          started_at: string
+          total_score_data: Json | null
+          user_agent: string | null
+          user_ip: unknown | null
+        }
+        Insert: {
+          calculated_personality_code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          started_at?: string
+          total_score_data?: Json | null
+          user_agent?: string | null
+          user_ip?: unknown | null
+        }
+        Update: {
+          calculated_personality_code?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          started_at?: string
+          total_score_data?: Json | null
+          user_agent?: string | null
+          user_ip?: unknown | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_sessions_calculated_personality_code_fkey"
+            columns: ["calculated_personality_code"]
+            isOneToOne: false
+            referencedRelation: "personality_types"
+            referencedColumns: ["code"]
+          },
+        ]
       }
     }
     Views: {
@@ -269,3 +863,126 @@ export interface Database {
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

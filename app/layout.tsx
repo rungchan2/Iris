@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
-  description: "촬영이 처음인 사람도, 전문 배우도 찍고 가는 개인맞춤형 프로필 사진",
+  title: "Iris | 나만의 성향을 찾아가는 포토 여정",
+  description: "AI 성향 진단으로 당신에게 딱 맞는 사진 스타일과 전문 작가를 추천해드립니다",
   icons: {
     icon: "/favicon.ico",
   },
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sunset Cinema | 일상을 영화처럼, 시네마틱 프로필",
-    description: "촬영이 처음인 사람도, 전문 배우도 찍고 가는 개인맞춤형 프로필 사진",
+    title: "Iris | 나만의 성향을 찾아가는 포토 여정",
+    description: "AI 성향 진단으로 당신에게 딱 맞는 사진 스타일과 전문 작가를 추천해드립니다",
     images: "/og-image.jpg",
   },
 };

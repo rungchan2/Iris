@@ -14,8 +14,8 @@ import { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "어드민 페이지 | Sunset Cinema",
-  description: "Sunset Cinema 어드민 페이지 입니다. 사용자 관리, 통계, 설정 등을 관리할 수 있습니다.",
+  title: "어드민 페이지 | Iris",
+  description: "Iris 어드민 페이지 입니다. 사용자 관리, 통계, 설정 등을 관리할 수 있습니다.",
 };
 
 export default async function AdminLayout({

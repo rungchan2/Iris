@@ -360,7 +360,7 @@ export function InquiryForm({
             </html>
           `;
 
-          sendEmail(EMAIL_TO, "[sunset-cinema] 새로운 문의가 접수되었습니다.", emailBody);
+          sendEmail(EMAIL_TO, "[Iris] 새로운 문의가 접수되었습니다.", emailBody);
 
           // 추가 데이터 조회하여 완전한 Inquiry 객체 구성
           let slotData = null;

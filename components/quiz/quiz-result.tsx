@@ -6,14 +6,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Download, Camera, Users, ArrowRight, Sparkles } from "lucide-react";
 import { personalityTypes, type PersonalityType } from "@/lib/quiz-data";
+import { AIImageGenerator } from "@/components/quiz/ai-image-generator";
+import { RecommendedGallery } from "@/components/quiz/recommended-gallery";
+import { ShareResult } from "@/components/quiz/share-result";
+import { RecommendedPhotographers } from "@/components/quiz/recommended-photographers";
 import Link from "next/link";
 
 interface QuizResultProps {
   personalityType: PersonalityType;
   scores: Record<PersonalityType, number>;
+  sessionId: string;
 }
 
-export function QuizResult({ personalityType, scores }: QuizResultProps) {
+export function QuizResult({ personalityType, scores, sessionId }: QuizResultProps) {
   const result = personalityTypes[personalityType];
   
   // 상위 3개 성격유형 (호환성 분석용)
@@ -153,68 +158,48 @@ export function QuizResult({ personalityType, scores }: QuizResultProps) {
           </div>
         </motion.section>
 
-        {/* AI Preview Section (Placeholder) */}
+        {/* Recommended Gallery Section */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">AI 이미지 미리보기</h2>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  당신의 성향에 맞는 AI 생성 이미지 미리보기 기능이 곧 제공됩니다.<br />
-                  현재는 전문 작가와의 매칭 서비스를 이용해보세요.
-                </p>
-                
-                <div className="bg-gray-100 rounded-lg p-12 mb-6">
-                  <div className="text-gray-400">
-                    <Camera className="w-16 h-16 mx-auto mb-4" />
-                    <p className="text-lg font-medium">AI 이미지 생성 예정</p>
-                    <p className="text-sm">성향별 맞춤 스타일 미리보기</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <RecommendedGallery personalityCode={personalityType} />
         </motion.section>
 
-        {/* Photographer Matching Section (Placeholder) */}
+        {/* AI Image Generation Section */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-green-500 to-teal-600 flex items-center justify-center shadow-lg">
-                  <Users className="w-8 h-8 text-white" />
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">추천 작가 매칭</h2>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  {result.name} 성향에 가장 잘 맞는 전문 작가들을 매칭해드립니다.<br />
-                  현재는 직접 예약 시스템을 통해 촬영을 예약해보세요.
-                </p>
-                
-                <div className="bg-gray-100 rounded-lg p-12 mb-6">
-                  <div className="text-gray-400">
-                    <Users className="w-16 h-16 mx-auto mb-4" />
-                    <p className="text-lg font-medium">작가 매칭 시스템 준비 중</p>
-                    <p className="text-sm">성향 호환성 기반 추천</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AIImageGenerator 
+            sessionId={sessionId} 
+            personalityCode={personalityType} 
+          />
+        </motion.section>
+
+        {/* Share Result Section */}
+        <motion.section
+          id="share-section"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <ShareResult personalityType={personalityType} sessionId={sessionId} />
+        </motion.section>
+
+        {/* Recommended Photographers Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <RecommendedPhotographers personalityCode={personalityType} />
         </motion.section>
 
         {/* Call to Action */}
@@ -248,6 +233,9 @@ export function QuizResult({ personalityType, scores }: QuizResultProps) {
                   variant="outline"
                   size="lg"
                   className="border-white text-white hover:bg-white/10 px-8 py-3"
+                  onClick={() => {
+                    document.getElementById('share-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 >
                   <Share2 className="mr-2 h-5 w-5" />
                   결과 공유하기

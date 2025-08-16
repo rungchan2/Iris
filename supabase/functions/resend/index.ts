@@ -52,10 +52,10 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: from || 'noreply@sunset-cinema.com',
+        from: from || 'noreply@iris-photo.com',
         to,
         subject: subject || '이메일 알림',
-        html: html || '<strong>sunset-cinema.com 에서 보낸 이메일입니다.</strong>',
+        html: html || '<strong>Iris 에서 보낸 이메일입니다.</strong>',
       }),
     });
 

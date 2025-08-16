@@ -16,8 +16,8 @@ interface SuccessScreenProps {
 export function SuccessScreen({ formData, onStartOver }: SuccessScreenProps) {
   const addToCalendar = () => {
     const date = formData.desired_date
-    const title = `Sunset Cinema - ${formData.name}`
-    const details = `Sunset Cinema for ${formData.name}.`
+    const title = `Iris - ${formData.name}`
+    const details = `Iris for ${formData.name}.`
 
     // Create start and end dates
     const startTime = formData.selected_slot_id?.start_time || '10:00'
