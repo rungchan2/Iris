@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar } from "lucide-react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3 } from "lucide-react"
 
 import {
   Sidebar,
@@ -40,6 +40,26 @@ const items = [
     title: "일정",
     url: "/admin/schedule",
     icon: Calendar,
+  },
+  {
+    title: "작가 관리",
+    url: "/admin/admin-users",
+    icon: Users,
+  },
+  {
+    title: "성격유형 매칭",
+    url: "/admin/personality-mapping",
+    icon: Target,
+  },
+  {
+    title: "통계 및 분석",
+    url: "/admin/analytics",
+    icon: BarChart3,
+  },
+  {
+    title: "성향 진단 관리",
+    url: "/admin/personality-management",
+    icon: Brain,
   },
   {
     title: "내 계정",

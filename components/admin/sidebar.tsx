@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Menu, X } from "lucide-react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Menu, X, Users, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -13,6 +13,8 @@ const navigation = [
   { name: "문의", href: "/admin", icon: Inbox },
   { name: "카테고리", href: "/admin/category", icon: FolderTree },
   { name: "사진", href: "/admin/photos", icon: ImageIcon },
+  { name: "일정 관리", href: "/admin/schedule", icon: Calendar },
+  { name: "작가 관리", href: "/admin/admin-users", icon: Users },
   { name: "내 계정", href: "/admin/my-account", icon: User },
 ]
 

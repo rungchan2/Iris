@@ -141,12 +141,12 @@ components/                   # Reusable UI components
 // Template for Server Actions
 'use server'
 
-import { createServerClient } from '@/lib/supabase/server'
+import { creatClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function actionName(formData: FormData) {
   try {
-    const supabase = createServerClient()
+    const supabase = await creatClient()
     
     // Validation
     const data = validateInput(formData)

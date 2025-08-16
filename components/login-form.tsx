@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { login } from "@/lib/login";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function LoginForm({
   className,
@@ -68,12 +69,12 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">비밀번호</Label>
-                  <a
-                    href="#"
+                  <Link
+                    href="/reset-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     비밀번호를 잊으셨나요?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="password"
