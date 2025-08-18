@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { UserManagement } from '@/components/admin/user-management'
 
 export const metadata: Metadata = {
-  title: '사용자 관리 - Photo4You',
+  title: '사용자 관리 - Iris',
   description: '관리자 및 작가 사용자 생성 및 관리',
 }
 

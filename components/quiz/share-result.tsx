@@ -130,7 +130,7 @@ export function ShareResult({ personalityType, sessionId }: ShareResultProps) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `photo4you-result-${personalityType}-${Date.now()}.png`;
+          link.download = `Iris-result-${personalityType}-${Date.now()}.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);

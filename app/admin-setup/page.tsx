@@ -130,7 +130,7 @@ export default function AdminSetupPage() {
               </div>
               <CardTitle className="text-2xl">시스템 초기화</CardTitle>
               <CardDescription>
-                Photo4You 시스템의 최초 Admin을 생성하세요.
+                Iris 시스템의 최초 Admin을 생성하세요.
               </CardDescription>
             </CardHeader>
             <CardContent>

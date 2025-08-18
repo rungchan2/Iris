@@ -1,8 +1,8 @@
-# Photo4You Development Guide
+# Iris Development Guide
 
 ## 🎯 Project Overview & Development Principles
 
-**Photo4You (Iris)** is a personality-based photo styling and photographer matching platform that transforms an existing photography booking system into a comprehensive personality-driven service. The development follows a **sequential, path-by-path approach** to ensure quality and maintainability.
+**Iris (Iris)** is a personality-based photo styling and photographer matching platform that transforms an existing photography booking system into a comprehensive personality-driven service. The development follows a **sequential, path-by-path approach** to ensure quality and maintainability.
 
 ### Core Development Philosophy
 
@@ -130,7 +130,7 @@ components/                   # Reusable UI components
 ## 🔐 RBAC (Role-Based Access Control) System
 
 ### Overview
-Photo4You implements a comprehensive RBAC system that separates users into distinct types with granular permission control. This ensures secure access management and scalable authorization.
+Iris implements a comprehensive RBAC system that separates users into distinct types with granular permission control. This ensures secure access management and scalable authorization.
 
 ### User Types & Roles
 1. **Super Admin** (`super_admin`): Full system access, user management
@@ -564,7 +564,7 @@ export async function actionName(formData: FormData) {
 
 ## 📝 Implementation Notes
 
-This guide ensures systematic, high-quality development of Photo4You's personality-based features while maintaining the stability of existing functionality. Each phase builds upon the previous one, creating a robust and scalable platform.
+This guide ensures systematic, high-quality development of Iris's personality-based features while maintaining the stability of existing functionality. Each phase builds upon the previous one, creating a robust and scalable platform.
 
 **Key Success Factors:**
 - Sequential development prevents feature conflicts

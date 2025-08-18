@@ -237,7 +237,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
             </html>
           `
 
-          sendEmail(EMAIL_TO, `[Photo4You] ${photographer.name} 작가 지정 문의가 접수되었습니다.`, emailBody)
+          sendEmail(EMAIL_TO, `[Iris] ${photographer.name} 작가 지정 문의가 접수되었습니다.`, emailBody)
 
           // 추가 데이터 조회하여 완전한 Inquiry 객체 구성
           let slotData = null

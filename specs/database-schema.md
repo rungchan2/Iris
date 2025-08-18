@@ -1,4 +1,4 @@
-# Database Schema - Photo4You (2025년 8월 최신)
+# Database Schema - Iris (2025년 8월 최신)
 
 ## 🏗️ 전체 DB 구조 개요
 

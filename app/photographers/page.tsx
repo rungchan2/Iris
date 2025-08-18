@@ -5,10 +5,10 @@ import { getPhotographers, getPersonalityTypes } from '@/lib/actions/photographe
 import { Skeleton } from '@/components/ui/skeleton'
 
 export const metadata: Metadata = {
-  title: '작가 목록 | Photo4You',
+  title: '작가 목록 | Iris',
   description: '나에게 맞는 사진작가를 찾아보세요. 성격유형별 맞춤 작가 추천.',
   openGraph: {
-    title: '작가 목록 | Photo4You',
+    title: '작가 목록 | Iris',
     description: '나에게 맞는 사진작가를 찾아보세요. 성격유형별 맞춤 작가 추천.',
   },
 }

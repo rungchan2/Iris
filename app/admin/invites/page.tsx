@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { InviteCodeManager } from '@/components/admin/invite-code-manager'
 
 export const metadata: Metadata = {
-  title: '초대 코드 관리 - Photo4You',
+  title: '초대 코드 관리 - Iris',
   description: '어드민 초대 코드 생성 및 관리',
 }
 

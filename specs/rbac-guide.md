@@ -13,7 +13,7 @@
 
 ## 🎯 Overview
 
-Photo4You implements a comprehensive Role-Based Access Control (RBAC) system that provides:
+Iris implements a comprehensive Role-Based Access Control (RBAC) system that provides:
 
 - **Granular Permission Control**: 15+ specific permissions across different system areas
 - **Type-Safe Implementation**: Full TypeScript integration with compile-time safety
@@ -920,4 +920,4 @@ const invalidateUserProfile = () => {
 
 ---
 
-**Note**: This RBAC system is designed for Photo4You's specific needs but can be adapted for other applications by modifying the permission matrix and user types in `lib/rbac/types.ts`.
+**Note**: This RBAC system is designed for Iris's specific needs but can be adapted for other applications by modifying the permission matrix and user types in `lib/rbac/types.ts`.

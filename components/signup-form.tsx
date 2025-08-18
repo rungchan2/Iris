@@ -772,7 +772,7 @@ export function SignupForm({
         <CardHeader>
           <CardTitle className="text-2xl">작가 회원가입</CardTitle>
           <CardDescription>
-            Photo4You 플랫폼에 작가로 등록하여 고객들과 만나보세요.
+            Iris 플랫폼에 작가로 등록하여 고객들과 만나보세요.
           </CardDescription>
           
           {/* 진행바 */}

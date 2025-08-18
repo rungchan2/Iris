@@ -34,7 +34,7 @@ export function PhotographersSection() {
         if (result.data) {
           // Get review stats for each photographer
           const photographersWithReviews = await Promise.all(
-            result.data.slice(0, 6).map(async (photographer) => {
+            result.data.slice(0, 3).map(async (photographer) => {
               try {
                 const reviewStats = await getReviewStats(photographer.id);
                 return {
@@ -99,10 +99,10 @@ export function PhotographersSection() {
             <Users className="w-4 h-4" />
             전문 작가진
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            {photographers.length}+ 명의 전문 작가가
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+            우리 작가들을 
             <br />
-            <span className="text-orange-600">당신을 기다리고 있습니다</span>
+            <span className="text-orange-600">소개합니다</span>
           </h2>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
             각각의 독특한 스타일과 전문성을 가진 작가들이 
@@ -183,6 +183,14 @@ export function PhotographersSection() {
                     </div>
 
                     {/* View portfolio button */}
+                    <Link href={`/photographers/${photographer.id}`}>
+                      <Button 
+                        variant="default" 
+                        className="w-full bg-orange-500 text-white hover:bg-orange-600 border border-orange-500 shine-effect"
+                      >
+                        1분 자기소개 영상 보기
+                      </Button>
+                    </Link>
                     <Link href={`/photographers/${photographer.id}`}>
                       <Button 
                         variant="outline" 

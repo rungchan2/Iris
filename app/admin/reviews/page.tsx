@@ -233,6 +233,6 @@ export default function ReviewsPage() {
 }
 
 export const metadata = {
-  title: "리뷰 관리 - Photo4You Admin",
+  title: "리뷰 관리 - Iris Admin",
   description: "고객 리뷰를 관리하고 새로운 리뷰 링크를 생성하세요.",
 };

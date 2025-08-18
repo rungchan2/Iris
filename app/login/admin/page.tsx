@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = {
-  title: '관리자 회원가입 - Photo4You',
+  title: '관리자 회원가입 - Iris',
   description: '초대 코드를 통한 관리자 회원가입',
 }
 

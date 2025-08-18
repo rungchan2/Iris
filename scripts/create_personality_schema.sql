@@ -1,4 +1,4 @@
--- Photo4You Personality System Database Schema
+-- Iris Personality System Database Schema
 -- This script creates all necessary tables for the personality assessment system
 
 -- Drop existing tables if they exist (for development)

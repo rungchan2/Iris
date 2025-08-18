@@ -1,4 +1,4 @@
-# Features & Migration Strategy - Photo4You
+# Features & Migration Strategy - Iris
 
 ## 🔄 기존 sunset-cinema 프로젝트 활용 전략
 

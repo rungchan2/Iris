@@ -1,9 +1,9 @@
-# Implementation Guide - Photo4You (Based on sunset-cinema)
+# Implementation Guide - Iris (Based on sunset-cinema)
 
 ## 🔄 기존 프로젝트 기반 확장 전략
 
 ### 기존 sunset-cinema 프로젝트 분석
-**sunset-cinema**는 이미 Photo4You에 필요한 핵심 인프라를 갖추고 있습니다:
+**sunset-cinema**는 이미 Iris에 필요한 핵심 인프라를 갖추고 있습니다:
 
 #### ✅ 활용 가능한 기존 기능들
 - **Next.js 14+ App Router** 구조
@@ -28,8 +28,8 @@
 #### 1.1 프로젝트 Fork 및 Clone
 ```bash
 # GitHub에서 sunset-cinema를 Fork한 후
-git clone https://github.com/your-username/photo4you.git
-cd photo4you
+git clone https://github.com/your-username/Iris.git
+cd Iris
 
 # 원본 저장소를 upstream으로 추가
 git remote add upstream https://github.com/rungchan2/sunset-cinema.git
@@ -43,13 +43,13 @@ npm audit fix
 ```bash
 # package.json 수정
 {
-  "name": "photo4you",
+  "name": "Iris",
   "description": "스냅 성향 진단 & 작가 매칭 플랫폼",
   "version": "1.0.0"
 }
 
 # README.md 업데이트
-# 기존 sunset-cinema 설명을 Photo4You로 변경
+# 기존 sunset-cinema 설명을 Iris로 변경
 ```
 
 #### 1.3 추가 패키지 설치
@@ -684,7 +684,7 @@ vercel --prod
 - AI 이미지 생성으로 인한 서버 부하 모니터링
 - 기존 성능 지표 유지 확인
 
-이 가이드를 통해 기존 sunset-cinema 프로젝트를 안정적으로 Photo4You로 확장할 수 있습니다. 기존의 검증된 시스템을 최대한 활용하면서 새로운 기능을 점진적으로 추가하는 방식으로 리스크를 최소화합니다.# Implementation Guide - Photo4You
+이 가이드를 통해 기존 sunset-cinema 프로젝트를 안정적으로 Iris로 확장할 수 있습니다. 기존의 검증된 시스템을 최대한 활용하면서 새로운 기능을 점진적으로 추가하는 방식으로 리스크를 최소화합니다.# Implementation Guide - Iris
 
 ## 🏗️ 개발 순서 및 구현 가이드
 
@@ -693,9 +693,9 @@ vercel --prod
 #### 1.1 Next.js 프로젝트 초기화
 ```bash
 # Next.js 프로젝트 생성
-npx create-next-app@latest photo4you --typescript --tailwind --eslint --app --src-dir
+npx create-next-app@latest Iris --typescript --tailwind --eslint --app --src-dir
 
-cd photo4you
+cd Iris
 
 # 필수 패키지 설치
 npm install @supabase/supabase-js @supabase/auth-helpers-nextjs
@@ -1063,7 +1063,7 @@ import { memo, useMemo, useCallback } from 'react'
 ```typescript
 // app/layout.tsx 또는 개별 페이지에서
 export const metadata: Metadata = {
-  title: 'Photo4You - 성향 진단 기반 스냅 사진 플랫폼',
+  title: 'Iris - 성향 진단 기반 스냅 사진 플랫폼',
   description: '나만의 사진 스타일을 찾고 완벽한 작가와 매칭되세요',
   // ... 기타 메타데이터
 }
@@ -1171,4 +1171,4 @@ export function reportWebVitals(metric: NextWebVitalsMetric) {
 - 오프라인 상황 고려
 - 접근성 가이드라인 준수
 
-이 가이드를 따라 단계적으로 구현하면 안정적이고 확장 가능한 Photo4You 플랫
+이 가이드를 따라 단계적으로 구현하면 안정적이고 확장 가능한 Iris 플랫

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Photo4You (Iris)** is a personality-based photo styling and photographer matching platform built on Next.js. It transforms from the existing `sunset-cinema` project into a comprehensive system that:
+**Iris (Iris)** is a personality-based photo styling and photographer matching platform built on Next.js. It transforms from the existing `sunset-cinema` project into a comprehensive system that:
 
 1. **Personality Diagnosis**: 21-question psychological assessment determining one of 9 personality types
 2. **AI Image Generation**: Creates style previews based on user photos and personality
@@ -189,7 +189,7 @@ NEXT_PUBLIC_APP_URL=
 
 ## Migration Context
 
-This project evolved from `sunset-cinema` (film photography booking) to Photo4You (personality-based matching). Key migration points:
+This project evolved from `sunset-cinema` (film photography booking) to Iris (personality-based matching). Key migration points:
 
 - **Preserved**: Booking system, admin dashboard, photo management
 - **Extended**: Database schema for personality features

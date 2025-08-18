@@ -42,12 +42,7 @@ export function LandingHeroSection() {
         >
           작가 목록
         </Link>
-        <Link
-          href="/booking"
-          className="text-gray-700 text-sm hover:text-orange-600 hover:underline hover:underline-offset-4 transition-all duration-200"
-        >
-          직접 예약하기
-        </Link>
+        
         <a
           href="https://www.instagram.com/sunset_cinematic/"
           target="_blank"
@@ -75,25 +70,25 @@ export function LandingHeroSection() {
         >
           <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
-            새롭게 출시된 성향 진단 서비스
+          맞춤형 촬영 예약 플랫폼
           </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-20">
             촬영 전부터 확신이 드는,
             <br />
             <span className="text-orange-600">나만의 사진 작가를 추천합니다</span>
           </h1>
         </motion.div>
 
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed"
         >
-          촬영 전부터 확신이 드는,
+          All-In-One
           <br className="hidden md:block" />
-          나만의 사진 작가를 추천합니다.
-        </motion.div>
+          나에게 가장 잘 어울리는 작가를 추천합니다
+        </motion.div> */}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -128,22 +123,20 @@ export function LandingHeroSection() {
           transition={{ duration: 0.8, delay: 0.9 }}
           className="flex flex-wrap justify-center gap-6 md:gap-12 mt-16 text-sm text-gray-500"
         >
+          
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">9</div>
-            <div>가지 성격유형</div>
+            <div className="text-2xl font-bold text-gray-900">All-In-One</div>
+            <div>예약부터 촬영까지</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">21</div>
-            <div>개 진단 질문</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">AI</div>
-            <div>이미지 미리보기</div>
+            <div className="text-2xl font-bold text-gray-900">Friendly</div>
+            <div>걱정없이 손쉽게</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900">1:1</div>
             <div>맞춤 작가 매칭</div>
           </div>
+          
         </motion.div>
       </div>
 

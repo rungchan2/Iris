@@ -68,7 +68,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Photo4You 리뷰 작성
+              Iris 리뷰 작성
             </h1>
             <p className="text-gray-600">
               촬영 경험을 공유하고 다른 고객들에게 도움을 주세요
@@ -124,7 +124,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
             리뷰 작성에 문제가 있으시면{" "}
-            <a href="mailto:support@photo4you.com" className="text-orange-600 hover:underline">
+            <a href="mailto:support@Iris.com" className="text-orange-600 hover:underline">
               고객센터
             </a>로 연락해주세요.
           </p>
@@ -142,15 +142,15 @@ export async function generateMetadata({ params }: ReviewPageProps) {
   
   if (result.error || !result.data) {
     return {
-      title: "리뷰 작성 - Photo4You",
-      description: "Photo4You 촬영 후기를 작성해주세요.",
+      title: "리뷰 작성 - Iris",
+      description: "Iris 촬영 후기를 작성해주세요.",
     };
   }
 
   const photographer = result.data.inquiries?.photographers;
   
   return {
-    title: `${photographer?.name || "작가"}님 촬영 후기 작성 - Photo4You`,
+    title: `${photographer?.name || "작가"}님 촬영 후기 작성 - Iris`,
     description: `${photographer?.name || "작가"}님과의 촬영 경험을 공유하고 다른 고객들에게 도움을 주세요.`,
     robots: {
       index: false, // 개별 리뷰 작성 페이지는 검색 노출하지 않음
