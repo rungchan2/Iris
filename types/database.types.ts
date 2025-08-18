@@ -12,8 +12,84 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      admin_invite_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          expires_at: string
+          id: string
+          notes: string | null
+          role: string | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_invite_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_invite_codes_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_portfolio_photos: {
         Row: {
           admin_id: string | null
@@ -65,34 +141,10 @@ export type Database = {
             foreignKeyName: "admin_portfolio_photos_admin_id_fkey"
             columns: ["admin_id"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "photographers"
             referencedColumns: ["id"]
           },
         ]
-      }
-      admin_users: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       ai_image_generations: {
         Row: {
@@ -205,7 +257,7 @@ export type Database = {
             foreignKeyName: "available_slots_admin_id_fkey"
             columns: ["admin_id"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "photographers"
             referencedColumns: ["id"]
           },
         ]
@@ -397,7 +449,7 @@ export type Database = {
             foreignKeyName: "inquiries_matched_admin_id_fkey"
             columns: ["matched_admin_id"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "photographers"
             referencedColumns: ["id"]
           },
           {
@@ -493,7 +545,7 @@ export type Database = {
             foreignKeyName: "personality_admin_mapping_admin_id_fkey"
             columns: ["admin_id"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "photographers"
             referencedColumns: ["id"]
           },
           {
@@ -631,6 +683,93 @@ export type Database = {
           },
         ]
       }
+      photographers: {
+        Row: {
+          age_range: string | null
+          application_status: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          bio: string | null
+          birth_year: number | null
+          created_at: string | null
+          email: string | null
+          equipment_info: string | null
+          gender: string | null
+          id: string
+          instagram_handle: string | null
+          name: string | null
+          phone: string | null
+          portfolio_submitted_at: string | null
+          price_description: string | null
+          price_range_max: number | null
+          price_range_min: number | null
+          profile_completed: boolean | null
+          rejection_reason: string | null
+          specialties: string[] | null
+          studio_location: string | null
+          updated_at: string | null
+          website_url: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          age_range?: string | null
+          application_status?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string | null
+          email?: string | null
+          equipment_info?: string | null
+          gender?: string | null
+          id: string
+          instagram_handle?: string | null
+          name?: string | null
+          phone?: string | null
+          portfolio_submitted_at?: string | null
+          price_description?: string | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          profile_completed?: boolean | null
+          rejection_reason?: string | null
+          specialties?: string[] | null
+          studio_location?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          age_range?: string | null
+          application_status?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          bio?: string | null
+          birth_year?: number | null
+          created_at?: string | null
+          email?: string | null
+          equipment_info?: string | null
+          gender?: string | null
+          id?: string
+          instagram_handle?: string | null
+          name?: string | null
+          phone?: string | null
+          portfolio_submitted_at?: string | null
+          price_description?: string | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          profile_completed?: boolean | null
+          rejection_reason?: string | null
+          specialties?: string[] | null
+          studio_location?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           created_at: string | null
@@ -676,7 +815,7 @@ export type Database = {
             foreignKeyName: "photos_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
-            referencedRelation: "admin_users"
+            referencedRelation: "photographers"
             referencedColumns: ["id"]
           },
         ]
@@ -848,6 +987,62 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          inquiry_id: string | null
+          is_anonymous: boolean | null
+          is_public: boolean | null
+          is_submitted: boolean | null
+          photos: string[] | null
+          rating: number | null
+          review_token: string
+          reviewer_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          is_anonymous?: boolean | null
+          is_public?: boolean | null
+          is_submitted?: boolean | null
+          photos?: string[] | null
+          rating?: number | null
+          review_token?: string
+          reviewer_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          is_anonymous?: boolean | null
+          is_public?: boolean | null
+          is_submitted?: boolean | null
+          photos?: string[] | null
+          rating?: number | null
+          review_token?: string
+          reviewer_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -982,6 +1177,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

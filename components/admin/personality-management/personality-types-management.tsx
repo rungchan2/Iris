@@ -41,7 +41,21 @@ export function PersonalityTypesManagement() {
       try {
         const result = await getAllPersonalityDetails();
         if (result.success && result.personalityTypes) {
-          setPersonalityTypes(result.personalityTypes);
+          setPersonalityTypes(result.personalityTypes.map(type => ({
+            code: type.code,
+            name: type.name,
+            description: type.description || '',
+            example_person: type.example_person || '',
+            representative_image_url: '/placeholder-personality.jpg', // Use placeholder for now
+            style_keywords: [], // Will be populated when database schema is extended
+            recommended_locations: [], // Will be populated when database schema is extended
+            recommended_props: [], // Will be populated when database schema is extended
+            ai_preview_prompt: type.ai_preview_prompt || '',
+            display_order: type.display_order || 0,
+            is_active: type.is_active ?? true,
+            created_at: type.created_at || new Date().toISOString(),
+            updated_at: type.updated_at || new Date().toISOString()
+          })));
         }
       } catch (error) {
         console.error("Error loading personality types:", error);

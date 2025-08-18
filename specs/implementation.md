@@ -11,7 +11,7 @@
 - **shadcn/ui 디자인 시스템**
 - **카테고리 기반 사진 관리 시스템**
 - **문의/예약 시스템 (inquiries, available_slots)**
-- **관리자 시스템 (admin_users)**
+- **관리자 시스템 (photographers)**
 - **사진 업로드/관리 (photos, photo_categories)**
 - **반응형 UI 컴포넌트들**
 
@@ -87,7 +87,7 @@ RUNWAY_API_KEY=your_runway_api_key
 #### 2.2 새로운 테이블 추가 (기존 테이블 유지)
 ```sql
 -- Supabase SQL Editor에서 실행
--- 기존 테이블들 (admin_users, categories, photos, inquiries 등)은 그대로 유지
+-- 기존 테이블들 (photographers, categories, photos, inquiries 등)은 그대로 유지
 -- 새로운 성향 진단 관련 테이블들만 추가
 
 -- 이미 제공된 스키마에서 다음 테이블들 추가:
@@ -117,7 +117,7 @@ export interface Database {
   public: {
     Tables: {
       // 기존 테이블들 유지
-      admin_users: { ... }
+      photographers: { ... }
       categories: { ... }
       photos: { ... }
       inquiries: { ... }
@@ -348,7 +348,7 @@ export const getRecommendedPhotographers = async (personalityCode: string) => {
     .select(`
       compatibility_score,
       is_primary,
-      admin_users (
+      photographers (
         id,
         name,
         email
@@ -447,7 +447,48 @@ export default function PersonalityMappingPage() {
 **참고 문서**:
 - [Supabase Multi-table Queries](https://supabase.com/docs/guides/database/joins-and-nesting)
 
-### Phase 8: UI/UX 개선 및 통합 (2일)
+### Phase 8: 리뷰 시스템 구현 (2일)
+
+#### 8.1 데이터베이스 스키마 추가
+```sql
+-- reviews 테이블 생성
+CREATE TABLE reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  inquiry_id UUID REFERENCES inquiries(id) ON DELETE CASCADE,
+  review_token UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+  reviewer_name VARCHAR(100),
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  photos TEXT[],
+  is_public BOOLEAN DEFAULT true,
+  is_anonymous BOOLEAN DEFAULT false,
+  is_submitted BOOLEAN DEFAULT false,
+  expires_at TIMESTAMP DEFAULT (NOW() + INTERVAL '30 days'),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 8.2 Server Actions 구현
+```typescript
+// lib/actions/reviews.ts
+- generateReviewLink(inquiryId) - 리뷰 링크 생성
+- getReviewByToken(token) - 토큰으로 리뷰 조회
+- submitReview(token, data) - 리뷰 제출
+- getReviewStats(photographerId) - 통계 조회
+```
+
+#### 8.3 리뷰 페이지 구현
+- `/review/[token]` - 익명 리뷰 작성 페이지
+- `/admin/reviews` - 작가용 리뷰 관리
+- `/reviews` - 공개 리뷰 갤러리
+
+#### 8.4 컴포넌트 개발
+- `StarRating` - 별점 입력 컴포넌트
+- `ReviewForm` - 리뷰 작성 폼
+- `ReviewManagement` - 리뷰 관리 UI
+
+### Phase 9: UI/UX 개선 및 통합 (2일)
 
 #### 8.1 기존 디자인 시스템 확장
 ```typescript
@@ -512,7 +553,7 @@ const navigationItems = [
 ]
 ```
 
-### Phase 9: 실시간 기능 및 최적화 (1일)
+### Phase 10: 실시간 기능 및 최적화 (1일)
 
 #### 9.1 기존 실시간 기능 확장
 ```typescript
@@ -570,7 +611,7 @@ const nextConfig = {
 }
 ```
 
-### Phase 10: 테스팅 및 배포 (1일)
+### Phase 11: 테스팅 및 배포 (1일)
 
 #### 10.1 기존 테스트 유지 및 확장
 ```bash

@@ -16,7 +16,7 @@ export default async function SchedulePage() {
   }
 
   // Check if user is admin
-  const { data: adminUser } = await supabase.from("admin_users").select("*").eq("id", session.user.id).single()
+  const { data: adminUser } = await supabase.from("photographers").select("*").eq("id", session.user.id).single()
 
   if (!adminUser) {
     redirect("/unauthorized")

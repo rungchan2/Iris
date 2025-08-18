@@ -17,6 +17,11 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
   const searchParams = useSearchParams()
   const supabase = createClient()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Client-side sorting for booking_date to handle nulls properly
   const sortField = searchParams.get('sortField')
@@ -36,11 +41,12 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
       if (!aDate) return 1
       if (!bDate) return -1
       
-      // Compare dates
+      // Compare dates only when mounted
+      if (!mounted) return 0
       const comparison = new Date(aDate).getTime() - new Date(bDate).getTime()
       return sortOrder === 'asc' ? comparison : -comparison
     })
-  }, [inquiries, sortField, sortOrder])
+  }, [inquiries, sortField, sortOrder, mounted])
 
   const handleSort = (field: string) => {
     const params = new URLSearchParams(searchParams)
@@ -172,11 +178,13 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {inquiry.selected_slot_id ? 
-                    formatDate(inquiry.selected_slot_id.date + " " + inquiry.selected_slot_id.start_time) : 
+                    (mounted ? formatDate(inquiry.selected_slot_id.date + " " + inquiry.selected_slot_id.start_time) : inquiry.selected_slot_id.date + " " + inquiry.selected_slot_id.start_time) : 
                     <span className="text-muted-foreground">미정</span>
                   }
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{formatDate(inquiry.created_at)}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {mounted ? formatDate(inquiry.created_at) : inquiry.created_at}
+                </TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/inquiry/${inquiry.id}`}>
                     <Button size="sm" variant="ghost">

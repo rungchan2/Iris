@@ -1,7 +1,8 @@
 "use client"
 
 import type * as React from "react"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3, UserPlus, MessageSquare } from "lucide-react"
 
 import {
   Sidebar,
@@ -42,9 +43,14 @@ const items = [
     icon: Calendar,
   },
   {
-    title: "작가 관리",
-    url: "/admin/admin-users",
+    title: "사용자 관리",
+    url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "초대 코드",
+    url: "/admin/invites",
+    icon: UserPlus,
   },
   {
     title: "성격유형 매칭",
@@ -60,6 +66,11 @@ const items = [
     title: "성향 진단 관리",
     url: "/admin/personality-management",
     icon: Brain,
+  },
+  {
+    title: "리뷰 관리",
+    url: "/admin/reviews",
+    icon: MessageSquare,
   },
   {
     title: "내 계정",
@@ -80,6 +91,11 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -111,7 +127,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = pathname === item.url || (item.url !== "/admin" && pathname.startsWith(item.url))
+                const isActive = mounted ? (pathname === item.url || (item.url !== "/admin" && pathname.startsWith(item.url))) : false
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive}>

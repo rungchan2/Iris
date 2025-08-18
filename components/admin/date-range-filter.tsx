@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 import { DateRange } from "react-day-picker"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Button } from "@/components/ui/button"
@@ -9,16 +10,23 @@ import { X } from "lucide-react"
 export function DateRangeFilter() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const fromDate = searchParams.get('bookingFrom')
   const toDate = searchParams.get('bookingTo')
   
-  const dateRange: DateRange | undefined = fromDate || toDate ? {
+  const dateRange: DateRange | undefined = mounted && (fromDate || toDate) ? {
     from: fromDate ? new Date(fromDate + 'T00:00:00') : undefined,
     to: toDate ? new Date(toDate + 'T00:00:00') : undefined,
   } : undefined
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (!mounted) return
+    
     const params = new URLSearchParams(searchParams)
     
     if (range?.from) {

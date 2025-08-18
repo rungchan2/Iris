@@ -30,7 +30,8 @@ export default async function PhotosPage({
       <PhotoManager
         categories={categories?.map(cat => ({
           ...cat,
-          path: cat.path || ''
+          path: cat.path || '',
+          is_active: cat.is_active ?? true
         })) || []}
         userId={user?.id || ""}
         initialPage={Number.parseInt(params.page || "1")}

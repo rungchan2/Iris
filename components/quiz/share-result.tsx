@@ -64,7 +64,7 @@ export function ShareResult({ personalityType, sessionId }: ShareResultProps) {
         content: {
           title: `나의 사진 성향: ${result.name}`,
           description: result.description,
-          imageUrl: result.representativeImageUrl || `${window.location.origin}/og-image.jpg`,
+          imageUrl: `${window.location.origin}/og-image.jpg`, // Use default for now
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl,

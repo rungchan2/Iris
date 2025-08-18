@@ -4,20 +4,22 @@ import { BookingConfirmation } from "@/components/booking/booking-confirmation";
 import { getInquiryById } from "@/lib/actions/code";
 
 interface BookingConfirmationPageProps {
-  params: {
+  params: Promise<{
     inquiryId: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: BookingConfirmationPageProps): Promise<Metadata> {
+  const { inquiryId } = await params;
   return {
-    title: `예약 확인 #${params.inquiryId} - Iris`,
+    title: `예약 확인 #${inquiryId} - Iris`,
     description: "예약 상세 정보를 확인하고 촬영 준비 사항을 안내받으세요.",
   };
 }
 
 export default async function BookingConfirmationPage({ params }: BookingConfirmationPageProps) {
-  const inquiryResult = await getInquiryById(params.inquiryId);
+  const { inquiryId } = await params;
+  const inquiryResult = await getInquiryById(inquiryId);
   
   if (!inquiryResult.success || !inquiryResult.inquiry) {
     notFound();

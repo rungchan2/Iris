@@ -184,7 +184,7 @@ export function InquiryDetailsWithCapture({
 
                   <div>
                     <p className="text-sm font-medium text-gray-500">담당 작가</p>
-                    <p className="text-lg font-semibold">{inquiry.available_slots.admin_users?.name}</p>
+                    <p className="text-lg font-semibold">{inquiry.available_slots.photographers?.name}</p>
                   </div>
                 </CardContent>
               </Card>

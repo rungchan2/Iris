@@ -113,7 +113,7 @@ CREATE TABLE ai_image_generations (
 CREATE TABLE personality_admin_mapping (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     personality_code VARCHAR(10) NOT NULL REFERENCES personality_types(code) ON DELETE CASCADE,
-    admin_id UUID NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+    admin_id UUID NOT NULL REFERENCES photographers(id) ON DELETE CASCADE,
     compatibility_score INTEGER NOT NULL CHECK (compatibility_score >= 1 AND compatibility_score <= 10),
     notes TEXT,
     is_primary BOOLEAN DEFAULT false,
@@ -181,7 +181,7 @@ CREATE POLICY "Admin full access" ON personality_photos FOR ALL USING (auth.role
 -- Update inquiries table to add personality-related columns
 ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS quiz_session_id UUID REFERENCES quiz_sessions(id);
 ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS selected_personality_code VARCHAR(10) REFERENCES personality_types(code);
-ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS matched_admin_id UUID REFERENCES admin_users(id);
+ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS matched_admin_id UUID REFERENCES photographers(id);
 ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS ai_generation_id UUID REFERENCES ai_image_generations(id);
 
 -- Create updated_at trigger function

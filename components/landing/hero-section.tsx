@@ -78,9 +78,9 @@ export function LandingHeroSection() {
             새롭게 출시된 성향 진단 서비스
           </div>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-4">
-            나만의 성향을 찾아가는
+            촬영 전부터 확신이 드는,
             <br />
-            <span className="text-orange-600">포토 여정</span>
+            <span className="text-orange-600">나만의 사진 작가를 추천합니다</span>
           </h1>
         </motion.div>
 
@@ -90,9 +90,9 @@ export function LandingHeroSection() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed"
         >
-          21가지 질문으로 당신의 사진 성향을 진단하고,
+          촬영 전부터 확신이 드는,
           <br className="hidden md:block" />
-          AI가 제안하는 미리보기를 통해 완벽한 작가를 매칭해드립니다.
+          나만의 사진 작가를 추천합니다.
         </motion.div>
 
         <motion.div
@@ -110,14 +110,15 @@ export function LandingHeroSection() {
               성향 진단 시작하기
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={scrollToFeatures}
-            className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-orange-200 text-orange-600 hover:bg-orange-50 transition-all duration-200"
-          >
-            바로 예약하기
-          </Button>
+          <Link href="/photographers">
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-8 py-4 text-lg font-semibold rounded-lg border-2 border-orange-200 text-orange-600 hover:bg-orange-50 transition-all duration-200"
+            >
+              바로 예약하기
+            </Button>
+          </Link>
         </motion.div>
 
         {/* Stats */}

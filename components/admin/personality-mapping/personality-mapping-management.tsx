@@ -46,6 +46,11 @@ export function PersonalityMappingManagement() {
   const [error, setError] = useState<string | null>(null);
   const [editingMapping, setEditingMapping] = useState<PersonalityMapping | null>(null);
   const [selectedAdmin, setSelectedAdmin] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 성격유형별 아이콘 매핑
   const getPersonalityIcon = (code: string) => {
@@ -335,15 +340,19 @@ export function PersonalityMappingManagement() {
                       variant="outline"
                       onClick={() => {
                         // 새로운 매칭 추가
-                        setEditingMapping({
-                          id: '',
-                          admin_id: adminId,
-                          admin_name: admin.admin_name,
-                          personality_type_code: 'A1',
-                          compatibility_score: 50,
-                          is_primary: false,
-                          notes: ''
-                        });
+                        if (mounted) {
+                          setEditingMapping({
+                            id: '',
+                            admin_id: adminId,
+                            admin_name: admin.admin_name,
+                            personality_type_code: 'A1',
+                            compatibility_score: 50,
+                            is_primary: false,
+                            notes: '',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                          });
+                        }
                       }}
                     >
                       <Plus className="h-3 w-3 mr-1" />

@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { login } from "@/lib/login";
+import { loginWithUserType } from "@/lib/login";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -31,15 +31,19 @@ export function LoginForm({
     setIsLoading(true);
     setError("");
 
-    const { data, error } = await login(email, password);
-    if (error) {
-      setError("로그인에 실패했습니다. 다시 시도해주세요.");
+    const result = await loginWithUserType(email, password);
+    
+    if (result.error) {
+      setError(result.error.message || "로그인에 실패했습니다. 다시 시도해주세요.");
       setIsLoading(false);
       return;
     }
 
-    if (data.user) {
-      router.push("/admin");
+    if (result.data?.user && result.redirectPath) {
+      router.push(result.redirectPath);
+    } else {
+      setError("로그인 후 이동할 페이지를 찾을 수 없습니다.");
+      setIsLoading(false);
     }
   };
 

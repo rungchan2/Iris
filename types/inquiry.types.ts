@@ -70,7 +70,7 @@ export interface AvailableSlot {
   current_bookings: number
   is_available: boolean
   admin_id: string
-  admin_users?: {
+  photographers?: {
     name: string
     email: string
   }

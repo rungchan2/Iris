@@ -23,7 +23,7 @@ interface AvailableSlot {
   duration_minutes: number;
   is_available: boolean;
   admin_id: string;
-  admin_users: {
+  photographers: {
     name: string;
     email: string;
   };
@@ -65,7 +65,7 @@ export function TimeSlotSelector({
           .select(
             `
             *,
-            admin_users (
+            photographers (
               name,
               email
             )
@@ -178,7 +178,7 @@ export function TimeSlotSelector({
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  작가: {slot.admin_users.name}
+                  작가: {slot.photographers.name}
                 </div>
 
                 <Badge variant="secondary" className="text-xs">
@@ -204,7 +204,7 @@ export function TimeSlotSelector({
               </div>
 
               <div className="text-xs text-muted-foreground">
-                작가: {slot.admin_users.name}
+                작가: {slot.photographers.name}
               </div>
 
               <div className="flex items-center justify-center gap-2">

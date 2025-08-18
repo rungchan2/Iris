@@ -47,7 +47,7 @@ export async function getAllAdminUsersWithStats(
     
     // 기본 쿼리 설정
     let query = supabase
-      .from('admin_users')
+      .from('photographers')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * limit, (page + 1) * limit - 1)
@@ -118,12 +118,12 @@ export async function getAllAdminUsersWithStats(
           id: user.id,
           name: user.name,
           email: user.email,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          approval_status: user.approval_status || 'pending',
-          approved_by: user.approved_by,
-          approved_at: user.approved_at,
-          rejection_reason: user.rejection_reason,
+          created_at: user.created_at || new Date().toISOString(),
+          updated_at: user.updated_at || new Date().toISOString(),
+          approval_status: 'approved', // Default status for existing users
+          approved_by: undefined,
+          approved_at: undefined,
+          rejection_reason: undefined,
           totalInquiries: totalInquiries || 0,
           completedInquiries: completedInquiries || 0,
           availableSlots: availableSlots || 0,
@@ -162,7 +162,7 @@ export async function getAdminUserDetail(adminId: string): Promise<{
     
     // 기본 유저 정보 조회
     const { data: adminUser, error: userError } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .select('*')
       .eq('id', adminId)
       .single()
@@ -233,7 +233,7 @@ export async function getAdminUserDetail(adminId: string): Promise<{
       ...userStats,
       monthlyInquiries,
       portfolioPhotos: portfolioPhotos || 0,
-      lastActivity: lastActivity?.[0]?.updated_at || adminUser.updated_at
+      lastActivity: lastActivity?.[0]?.updated_at || adminUser.updated_at || new Date().toISOString()
     }
 
     return {
@@ -261,7 +261,7 @@ export async function updateAdminUser(adminId: string, updates: {
     const supabase = await createClient()
     
     const { error } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .update({
         ...updates,
         updated_at: new Date().toISOString()
@@ -294,7 +294,7 @@ export async function approveAdminUser(
     const supabase = await createClient()
     
     const { error } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .update({
         approval_status: 'approved',
         approved_by: approvedBy,
@@ -331,7 +331,7 @@ export async function rejectAdminUser(
     const supabase = await createClient()
     
     const { error } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .update({
         approval_status: 'rejected',
         approved_by: rejectedBy,
@@ -365,7 +365,7 @@ export async function getPendingAdminUsersCount(): Promise<{
     const supabase = await createClient()
     
     const { count, error } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .select('*', { count: 'exact', head: true })
       .eq('approval_status', 'pending')
     

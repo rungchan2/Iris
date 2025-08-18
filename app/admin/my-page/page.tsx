@@ -16,7 +16,7 @@ export default async function MyAccountPage() {
 
   // Get admin user info
   const { data: adminUser, error: userError } = await supabase
-    .from("admin_users")
+    .from("photographers")
     .select("*")
     .eq("id", session.user.id)
     .single()

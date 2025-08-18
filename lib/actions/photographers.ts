@@ -27,25 +27,15 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
   try {
     const supabase = await createClient()
     
-    // Base query to get admin users with portfolio count
+    // Base query to get photographers with portfolio count
     let query = supabase
-      .from('admin_users')
+      .from('photographers')
       .select(`
         id,
         name,
         email,
         created_at,
-        admin_portfolio_photos(count),
-        personality_admin_mapping(
-          personality_code,
-          compatibility_score,
-          is_primary,
-          notes,
-          personality_types(
-            code,
-            name
-          )
-        )
+        admin_portfolio_photos(count)
       `)
     
     // Apply search filter
@@ -71,21 +61,16 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
       email: photographer.email,
       created_at: photographer.created_at || '',
       portfolioCount: photographer.admin_portfolio_photos?.length || 0,
-      personalityTypes: (photographer.personality_admin_mapping || []).map((mapping: any) => ({
-        code: mapping.personality_types?.code || mapping.personality_code,
-        name: mapping.personality_types?.name || '',
-        compatibility: mapping.compatibility_score || 0,
-        isPrimary: mapping.is_primary || false,
-        notes: mapping.notes
-      }))
+      personalityTypes: [] // TODO: personality_admin_mapping 테이블 생성 후 활성화
     }))
     
     // Apply personality filter
-    if (filters.personalityCode) {
-      transformedData = transformedData.filter(photographer => 
-        photographer.personalityTypes.some(pt => pt.code === filters.personalityCode)
-      )
-    }
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
+    // if (filters.personalityCode) {
+    //   transformedData = transformedData.filter(photographer => 
+    //     photographer.personalityTypes.some(pt => pt.code === filters.personalityCode)
+    //   )
+    // }
     
     // Apply sorting
     switch (filters.sortBy) {
@@ -126,7 +111,7 @@ export async function getPhotographerById(id: string) {
     const supabase = await createClient()
     
     const { data: photographer, error } = await supabase
-      .from('admin_users')
+      .from('photographers')
       .select(`
         id,
         name,

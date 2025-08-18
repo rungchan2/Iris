@@ -34,7 +34,13 @@ export function RecommendedGallery({ personalityCode }: RecommendedGalleryProps)
       try {
         const result = await getPersonalityPhotos(personalityCode);
         if (result.success && result.photos) {
-          setPhotos(result.photos);
+          const validPhotos: PersonalityPhoto[] = result.photos
+            .filter(photo => photo !== null)
+            .map(photo => ({
+              ...photo!,
+              style_tags: photo!.style_tags || []
+            }));
+          setPhotos(validPhotos);
         }
       } catch (error) {
         console.error("Error loading personality photos:", error);

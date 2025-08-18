@@ -127,6 +127,327 @@ components/                   # Reusable UI components
    - Pass personality context to booking flow
    - Maintain booking functionality
 
+## 🔐 RBAC (Role-Based Access Control) System
+
+### Overview
+Photo4You implements a comprehensive RBAC system that separates users into distinct types with granular permission control. This ensures secure access management and scalable authorization.
+
+### User Types & Roles
+1. **Super Admin** (`super_admin`): Full system access, user management
+2. **Admin** (`admin`): Content and inquiry management, limited user access
+3. **Photographer** (`photographer`): Portfolio and schedule management, own content only
+
+### Core RBAC Components
+
+#### 1. Types & Permissions (`lib/rbac/types.ts`)
+```typescript
+// Permission categories
+type Permission = 
+  | 'users.create' | 'users.read' | 'users.update' | 'users.delete'
+  | 'photos.create' | 'photos.read' | 'photos.update' | 'photos.delete'
+  | 'categories.create' | 'categories.read' | 'categories.update' | 'categories.delete'
+  | 'inquiries.read' | 'inquiries.update' | 'inquiries.delete'
+  | 'schedule.create' | 'schedule.read' | 'schedule.update' | 'schedule.delete'
+  | 'system.config' | 'system.logs'
+  | 'analytics.read'
+
+// Role to permissions mapping
+const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  super_admin: [/* all permissions */],
+  admin: [/* most permissions except user management */],
+  photographer: [/* limited permissions for own content */]
+}
+```
+
+#### 2. Permission Hooks (`lib/rbac/hooks.ts`)
+```typescript
+// Check if user has specific permission
+const hasPermission = usePermissions(['photos.create', 'photos.update'])
+
+// Check user role
+const isAdmin = useIsAdmin()
+const isSuperAdmin = useIsAdmin(true) // super admin only
+
+// Get current user profile with type detection
+const { profile, userType, isLoading } = useUserProfile()
+```
+
+#### 3. Guard Components (`lib/rbac/components.tsx`)
+```typescript
+// Protect entire components
+<AdminGuard>
+  <SensitiveAdminContent />
+</AdminGuard>
+
+<AdminGuard superAdminOnly>
+  <SuperAdminOnlyContent />
+</AdminGuard>
+
+<PermissionGuard permissions={['users.create']}>
+  <UserCreationForm />
+</PermissionGuard>
+
+<RoleGuard roles={['admin', 'super_admin']}>
+  <ManagementDashboard />
+</RoleGuard>
+```
+
+### Implementation Patterns
+
+#### Server Actions with Permission Checks
+```typescript
+'use server'
+
+export async function sensitiveAction() {
+  const supabase = await createClient()
+  
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+  
+  // Check permissions
+  const { data: admin } = await supabase
+    .from('admins')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  
+  if (!admin || !['admin', 'super_admin'].includes(admin.role)) {
+    return { error: 'Insufficient permissions' }
+  }
+  
+  // Proceed with action...
+}
+```
+
+#### Component-Level Protection
+```typescript
+// In admin pages
+import { AdminGuard } from '@/lib/rbac/components'
+
+export default function AdminPage() {
+  return (
+    <AdminGuard>
+      <AdminContent />
+    </AdminGuard>
+  )
+}
+
+// In sensitive sections
+import { usePermissions } from '@/lib/rbac/hooks'
+
+export function UserManagement() {
+  const canCreateUsers = usePermissions(['users.create'])
+  
+  return (
+    <div>
+      {canCreateUsers && (
+        <CreateUserButton />
+      )}
+    </div>
+  )
+}
+```
+
+#### Navigation Filtering
+```typescript
+// Sidebar component with permission-based filtering
+import { usePermissions } from '@/lib/rbac/hooks'
+
+const navigationItems = [
+  { label: 'Users', href: '/admin/users', permission: 'users.read' },
+  { label: 'Photos', href: '/admin/photos', permission: 'photos.read' },
+  { label: 'System', href: '/admin/system', permission: 'system.config' }
+]
+
+export function Sidebar() {
+  const permissions = usePermissions(navigationItems.map(item => item.permission))
+  
+  return (
+    <nav>
+      {navigationItems
+        .filter((item, index) => permissions[index])
+        .map(item => (
+          <SidebarItem key={item.href} {...item} />
+        ))}
+    </nav>
+  )
+}
+```
+
+### User Management Workflows
+
+#### Initial Setup
+1. **First Time Setup**: Visit `/superadmin` to create initial Super Admin
+2. **Super Admin Creation**: One-time use page, automatically disabled after first admin
+3. **Subsequent Admins**: Use `/admin/users` page to create additional users
+
+#### User Creation Process
+```typescript
+// For admins (requires super_admin role)
+await createAdminUser({
+  email: 'admin@example.com',
+  password: 'securePassword',
+  name: 'Admin Name',
+  role: 'admin' // or 'super_admin'
+})
+
+// For photographers (requires admin+ role)
+await createPhotographerUser({
+  email: 'photographer@example.com',
+  password: 'securePassword',
+  name: 'Photographer Name',
+  phone: '+1234567890',
+  bio: 'Professional photographer'
+})
+```
+
+#### Authentication Flow
+1. **Login**: User enters credentials at `/login`
+2. **Type Detection**: System automatically detects user type (admin vs photographer)
+3. **Permission Loading**: User permissions and profile loaded
+4. **Smart Redirect**: Automatic redirect based on user type and permissions
+5. **Navigation Filtering**: Sidebar and menus filtered based on permissions
+
+### Database Security
+
+#### Row Level Security (RLS) Policies
+```sql
+-- Admins table access
+CREATE POLICY "Admins can view their profile or super_admins can view all"
+ON admins FOR SELECT USING (
+  auth.uid() = id OR 
+  EXISTS (SELECT 1 FROM admins WHERE id = auth.uid() AND role = 'super_admin')
+);
+
+-- Photographers table access  
+CREATE POLICY "Photographers can update their profile"
+ON photographers FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Admins can manage photographers"
+ON photographers FOR ALL USING (
+  EXISTS (SELECT 1 FROM admins WHERE id = auth.uid())
+);
+
+-- Photos access control
+CREATE POLICY "Photographers manage own photos"
+ON photos FOR ALL USING (uploaded_by = auth.uid());
+
+CREATE POLICY "Admins can manage all photos"
+ON photos FOR ALL USING (
+  EXISTS (SELECT 1 FROM admins WHERE id = auth.uid())
+);
+```
+
+### Best Practices
+
+#### 1. Always Use Guard Components
+```typescript
+// ❌ Don't expose sensitive content without guards
+export function AdminPage() {
+  return <SensitiveContent /> // Anyone can access!
+}
+
+// ✅ Always wrap with appropriate guards
+export function AdminPage() {
+  return (
+    <AdminGuard>
+      <SensitiveContent />
+    </AdminGuard>
+  )
+}
+```
+
+#### 2. Server-Side Permission Checks
+```typescript
+// ❌ Client-side only checks are not secure
+export function deleteUser(id: string) {
+  // Anyone can call this!
+  return fetch(`/api/users/${id}`, { method: 'DELETE' })
+}
+
+// ✅ Always validate permissions on server
+'use server'
+export async function deleteUser(id: string) {
+  // Server-side permission check
+  const hasPermission = await checkUserPermission('users.delete')
+  if (!hasPermission) return { error: 'Unauthorized' }
+  
+  // Proceed with deletion...
+}
+```
+
+#### 3. Principle of Least Privilege
+- Grant minimal necessary permissions
+- Use specific permissions instead of broad roles
+- Regularly audit user permissions
+- Implement permission expiration for temporary access
+
+#### 4. Error Handling
+```typescript
+// ✅ Graceful permission failures
+const hasPermission = usePermissions(['users.create'])
+
+return (
+  <div>
+    {hasPermission ? (
+      <CreateUserForm />
+    ) : (
+      <Alert>You don't have permission to create users.</Alert>
+    )}
+  </div>
+)
+```
+
+### Testing RBAC
+
+#### Unit Testing Permissions
+```typescript
+// Test permission logic
+import { hasPermission } from '@/lib/rbac/utils'
+
+describe('RBAC Permissions', () => {
+  test('super_admin has all permissions', () => {
+    expect(hasPermission('super_admin', 'users.delete')).toBe(true)
+    expect(hasPermission('super_admin', 'system.config')).toBe(true)
+  })
+  
+  test('photographer has limited permissions', () => {
+    expect(hasPermission('photographer', 'users.delete')).toBe(false)
+    expect(hasPermission('photographer', 'photos.create')).toBe(true)
+  })
+})
+```
+
+#### Integration Testing
+```typescript
+// Test guard components
+import { render } from '@testing-library/react'
+import { AdminGuard } from '@/lib/rbac/components'
+
+test('AdminGuard blocks non-admin users', () => {
+  // Mock non-admin user
+  mockUser({ role: 'photographer' })
+  
+  const { queryByText } = render(
+    <AdminGuard>
+      <div>Admin Content</div>
+    </AdminGuard>
+  )
+  
+  expect(queryByText('Admin Content')).toBeNull()
+})
+```
+
+### Security Considerations
+
+1. **Never Trust Client-Side**: Always validate permissions on server
+2. **Use TypeScript**: Leverage type safety for permission checks
+3. **Regular Audits**: Review user permissions periodically
+4. **Logging**: Track permission changes and access attempts
+5. **Principle of Least Privilege**: Grant minimal necessary permissions
+6. **Session Management**: Proper session timeout and refresh handling
+
 ## 🔧 Development Standards & Best Practices
 
 ### Code Quality Requirements
@@ -135,6 +456,7 @@ components/                   # Reusable UI components
 3. **Loading States**: Proper loading indicators for all async operations
 4. **Responsive Design**: Mobile-first approach for all UI components
 5. **Accessibility**: WCAG 2.1 AA compliance for all interactive elements
+6. **RBAC Compliance**: Always implement proper permission checks
 
 ### Server Actions Standards
 ```typescript

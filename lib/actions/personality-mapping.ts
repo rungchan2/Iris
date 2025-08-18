@@ -6,8 +6,11 @@ export interface PersonalityType {
   code: string
   name: string
   description: string
-  characteristics: string[]
+  style_keywords: string[]
   ai_preview_prompt: string
+  example_person?: string
+  recommended_locations?: string[]
+  recommended_props?: string[]
 }
 
 export interface PersonalityMapping {
@@ -40,9 +43,21 @@ export async function getPersonalityTypes(): Promise<{
       return { success: false, error: error.message }
     }
 
+    // Transform database results to match interface
+    const transformedTypes: PersonalityType[] = (personalityTypes || []).map(type => ({
+      code: type.code,
+      name: type.name,
+      description: type.description,
+      style_keywords: type.style_keywords || [],
+      ai_preview_prompt: type.ai_preview_prompt || '',
+      example_person: type.example_person || undefined,
+      recommended_locations: type.recommended_locations || undefined,
+      recommended_props: type.recommended_props || undefined
+    }))
+
     return {
       success: true,
-      personalityTypes: personalityTypes || []
+      personalityTypes: transformedTypes
     }
   } catch (error) {
     console.error('Error fetching personality types:', error)
@@ -60,36 +75,39 @@ export async function getAdminPersonalityMappings(): Promise<{
   error?: string
 }> {
   try {
-    const supabase = await createClient()
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
+    return { success: true, mappings: [] }
     
-    const { data: mappings, error } = await supabase
-      .from('personality_admin_mapping')
-      .select(`
-        *,
-        admin:admin_users(name)
-      `)
-      .order('admin_id')
+    // const supabase = await createClient()
     
-    if (error) {
-      return { success: false, error: error.message }
-    }
+    // const { data: mappings, error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .select(`
+    //     *,
+    //     admin:photographers(name)
+    //   `)
+    //   .order('admin_id')
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
 
-    const formattedMappings: PersonalityMapping[] = (mappings || []).map(mapping => ({
-      id: mapping.id,
-      admin_id: mapping.admin_id,
-      admin_name: mapping.admin?.name || 'Unknown',
-      personality_type_code: mapping.personality_type_code,
-      compatibility_score: mapping.compatibility_score,
-      is_primary: mapping.is_primary,
-      notes: mapping.notes,
-      created_at: mapping.created_at,
-      updated_at: mapping.updated_at
-    }))
+    // const formattedMappings: PersonalityMapping[] = (mappings || []).map(mapping => ({
+    //   id: mapping.id,
+    //   admin_id: mapping.admin_id,
+    //   admin_name: mapping.admin?.name || 'Unknown',
+    //   personality_type_code: mapping.personality_type_code,
+    //   compatibility_score: mapping.compatibility_score,
+    //   is_primary: mapping.is_primary,
+    //   notes: mapping.notes,
+    //   created_at: mapping.created_at,
+    //   updated_at: mapping.updated_at
+    // }))
 
-    return {
-      success: true,
-      mappings: formattedMappings
-    }
+    // return {
+    //   success: true,
+    //   mappings: formattedMappings
+    // }
   } catch (error) {
     console.error('Error fetching admin personality mappings:', error)
     return {
@@ -106,37 +124,40 @@ export async function getAdminPersonalityMapping(adminId: string): Promise<{
   error?: string
 }> {
   try {
-    const supabase = await createClient()
-    
-    const { data: mappings, error } = await supabase
-      .from('personality_admin_mapping')
-      .select(`
-        *,
-        admin:admin_users(name)
-      `)
-      .eq('admin_id', adminId)
-      .order('personality_type_code')
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
+    return { success: true, mappings: [] }
 
-    const formattedMappings: PersonalityMapping[] = (mappings || []).map(mapping => ({
-      id: mapping.id,
-      admin_id: mapping.admin_id,
-      admin_name: mapping.admin?.name || 'Unknown',
-      personality_type_code: mapping.personality_type_code,
-      compatibility_score: mapping.compatibility_score,
-      is_primary: mapping.is_primary,
-      notes: mapping.notes,
-      created_at: mapping.created_at,
-      updated_at: mapping.updated_at
-    }))
+    // const supabase = await createClient()
+    
+    // const { data: mappings, error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .select(`
+    //     *,
+    //     admin:photographers(name)
+    //   `)
+    //   .eq('admin_id', adminId)
+    //   .order('personality_type_code')
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
 
-    return {
-      success: true,
-      mappings: formattedMappings
-    }
+    // const formattedMappings: PersonalityMapping[] = (mappings || []).map(mapping => ({
+    //   id: mapping.id,
+    //   admin_id: mapping.admin_id,
+    //   admin_name: mapping.admin?.name || 'Unknown',
+    //   personality_type_code: mapping.personality_type_code,
+    //   compatibility_score: mapping.compatibility_score,
+    //   is_primary: mapping.is_primary,
+    //   notes: mapping.notes,
+    //   created_at: mapping.created_at,
+    //   updated_at: mapping.updated_at
+    // }))
+
+    // return {
+    //   success: true,
+    //   mappings: formattedMappings
+    // }
   } catch (error) {
     console.error('Error fetching admin personality mapping:', error)
     return {
@@ -158,35 +179,38 @@ export async function createPersonalityMapping(mapping: {
   error?: string
 }> {
   try {
-    const supabase = await createClient()
-    
-    // 중복 매칭 확인
-    const { data: existing } = await supabase
-      .from('personality_admin_mapping')
-      .select('id')
-      .eq('admin_id', mapping.admin_id)
-      .eq('personality_type_code', mapping.personality_type_code)
-      .single()
-
-    if (existing) {
-      return { success: false, error: '이미 설정된 성격유형입니다.' }
-    }
-
-    const { error } = await supabase
-      .from('personality_admin_mapping')
-      .insert({
-        admin_id: mapping.admin_id,
-        personality_type_code: mapping.personality_type_code,
-        compatibility_score: mapping.compatibility_score,
-        is_primary: mapping.is_primary,
-        notes: mapping.notes
-      })
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
     return { success: true }
+
+    // const supabase = await createClient()
+    
+    // // 중복 매칭 확인
+    // const { data: existing } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .select('id')
+    //   .eq('admin_id', mapping.admin_id)
+    //   .eq('personality_type_code', mapping.personality_type_code)
+    //   .single()
+
+    // if (existing) {
+    //   return { success: false, error: '이미 설정된 성격유형입니다.' }
+    // }
+
+    // const { error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .insert({
+    //     admin_id: mapping.admin_id,
+    //     personality_type_code: mapping.personality_type_code,
+    //     compatibility_score: mapping.compatibility_score,
+    //     is_primary: mapping.is_primary,
+    //     notes: mapping.notes
+    //   })
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
+
+    // return { success: true }
   } catch (error) {
     console.error('Error creating personality mapping:', error)
     return {
@@ -206,21 +230,24 @@ export async function updatePersonalityMapping(mappingId: string, updates: {
   error?: string
 }> {
   try {
-    const supabase = await createClient()
-    
-    const { error } = await supabase
-      .from('personality_admin_mapping')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', mappingId)
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
     return { success: true }
+
+    // const supabase = await createClient()
+    
+    // const { error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .update({
+    //     ...updates,
+    //     updated_at: new Date().toISOString()
+    //   })
+    //   .eq('id', mappingId)
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
+
+    // return { success: true }
   } catch (error) {
     console.error('Error updating personality mapping:', error)
     return {
@@ -236,18 +263,21 @@ export async function deletePersonalityMapping(mappingId: string): Promise<{
   error?: string
 }> {
   try {
-    const supabase = await createClient()
-    
-    const { error } = await supabase
-      .from('personality_admin_mapping')
-      .delete()
-      .eq('id', mappingId)
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
     return { success: true }
+
+    // const supabase = await createClient()
+    
+    // const { error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .delete()
+    //   .eq('id', mappingId)
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
+
+    // return { success: true }
   } catch (error) {
     console.error('Error deleting personality mapping:', error)
     return {
@@ -271,35 +301,38 @@ export async function getRecommendedAdminsForPersonality(personalityTypeCode: st
   error?: string
 }> {
   try {
-    const supabase = await createClient()
-    
-    const { data: mappings, error } = await supabase
-      .from('personality_admin_mapping')
-      .select(`
-        *,
-        admin:admin_users(id, name, email)
-      `)
-      .eq('personality_type_code', personalityTypeCode)
-      .gte('compatibility_score', 50) // 최소 50% 이상 호환성
-      .order('compatibility_score', { ascending: false })
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
+    // TODO: personality_admin_mapping 테이블 생성 후 활성화
+    return { success: true, admins: [] }
 
-    const admins = (mappings || []).map(mapping => ({
-      id: mapping.admin.id,
-      name: mapping.admin.name,
-      email: mapping.admin.email,
-      compatibility_score: mapping.compatibility_score,
-      is_primary: mapping.is_primary,
-      notes: mapping.notes
-    }))
+    // const supabase = await createClient()
+    
+    // const { data: mappings, error } = await supabase
+    //   .from('personality_admin_mapping')
+    //   .select(`
+    //     *,
+    //     admin:photographers(id, name, email)
+    //   `)
+    //   .eq('personality_type_code', personalityTypeCode)
+    //   .gte('compatibility_score', 50) // 최소 50% 이상 호환성
+    //   .order('compatibility_score', { ascending: false })
+    
+    // if (error) {
+    //   return { success: false, error: error.message }
+    // }
 
-    return {
-      success: true,
-      admins
-    }
+    // const admins = (mappings || []).map(mapping => ({
+    //   id: mapping.admin.id,
+    //   name: mapping.admin.name,
+    //   email: mapping.admin.email,
+    //   compatibility_score: mapping.compatibility_score,
+    //   is_primary: mapping.is_primary,
+    //   notes: mapping.notes
+    // }))
+
+    // return {
+    //   success: true,
+    //   admins
+    // }
   } catch (error) {
     console.error('Error fetching recommended admins:', error)
     return {

@@ -41,7 +41,7 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
     setIsUpdating(true)
     try {
       const { error } = await supabase
-        .from("admin_users")
+        .from("photographers")
         .update({
           name: name.trim(),
           updated_at: new Date().toISOString(),

@@ -20,23 +20,23 @@ export default async function Page() {
   }
   return (
     <>
-      <Toaster position="top-right" richColors />
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Tabs defaultValue="account" className="w-[400px]">
-          <TabsList>
-            <TabsTrigger value="account">로그인</TabsTrigger>
-            <TabsTrigger value="password">회원가입</TabsTrigger>
-          </TabsList>
-          <TabsContent value="account">
-            <LoginForm />
-          </TabsContent>
-          <TabsContent value="password">
-            <SignupForm />
-          </TabsContent>
-        </Tabs>
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <Tabs defaultValue="account" className="w-[400px]">
+            <TabsList>
+              <TabsTrigger value="account">로그인</TabsTrigger>
+              <TabsTrigger value="password">회원가입</TabsTrigger>
+            </TabsList>
+            <TabsContent value="account">
+              <LoginForm />
+            </TabsContent>
+            <TabsContent value="password">
+              <SignupForm />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </div>
+      <Toaster richColors position="top-right" />
     </>
   );
 }

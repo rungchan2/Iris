@@ -19,18 +19,21 @@ export async function getInquiryById(inquiryId: string): Promise<{
   inquiry?: {
     id: string
     name: string
-    email: string
     phone: string
-    selected_date: string
-    selected_time: string
     status: string
-    notes?: string
     admin_notes?: string
     created_at: string
     updated_at: string
     assigned_admin_id?: string
-    selected_categories?: string[]
-    selected_moods?: string[]
+    selected_category_id?: string
+    selected_slot_id?: string
+    special_request?: string
+    gender?: string
+    people_count?: number
+    relationship?: string
+    desired_date?: string
+    current_mood_keywords?: string[]
+    desired_mood_keywords?: string[]
     assigned_admin?: {
       name: string
       email: string
@@ -46,7 +49,7 @@ export async function getInquiryById(inquiryId: string): Promise<{
       .from('inquiries')
       .select(`
         *,
-        assigned_admin:admin_users(name, email)
+        assigned_admin:photographers(name, email)
       `)
       .eq('id', inquiryId)
       .single()
@@ -64,19 +67,22 @@ export async function getInquiryById(inquiryId: string): Promise<{
       inquiry: {
         id: inquiry.id,
         name: inquiry.name,
-        email: inquiry.email,
         phone: inquiry.phone,
-        selected_date: inquiry.selected_date,
-        selected_time: inquiry.selected_time,
-        status: inquiry.status,
-        notes: inquiry.notes,
-        admin_notes: inquiry.admin_notes,
-        created_at: inquiry.created_at,
-        updated_at: inquiry.updated_at,
-        assigned_admin_id: inquiry.assigned_admin_id,
-        selected_categories: inquiry.selected_categories,
-        selected_moods: inquiry.selected_moods,
-        assigned_admin: inquiry.assigned_admin
+        status: inquiry.status || 'pending',
+        admin_notes: inquiry.admin_note || '',
+        created_at: inquiry.created_at || new Date().toISOString(),
+        updated_at: inquiry.updated_at || new Date().toISOString(),
+        assigned_admin_id: inquiry.assigned_admin_id || '',
+        selected_category_id: inquiry.selected_category_id || '',
+        selected_slot_id: inquiry.selected_slot_id || '',
+        special_request: inquiry.special_request || '',
+        gender: inquiry.gender || 'other',
+        people_count: inquiry.people_count || 1,
+        relationship: inquiry.relationship || '',
+        desired_date: inquiry.desired_date || '',
+        current_mood_keywords: inquiry.current_mood_keywords || [],
+        desired_mood_keywords: inquiry.desired_mood_keywords || [],
+        assigned_admin: inquiry.assigned_admin || undefined
       }
     }
   } catch (error) {

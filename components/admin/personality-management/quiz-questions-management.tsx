@@ -253,7 +253,7 @@ export function QuizQuestionsManagement() {
       question_text: "",
       question_type: "text",
       part: "emotion",
-      display_order: questions.length + 1,
+      display_order: allQuestions.length + 1,
       is_active: true,
       choices: []
     };
@@ -387,7 +387,7 @@ export function QuizQuestionsManagement() {
 
   const handleSaveQuestion = () => {
     if (editingQuestion) {
-      setQuestions(prev => 
+      setAllQuestions(prev => 
         prev.map(q => q.id === editingQuestion.id ? editingQuestion : q)
       );
       setEditingQuestion(null);

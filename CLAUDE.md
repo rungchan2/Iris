@@ -81,7 +81,7 @@ npx supabase db push
 - `quiz_responses` - Individual user answers
 
 **User Management:**
-- `admin_users` - Photographer/admin accounts
+- `photographers` - Photographer/admin accounts
 - `admin_portfolio_photos` - Photographer portfolios
 
 **Matching System:**
@@ -92,6 +92,9 @@ npx supabase db push
 - `ai_image_generations` - AI preview generation tracking
 - `inquiries` - Booking requests and customer information
 - `available_slots` - Photographer availability
+
+**Review System:**
+- `reviews` - Anonymous review system with token-based access
 
 ## Key Implementation Patterns
 
@@ -205,10 +208,39 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
 
 - **New Development Note**: Saved development guide at @specs/development-guide.md
 
+## Authentication System Update (2025.01.18)
+
+**MAJOR CHANGE**: The complex RBAC system has been completely removed and replaced with a simplified 2-system approach:
+
+### Current Authentication Architecture
+- **Admin System**: 
+  - Users stored only in `auth.users` table
+  - Identified by `user_metadata.user_type === 'admin'`
+  - Signup via invite codes at `/admin/signup`
+  - All authenticated users can access admin dashboard (no role guards)
+- **Photographer System**:
+  - Users stored in `auth.users` + `photographers` table 
+  - Created by admin via `/admin/users`
+  - Original flow maintained
+
+### Key Changes Made
+- ✅ Removed `role` column from `photographers` table
+- ✅ Removed all AdminGuard and role-based access controls
+- ✅ Simplified admin layout to only check authentication (not roles)
+- ✅ Updated all user management functions for new system
+- ✅ Maintained invite code system for admin signup
+
+### Important Files Updated
+- `app/admin/layout.tsx` - Removed role checking
+- `lib/actions/user-management.ts` - Complete rewrite for new system
+- `lib/actions/admin-auth.ts` - Removed role validations
+- `components/admin/user-management.tsx` - Removed role field
+
 ## Tools and Workflow Notes
 
 - If needed, use Supabase MCP to:
   - Change database schema
   - Modify table policies
   - Utilize supabase-heechan tool for project with ID `kypwcsgwjtnkiiwjedcn`
+- **Documentation**: New auth system documented at @specs/authentication-update-2025.md
 - and everytime you done your work, mark as checked in the @specs/feature.md file. it is important to keep track of the work that is finished and not finished that needs to worked on.

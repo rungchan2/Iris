@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,11 +19,17 @@ interface ScheduleManagerProps {
 }
 
 export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [mounted, setMounted] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [slots, setSlots] = useState<AvailableSlot[]>(initialSlots)
   const [bulkModalOpen, setBulkModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    setMounted(true)
+    setSelectedDate(new Date())
+  }, [])
 
   // Group slots by date for calendar display
   const slotsGroupedByDate = slots.reduce(
@@ -37,8 +43,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
   )
 
   // Get slots for selected date (timezone-safe)
-  const selectedDateStr = format(selectedDate, "yyyy-MM-dd")
-  const selectedDateSlots = slotsGroupedByDate[selectedDateStr] || []
+  const selectedDateStr = mounted && selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""
+  const selectedDateSlots = selectedDateStr ? (slotsGroupedByDate[selectedDateStr] || []) : []
 
   // Fetch slots for a specific month
   const fetchSlotsForMonth = async (date: Date) => {
@@ -74,6 +80,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
 
   // Get calendar day modifiers for visual indicators
   const getDateModifiers = (date: Date) => {
+    if (!mounted) return {}
+    
     const dateStr = format(date, "yyyy-MM-dd")
     const daySlots = slotsGroupedByDate[dateStr] || []
 
@@ -97,6 +105,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
 
   // Quick actions
   const handleCopyLastWeek = async () => {
+    if (!mounted || !selectedDate) return
+    
     const lastWeekDate = new Date(selectedDate)
     lastWeekDate.setDate(lastWeekDate.getDate() - 7)
     const lastWeekStr = format(lastWeekDate, "yyyy-MM-dd")
@@ -130,6 +140,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
   }
 
   const handleClearDay = async () => {
+    if (!mounted || !selectedDate) return
+    
     if (selectedDateSlots.length === 0) {
       toast.error("삭제할 슬롯이 없습니다")
       return
@@ -183,23 +195,24 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
               </div>
 
               {/* Calendar */}
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                onMonthChange={handleMonthChange}
-                className="rounded-md border w-full"
-                modifiers={{
-                  available: (date) => {
-                    const modifiers = getDateModifiers(date)
-                    return modifiers.available === true
-                  },
-                  partiallyBooked: (date) => {
-                    const modifiers = getDateModifiers(date)
-                    return modifiers.partiallyBooked === true
-                  },
-                  fullyBooked: (date) => {
-                    const modifiers = getDateModifiers(date)
+              {mounted && selectedDate && (
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  onMonthChange={handleMonthChange}
+                  className="rounded-md border w-full"
+                  modifiers={{
+                    available: (date) => {
+                      const modifiers = getDateModifiers(date)
+                      return modifiers.available === true
+                    },
+                    partiallyBooked: (date) => {
+                      const modifiers = getDateModifiers(date)
+                      return modifiers.partiallyBooked === true
+                    },
+                    fullyBooked: (date) => {
+                      const modifiers = getDateModifiers(date)
                     return modifiers.fullyBooked === true
                   },
                 }}
@@ -220,7 +233,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
                     fontWeight: "bold"
                   },
                 }}
-              />
+                />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -235,7 +249,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              {format(selectedDate, "yyyy년 MM월 dd일")} 시간대
+              {mounted && selectedDate ? format(selectedDate, "yyyy년 MM월 dd일") : "날짜 선택"} 시간대
             </CardTitle>
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" onClick={() => setBulkModalOpen(true)}>
@@ -257,7 +271,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
               date={selectedDateStr}
               slots={selectedDateSlots}
               adminId={adminId}
-              onSlotsChange={() => fetchSlotsForMonth(selectedDate)}
+              onSlotsChange={() => selectedDate && fetchSlotsForMonth(selectedDate)}
             />
           </CardContent>
         </Card>
@@ -268,7 +282,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
         open={bulkModalOpen}
         onOpenChange={setBulkModalOpen}
         adminId={adminId}
-        onScheduleCreated={() => fetchSlotsForMonth(selectedDate)}
+        onScheduleCreated={() => selectedDate && fetchSlotsForMonth(selectedDate)}
       />
     </div>
   )

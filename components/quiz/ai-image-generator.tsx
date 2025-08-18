@@ -24,7 +24,7 @@ import {
   editGeneratedImage,
   getAIGenerationStatus,
   rateAIGeneration,
-  fileToBase64,
+  fileToBase64Server,
   type AIImageGeneration 
 } from "@/lib/actions/ai";
 import { toast } from "sonner";
@@ -77,17 +77,14 @@ export function AIImageGenerator({ sessionId, personalityCode }: AIImageGenerato
     }
 
     try {
-      // Convert file to Base64
+      // Generate AI image with OpenAI (using File directly)
       setState({ status: 'uploading', progress: 20 });
-      const imageBase64 = await fileToBase64(uploadedFile);
-      
       setState(prev => ({ ...prev, progress: 50, status: 'generating' }));
 
-      // Generate AI image with OpenAI
       const result = await generatePersonalityImage(
         sessionId,
         personalityCode,
-        imageBase64
+        uploadedFile
       );
 
       if (result.success && result.generation) {

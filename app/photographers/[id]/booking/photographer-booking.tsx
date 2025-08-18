@@ -414,11 +414,17 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
               category={{
                 id: photographer.id,
                 name: photographer.name,
-                image_url: photographer.profileImage || null,
+                path: '',
                 parent_id: null,
                 depth: 1,
                 display_order: 1,
                 is_active: true,
+                representative_image_url: photographer.profileImage || null,
+                representative_image_id: null,
+                place_recommendation: null,
+                male_clothing_recommendation: null,
+                female_clothing_recommendation: null,
+                accessories_recommendation: null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               }}

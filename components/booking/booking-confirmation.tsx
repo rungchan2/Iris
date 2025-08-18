@@ -32,18 +32,21 @@ import {
 interface Inquiry {
   id: string;
   name: string;
-  email: string;
   phone: string;
-  selected_date: string;
-  selected_time: string;
   status: string;
-  notes?: string;
   admin_notes?: string;
   created_at: string;
   updated_at: string;
   assigned_admin_id?: string;
-  selected_categories?: string[];
-  selected_moods?: string[];
+  selected_category_id?: string;
+  selected_slot_id?: string;
+  special_request?: string;
+  gender?: string;
+  people_count?: number;
+  relationship?: string;
+  desired_date?: string;
+  current_mood_keywords?: string[];
+  desired_mood_keywords?: string[];
   assigned_admin?: {
     name: string;
     email: string;
@@ -76,7 +79,7 @@ export function BookingConfirmation({ inquiry }: BookingConfirmationProps) {
   // 촬영까지 남은 시간 계산
   useEffect(() => {
     const calculateTimeUntilShoot = () => {
-      const shootDateTime = new Date(`${inquiry.selected_date} ${inquiry.selected_time}`);
+      const shootDateTime = inquiry.desired_date ? new Date(inquiry.desired_date) : new Date();
       const now = new Date();
       const timeDiff = shootDateTime.getTime() - now.getTime();
 
@@ -101,7 +104,7 @@ export function BookingConfirmation({ inquiry }: BookingConfirmationProps) {
     const interval = setInterval(calculateTimeUntilShoot, 60000); // 1분마다 업데이트
 
     return () => clearInterval(interval);
-  }, [inquiry.selected_date, inquiry.selected_time]);
+  }, [inquiry.desired_date]);
 
   // 촬영 준비 체크리스트
   const preparationChecklist = [
@@ -162,7 +165,7 @@ export function BookingConfirmation({ inquiry }: BookingConfirmationProps) {
                 <div className="flex items-center">
                   <Mail className="h-3 w-3 mr-1 text-muted-foreground" />
                   <span className="w-11 text-muted-foreground">이메일:</span>
-                  <span>{inquiry.email}</span>
+                  <span>{inquiry.assigned_admin?.email || '이메일 없음'}</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-3 w-3 mr-1 text-muted-foreground" />
@@ -182,12 +185,12 @@ export function BookingConfirmation({ inquiry }: BookingConfirmationProps) {
                 <div className="flex items-center">
                   <CalendarDays className="h-3 w-3 mr-1 text-muted-foreground" />
                   <span className="w-11 text-muted-foreground">날짜:</span>
-                  <span className="font-medium">{new Date(inquiry.selected_date).toLocaleDateString('ko-KR')}</span>
+                  <span className="font-medium">{inquiry.desired_date ? new Date(inquiry.desired_date).toLocaleDateString('ko-KR') : '날짜 미정'}</span>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
                   <span className="w-11 text-muted-foreground">시간:</span>
-                  <span className="font-medium">{inquiry.selected_time}</span>
+                  <span className="font-medium">시간 미정</span>
                 </div>
                 <div className="flex items-center">
                   <Timer className="h-3 w-3 mr-1 text-muted-foreground" />
@@ -218,13 +221,13 @@ export function BookingConfirmation({ inquiry }: BookingConfirmationProps) {
           )}
 
           {/* 특별 요청사항 */}
-          {inquiry.notes && (
+          {inquiry.special_request && (
             <div className="pt-4 border-t">
               <h4 className="font-medium flex items-center mb-2">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 특별 요청사항
               </h4>
-              <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded">{inquiry.notes}</p>
+              <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded">{inquiry.special_request}</p>
             </div>
           )}
 

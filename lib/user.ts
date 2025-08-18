@@ -5,7 +5,7 @@ export async function createUser(id: string, email: string, name: string) {
     const supabase = createClient();
     console.log("Creating user with:", { id, email, name });
     
-    const { data, error } = await supabase.from("admin_users").insert({ id, email, name });
+    const { data, error } = await supabase.from("photographers").insert({ id, email, name });
     
     if (error) {
       console.error("Supabase error creating user:", error);
@@ -25,7 +25,7 @@ export async function getUser(id: string) {
     const supabase = createClient();
     console.log("Getting user with id:", id);
     
-    const { data, error } = await supabase.from("admin_users").select("*").eq("id", id);
+    const { data, error } = await supabase.from("photographers").select("*").eq("id", id);
     
     if (error) {
       console.error("Supabase error getting user:", error);
