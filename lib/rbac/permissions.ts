@@ -49,14 +49,15 @@ export function userHasAllPermissions(user: UserProfile | null, permissions: Per
  * 관리자 권한 확인 (admin 또는 super_admin)
  */
 export function isAdmin(user: UserProfile | null): boolean {
-  return user?.userType === 'admin' && (user.role === 'admin' || user.role === 'super_admin')
+  return user?.userType === 'admin'
 }
 
 /**
  * 슈퍼 관리자 권한 확인
  */
 export function isSuperAdmin(user: UserProfile | null): boolean {
-  return user?.userType === 'admin' && user.role === 'super_admin'
+  // Since role system was removed, all admins are treated equally
+  return user?.userType === 'admin'
 }
 
 /**
@@ -113,5 +114,5 @@ export function canAccessPage(user: UserProfile | null, path: string): boolean {
   if (!requiredPermissions) return true // 권한 설정이 없으면 접근 허용
   if (requiredPermissions.length === 0) return !!user // 로그인한 사용자만 접근
   
-  return userHasAnyPermission(user, requiredPermissions)
+  return userHasAnyPermission(user, [...requiredPermissions])
 }

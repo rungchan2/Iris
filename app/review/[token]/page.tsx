@@ -1,17 +1,16 @@
-import { notFound } from "next/navigation";
 import { getReviewByToken } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review/review-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 
 interface ReviewPageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default async function ReviewPage({ params }: ReviewPageProps) {
-  const { token } = params;
+  const { token } = await params;
   
   const result = await getReviewByToken(token);
 
@@ -136,7 +135,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ReviewPageProps) {
-  const { token } = params;
+  const { token } = await params;
   
   const result = await getReviewByToken(token);
   

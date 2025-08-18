@@ -4,7 +4,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { PersonalityType } from '@/lib/quiz-data'
-import { Json } from '@/types/database.type'
+import { Json } from '@/types/database.types'
 
 export interface QuizSession {
   id: string
@@ -75,7 +75,12 @@ export async function createQuizSession(): Promise<{ success: boolean; session?:
       return { success: false, error: error.message }
     }
     
-    return { success: true, session: data }
+    return { success: true, session: {
+      ...data,
+      updated_at: data.created_at,
+      started_at: data.started_at || data.created_at,
+      user_ip: data.user_ip as string | null
+    } as QuizSession }
   } catch (error) {
     console.error('Error creating quiz session:', error)
     return { success: false, error: 'Failed to create quiz session' }
@@ -139,7 +144,12 @@ export async function getQuizQuestions(): Promise<{ success: boolean; questions?
     // Combine questions with their choices
     const questionsWithChoices: QuizQuestion[] = questions.map(question => ({
       ...question,
-      choices: choices.filter(choice => choice.question_id === question.id)
+      choices: choices
+        .filter(choice => choice.question_id === question.id)
+        .map(choice => ({
+          ...choice,
+          question_id: choice.question_id || question.id
+        })) as QuizChoice[]
     }))
     
     return { success: true, questions: questionsWithChoices }
@@ -223,6 +233,7 @@ export async function calculatePersonalityResult(
     
     weights?.forEach(weight => {
       const personalityCode = weight.personality_code
+      if (!personalityCode) return
       if (!scores[personalityCode]) {
         scores[personalityCode] = 0
       }
@@ -280,7 +291,12 @@ export async function getQuizSession(sessionId: string): Promise<{ success: bool
       return { success: false, error: error.message }
     }
     
-    return { success: true, session: data }
+    return { success: true, session: {
+      ...data,
+      updated_at: data.created_at,
+      started_at: data.started_at || data.created_at,
+      user_ip: data.user_ip as string | null
+    } as QuizSession }
   } catch (error) {
     console.error('Error fetching quiz session:', error)
     return { success: false, error: 'Failed to fetch quiz session' }

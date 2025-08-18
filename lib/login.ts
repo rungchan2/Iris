@@ -47,7 +47,7 @@ export async function loginWithUserType(
     // 먼저 photographers 테이블에서 확인
     const { data: adminData } = await supabase
       .from('photographers')
-      .select('id, role')
+      .select('id')
       .eq('id', authData.user.id)
       .single();
 
@@ -56,7 +56,7 @@ export async function loginWithUserType(
         data: authData,
         error: null,
         userType: 'admin' as const,
-        role: adminData.role,
+        role: undefined,
         redirectPath: '/admin'
       };
     }

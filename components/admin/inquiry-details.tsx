@@ -126,6 +126,9 @@ export function InquiryDetails({
 
       const lastCategoryId = inquiry.selected_category_id || "";
 
+      // Note: These columns don't exist in the current schema
+      // Commenting out until schema is updated
+      /*
       const { data, error } = await supabase
         .from("categories")
         .select(
@@ -139,6 +142,10 @@ export function InquiryDetails({
       } else {
         setCategoryRecommendations(data);
       }
+      */
+      
+      // Set empty recommendations for now
+      setCategoryRecommendations({});
     };
 
     fetchCategoryRecommendations();

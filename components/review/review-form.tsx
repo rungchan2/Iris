@@ -19,11 +19,17 @@ const reviewSchema = z.object({
   reviewer_name: z.string().optional(),
   rating: z.number().min(1, "평점을 선택해주세요").max(5),
   comment: z.string().optional(),
-  is_public: z.boolean().default(true),
-  is_anonymous: z.boolean().default(false),
+  is_public: z.boolean(),
+  is_anonymous: z.boolean(),
 });
 
-type ReviewFormData = z.infer<typeof reviewSchema>;
+type ReviewFormData = {
+  reviewer_name?: string;
+  rating: number;
+  comment?: string;
+  is_public: boolean;
+  is_anonymous: boolean;
+};
 
 interface ReviewFormProps {
   token: string;

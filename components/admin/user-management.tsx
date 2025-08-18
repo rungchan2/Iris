@@ -106,7 +106,13 @@ export function UserManagement() {
     try {
       const result = await getPhotographerUsers()
       if (result.success && result.data) {
-        setPhotographerUsers(result.data)
+        setPhotographerUsers(result.data.map(user => ({
+          ...user,
+          email: user.email || '',
+          name: user.name || '',
+          created_at: user.created_at || new Date().toISOString(),
+          approval_status: user.approval_status || 'pending'
+        })))
       } else if (result.error) {
         toast.error(result.error)
       }

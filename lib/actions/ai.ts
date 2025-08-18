@@ -227,7 +227,14 @@ Please maintain photorealistic quality with professional studio lighting and pos
       return { success: false, error: '결과 저장 중 오류가 발생했습니다' }
     }
     
-    return { success: true, generation: updatedGeneration }
+    return { 
+      success: true, 
+      generation: {
+        ...updatedGeneration,
+        personality_code: updatedGeneration.personality_code || '',
+        generation_status: updatedGeneration.generation_status || 'completed'
+      } as AIImageGeneration
+    }
     
   } catch (error: any) {
     console.error('AI image generation error:', error)
@@ -367,7 +374,14 @@ export async function editGeneratedImage(
       return { success: false, error: '결과 저장 중 오류가 발생했습니다' }
     }
     
-    return { success: true, generation: updatedGeneration }
+    return { 
+      success: true, 
+      generation: {
+        ...updatedGeneration,
+        personality_code: updatedGeneration.personality_code || '',
+        generation_status: updatedGeneration.generation_status || 'completed'
+      } as AIImageGeneration
+    }
     
   } catch (error: any) {
     console.error('AI image edit error:', error)
@@ -451,7 +465,7 @@ export async function pollGenerationStatus(
     
     return { 
       success: true, 
-      status: data.generation_status,
+      status: data.generation_status || 'unknown',
       progress: responseData?.progress || 0,
       imageUrl: data.generated_image_url || undefined
     }
@@ -480,7 +494,14 @@ export async function getAIGenerationStatus(
       return { success: false, error: error.message }
     }
     
-    return { success: true, generation: data }
+    return { 
+      success: true, 
+      generation: {
+        ...data,
+        personality_code: data.personality_code || '',
+        generation_status: data.generation_status || 'unknown'
+      } as AIImageGeneration
+    }
   } catch (error) {
     console.error('Error fetching AI generation status:', error)
     return { success: false, error: 'Failed to fetch generation status' }
@@ -567,7 +588,14 @@ export async function getSessionAIGenerations(
       return { success: false, error: error.message }
     }
     
-    return { success: true, generations: data }
+    return { 
+      success: true, 
+      generations: data.map(gen => ({
+        ...gen,
+        personality_code: gen.personality_code || '',
+        generation_status: gen.generation_status || 'unknown'
+      } as AIImageGeneration))
+    }
   } catch (error) {
     console.error('Error fetching session AI generations:', error)
     return { success: false, error: 'Failed to fetch generations' }

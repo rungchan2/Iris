@@ -77,6 +77,9 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
     const fetchCategoryRecommendations = async () => {
       if (!inquiry.selected_category_id) return;
       
+      // Note: These columns don't exist in the current schema
+      // Commenting out until schema is updated
+      /*
       const supabase = createClient();
       const { data, error } = await supabase
         .from("categories")
@@ -90,6 +93,10 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
         console.log("Category recommendations loaded:", data);
         setCategoryRecommendations(data);
       }
+      */
+      
+      // Set empty recommendations for now
+      setCategoryRecommendations({});
     };
 
     if (isOpen) {

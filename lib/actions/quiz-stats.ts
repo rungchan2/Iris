@@ -276,6 +276,8 @@ export async function getQuestionStats(): Promise<{
       const responseTime = response.response_time_ms
       const questionData = response.quiz_questions as any
       
+      if (!questionId) return
+      
       if (!statsMap.has(questionId)) {
         statsMap.set(questionId, {
           questionText: questionData?.question_text || '',

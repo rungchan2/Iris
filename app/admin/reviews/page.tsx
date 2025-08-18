@@ -181,7 +181,14 @@ async function ReviewContent() {
           </div>
         </div>
 
-        <ReviewManagement inquiries={inquiries} reviews={reviews} />
+        <ReviewManagement 
+          inquiries={inquiries.map(inq => ({
+            ...inq,
+            created_at: inq.created_at || '',
+            status: inq.status || 'pending'
+          }))} 
+          reviews={reviews} 
+        />
       </div>
     </div>
   );

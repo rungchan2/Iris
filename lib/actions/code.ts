@@ -72,7 +72,7 @@ export async function getInquiryById(inquiryId: string): Promise<{
         admin_notes: inquiry.admin_note || '',
         created_at: inquiry.created_at || new Date().toISOString(),
         updated_at: inquiry.updated_at || new Date().toISOString(),
-        assigned_admin_id: inquiry.assigned_admin_id || '',
+        assigned_admin_id: inquiry.matched_admin_id || '',
         selected_category_id: inquiry.selected_category_id || '',
         selected_slot_id: inquiry.selected_slot_id || '',
         special_request: inquiry.special_request || '',
@@ -82,7 +82,10 @@ export async function getInquiryById(inquiryId: string): Promise<{
         desired_date: inquiry.desired_date || '',
         current_mood_keywords: inquiry.current_mood_keywords || [],
         desired_mood_keywords: inquiry.desired_mood_keywords || [],
-        assigned_admin: inquiry.assigned_admin || undefined
+        assigned_admin: inquiry.assigned_admin ? {
+          name: inquiry.assigned_admin.name || '',
+          email: inquiry.assigned_admin.email || ''
+        } : undefined
       }
     }
   } catch (error) {

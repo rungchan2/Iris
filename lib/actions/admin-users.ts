@@ -116,8 +116,8 @@ export async function getAllAdminUsersWithStats(
 
         return {
           id: user.id,
-          name: user.name,
-          email: user.email,
+          name: user.name || '',
+          email: user.email || '',
           created_at: user.created_at || new Date().toISOString(),
           updated_at: user.updated_at || new Date().toISOString(),
           approval_status: 'approved', // Default status for existing users

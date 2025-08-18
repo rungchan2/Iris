@@ -93,8 +93,15 @@ export function useAddCategory() {
     onSuccess: (newCategory) => {
       // Optimistic update
       queryClient.setQueryData<Category[]>(categoryKeys.lists(), (old) => {
-        if (!old) return [newCategory]
-        return [...old, newCategory]
+        const categoryWithDefaults = {
+          ...newCategory,
+          place_recommendation: '',
+          male_clothing_recommendation: '',
+          female_clothing_recommendation: '',
+          accessories_recommendation: ''
+        } as Category
+        if (!old) return [categoryWithDefaults]
+        return [...old, categoryWithDefaults]
       })
       toast.success("카테고리가 성공적으로 추가되었습니다")
     },

@@ -31,6 +31,7 @@ export default async function PhotosPage({
         categories={categories?.map(cat => ({
           ...cat,
           path: cat.path || '',
+          depth: cat.depth ?? 0,
           is_active: cat.is_active ?? true
         })) || []}
         userId={user?.id || ""}

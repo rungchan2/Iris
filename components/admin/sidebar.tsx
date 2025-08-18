@@ -126,7 +126,7 @@ export function Sidebar() {
                 <p className="font-medium">{user.name}</p>
                 <p className="text-xs">
                   {user.userType === 'admin' 
-                    ? (user.role === 'super_admin' ? '슈퍼 관리자' : '관리자')
+                    ? (user.role === 'admin' ? '관리자' : '작가')
                     : '작가'
                   }
                 </p>

@@ -332,8 +332,8 @@ export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise
 
     // 작가별 통계
     const adminStats = inquiries?.reduce((acc, inquiry) => {
-      if (inquiry.assigned_admin_id) {
-        const adminId = inquiry.assigned_admin_id
+      if (inquiry.matched_admin_id) {
+        const adminId = inquiry.matched_admin_id
         if (!acc[adminId]) {
           acc[adminId] = {
             adminId,

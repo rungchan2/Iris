@@ -2,6 +2,7 @@
 
 // 타입
 export type { UserRole, Permission, UserProfile, RolePermissions } from './types'
+import type { Permission } from './types'
 export { ROLE_PERMISSIONS } from './types'
 
 // 권한 체크 함수들
