@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import { useState, useEffect } from "react"
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { PhotoUploader } from "@/components/admin/photo-uploader"
@@ -9,6 +9,7 @@ import { PhotoFilters } from "@/components/admin/photo-filters"
 import { CategoryAssignModal } from "@/components/admin/category-assign-modal"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import dynamic from "next/dynamic"
 
 const PHOTOS_PER_PAGE = 500
 
@@ -52,9 +53,9 @@ interface PhotoManagerProps {
   showUnassigned: boolean
 }
 
-export function PhotoManager({ categories, userId, isAdmin, initialPage, filterCategory, showUnassigned }: PhotoManagerProps) {
-  const [selectedPhotos, setSelectedPhotos] = React.useState<Set<string>>(new Set())
-  const [assignModalOpen, setAssignModalOpen] = React.useState(false)
+export default function PhotoManager({ categories, userId, isAdmin, initialPage, filterCategory, showUnassigned }: PhotoManagerProps) {
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
   const supabase = createClient()
   const queryClient = useQueryClient()
 

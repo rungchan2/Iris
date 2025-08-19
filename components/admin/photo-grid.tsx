@@ -13,7 +13,6 @@ interface Photo {
   filename: string
   storage_url: string
   thumbnail_url?: string
-  uploaded_by?: string | null
   photo_categories?: Array<{
     category_id: string
     categories: {
