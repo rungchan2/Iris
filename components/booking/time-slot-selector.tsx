@@ -13,6 +13,7 @@ interface TimeSlotSelectorProps {
   date: Date;
   selectedSlotId?: string;
   onSelect: (slotId: string) => void;
+  photographerId?: string;
 }
 
 interface AvailableSlot {
@@ -33,6 +34,7 @@ export function TimeSlotSelector({
   date,
   selectedSlotId,
   onSelect,
+  photographerId,
 }: TimeSlotSelectorProps) {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export function TimeSlotSelector({
       try {
         const formattedDate = format(date, "yyyy-MM-dd");
 
-        const { data, error } = await supabase
+        let query = supabase
           .from("available_slots")
           .select(
             `
@@ -71,8 +73,14 @@ export function TimeSlotSelector({
             )
           `
           )
-          .eq("date", formattedDate)
-          .order("start_time");
+          .eq("date", formattedDate);
+
+        // Filter by photographer ID if provided
+        if (photographerId) {
+          query = query.eq("admin_id", photographerId);
+        }
+
+        const { data, error } = await query.order("start_time");
 
         if (error) throw error;
 
@@ -91,7 +99,7 @@ export function TimeSlotSelector({
     return () => {
       channel.unsubscribe();
     };
-  }, [date, supabase]);
+  }, [date, supabase, photographerId]);
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");

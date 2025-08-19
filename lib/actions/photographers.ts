@@ -8,6 +8,11 @@ export interface PhotographerData {
   email: string
   created_at: string
   portfolioCount: number
+  personality_type?: string | null
+  directing_style?: string | null
+  photography_approach?: string | null
+  youtube_intro_url?: string | null
+  profile_image_url?: string | null
   personalityTypes: Array<{
     code: string
     name: string
@@ -27,7 +32,8 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
   try {
     const supabase = await createClient()
     
-    // Base query to get photographers with portfolio count
+    // Base query to get photographers with portfolio count and style fields
+    // Admin 계정은 제외 (is_admin_account = false인 것만)
     let query = supabase
       .from('photographers')
       .select(`
@@ -35,8 +41,14 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
         name,
         email,
         created_at,
+        personality_type,
+        directing_style,
+        photography_approach,
+        youtube_intro_url,
+        profile_image_url,
         admin_portfolio_photos(count)
       `)
+      .eq('is_admin_account', false)
     
     // Apply search filter
     if (filters.search) {
@@ -60,6 +72,11 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
       name: photographer.name || '',
       email: photographer.email || '',
       created_at: photographer.created_at || '',
+      personality_type: photographer.personality_type,
+      directing_style: photographer.directing_style,
+      photography_approach: photographer.photography_approach,
+      youtube_intro_url: photographer.youtube_intro_url,
+      profile_image_url: photographer.profile_image_url,
       portfolioCount: photographer.admin_portfolio_photos?.length || 0,
       personalityTypes: [] // TODO: personality_admin_mapping 테이블 생성 후 활성화
     }))
@@ -144,6 +161,7 @@ export async function getPhotographerById(id: string) {
         )
       `)
       .eq('id', id)
+      .eq('is_admin_account', false) // admin 계정 제외
       .single()
     
     if (error) {

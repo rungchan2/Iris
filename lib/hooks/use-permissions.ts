@@ -1,0 +1,134 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { type UserPermissions } from '@/lib/auth/permissions'
+
+export function usePermissions() {
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getPermissions = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          setPermissions({
+            userType: null,
+            canAccessUsers: false,
+            canAccessPhotos: false,
+            canAccessCategories: false,
+            canAccessInquiries: false,
+            canAccessSchedule: false,
+            canAccessAnalytics: false,
+            canAccessMyPage: false,
+            canAccessReviews: false,
+            canAccessPersonalityMapping: false,
+          })
+          setLoading(false)
+          return
+        }
+
+        // Check if user is admin (stored in auth.users metadata)
+        const isAdmin = session.user.user_metadata?.user_type === 'admin'
+        
+        // Check if user is photographer (exists in photographers table)
+        const { data: photographer, error: photographerError } = await supabase
+          .from('photographers')
+          .select('id')
+          .eq('id', session.user.id)
+          .single()
+
+        const isPhotographer = !!photographer
+
+        // Admin has access to everything
+        if (isAdmin) {
+          // Admin인데 photographers 테이블에 프로필이 없으면 기본 프로필 생성
+          if (!photographer) {
+            const { error: createError } = await supabase
+              .from('photographers')
+              .insert({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: session.user.user_metadata?.name || 'Admin User',
+                phone: '',
+                bio: 'Iris 관리자',
+                personality_type: '',
+                directing_style: '',
+                photography_approach: '',
+                youtube_intro_url: '',
+                profile_image_url: '',
+                is_admin_account: true
+              })
+            
+            if (createError) {
+              console.error('Failed to create admin profile:', createError)
+            }
+          }
+          setPermissions({
+            userType: 'admin',
+            canAccessUsers: true,
+            canAccessPhotos: true,
+            canAccessCategories: true,
+            canAccessInquiries: true,
+            canAccessSchedule: true,
+            canAccessAnalytics: true,
+            canAccessMyPage: true,
+            canAccessReviews: true,
+            canAccessPersonalityMapping: true,
+          })
+        } else if (isPhotographer) {
+          // Photographer has limited access
+          setPermissions({
+            userType: 'photographer',
+            canAccessUsers: false,
+            canAccessPhotos: true,
+            canAccessCategories: false,
+            canAccessInquiries: true,
+            canAccessSchedule: true,
+            canAccessAnalytics: false,
+            canAccessMyPage: true,
+            canAccessReviews: true,
+            canAccessPersonalityMapping: true,
+          })
+        } else {
+          // No access if neither admin nor photographer
+          setPermissions({
+            userType: null,
+            canAccessUsers: false,
+            canAccessPhotos: false,
+            canAccessCategories: false,
+            canAccessInquiries: false,
+            canAccessSchedule: false,
+            canAccessAnalytics: false,
+            canAccessMyPage: false,
+            canAccessReviews: false,
+            canAccessPersonalityMapping: false,
+          })
+        }
+      } catch (error) {
+        console.error('Failed to get permissions:', error)
+        setPermissions({
+          userType: null,
+          canAccessUsers: false,
+          canAccessPhotos: false,
+          canAccessCategories: false,
+          canAccessInquiries: false,
+          canAccessSchedule: false,
+          canAccessAnalytics: false,
+          canAccessMyPage: false,
+          canAccessReviews: false,
+          canAccessPersonalityMapping: false,
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getPermissions()
+  }, [supabase])
+
+  return { permissions, loading }
+}

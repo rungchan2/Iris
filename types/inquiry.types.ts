@@ -20,6 +20,12 @@ export const inquiryFormSchema = z.object({
   // Additional Info
   special_request: z.string().optional(),
   difficulty_note: z.string().optional(),
+
+  // Final Questions (Step 4)
+  conversation_preference: z.string().optional(),
+  conversation_topics: z.string().optional(),
+  favorite_music: z.string().optional(),
+  shooting_meaning: z.string().optional(),
 })
 
 export type InquiryFormValues = z.infer<typeof inquiryFormSchema>

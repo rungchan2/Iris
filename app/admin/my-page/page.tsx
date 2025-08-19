@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AccountSettings, AdminUser } from "@/components/admin/account-settings"
+import { PhotographerProfileSection } from "@/components/admin/photographer-profile"
 
 export default async function MyAccountPage() {
   const supabase = await createClient()
@@ -14,14 +15,14 @@ export default async function MyAccountPage() {
     redirect("/login")
   }
 
-  // Get admin user info
-  const { data: adminUser, error: userError } = await supabase
+  // Get photographer info with extended fields
+  const { data: photographer, error: userError } = await supabase
     .from("photographers")
     .select("*")
     .eq("id", session.user.id)
     .single()
 
-  if (userError || !adminUser) {
+  if (userError || !photographer) {
     redirect("/unauthorized")
   }
 
@@ -58,7 +59,11 @@ export default async function MyAccountPage() {
         <p className="text-muted-foreground">프로필을 관리하고 업로드 통계를 확인하세요</p>
       </div>
 
-      <AccountSettings adminUser={adminUser as AdminUser} statistics={statistics} />
+      {/* Show extended profile for photographers */}
+      <PhotographerProfileSection photographer={photographer} />
+      
+      {/* Original account settings with statistics */}
+      <AccountSettings adminUser={photographer as AdminUser} statistics={statistics} />
     </div>
   )
 }

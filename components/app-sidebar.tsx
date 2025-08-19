@@ -19,63 +19,77 @@ import {
 } from "@/components/ui/sidebar"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
+import { type UserPermissions } from "@/lib/auth/permissions"
+import { usePermissions } from "@/lib/hooks/use-permissions"
 
-// Menu items
-const items = [
+interface MenuItem {
+  title: string
+  url: string
+  icon: any
+  requiredPermission: keyof UserPermissions
+}
+
+// Menu items with required permissions
+const items: MenuItem[] = [
   {
     title: "문의",
     url: "/admin",
     icon: Inbox,
+    requiredPermission: "canAccessInquiries",
   },
   {
     title: "카테고리",
     url: "/admin/category",
     icon: FolderTree,
+    requiredPermission: "canAccessCategories",
   },
   {
     title: "사진",
     url: "/admin/photos",
     icon: ImageIcon,
+    requiredPermission: "canAccessPhotos",
   },
   {
     title: "일정",
     url: "/admin/schedule",
     icon: Calendar,
+    requiredPermission: "canAccessSchedule",
   },
   {
     title: "사용자 관리",
     url: "/admin/users",
     icon: Users,
-  },
-  {
-    title: "초대 코드",
-    url: "/admin/invites",
-    icon: UserPlus,
+    requiredPermission: "canAccessUsers",
   },
   {
     title: "성격유형 매칭",
     url: "/admin/personality-mapping",
     icon: Target,
+    requiredPermission: "canAccessPersonalityMapping",
   },
   {
     title: "통계 및 분석",
     url: "/admin/analytics",
     icon: BarChart3,
+    requiredPermission: "canAccessAnalytics",
   },
   {
     title: "성향 진단 관리",
     url: "/admin/personality-management",
     icon: Brain,
+    requiredPermission: "canAccessUsers",
   },
   {
     title: "리뷰 관리",
     url: "/admin/reviews",
     icon: MessageSquare,
+    requiredPermission: "canAccessReviews",
   },
   {
     title: "내 계정",
     url: "/admin/my-page",
     icon: User,
+    requiredPermission: "canAccessMyPage",
   },
 ]
 
@@ -92,6 +106,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
   const pathname = usePathname()
   const supabase = createClient()
   const [mounted, setMounted] = useState(false)
+  const { permissions } = usePermissions()
 
   useEffect(() => {
     setMounted(true)
@@ -126,7 +141,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
           <SidebarGroupLabel>관리자 페이지</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {items.filter(item => permissions?.[item.requiredPermission]).map((item) => {
                 const isActive = mounted ? (pathname === item.url || (item.url !== "/admin" && pathname.startsWith(item.url))) : false
                 return (
                   <SidebarMenuItem key={item.title}>

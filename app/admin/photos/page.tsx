@@ -17,6 +17,9 @@ export default async function PhotosPage({
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Check if user is admin (has user_metadata.user_type === 'admin')
+  const isAdmin = user?.user_metadata?.user_type === 'admin'
+
   // Fetch categories for filter
   const { data: categories } = await supabase.from("categories").select("*").order("path")
 
@@ -35,6 +38,7 @@ export default async function PhotosPage({
           is_active: cat.is_active ?? true
         })) || []}
         userId={user?.id || ""}
+        isAdmin={isAdmin}
         initialPage={Number.parseInt(params.page || "1")}
         filterCategory={params.category}
         showUnassigned={params.unassigned === "true"}

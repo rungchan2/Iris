@@ -36,6 +36,7 @@ interface PersonalInfoFormProps {
   moodKeywords: MoodKeyword[];
   availableDates: string[];
   onFormChange?: () => void; // Add this prop
+  photographerId?: string; // Add photographer ID prop
 }
 
 export function PersonalInfoForm({
@@ -43,6 +44,7 @@ export function PersonalInfoForm({
   moodKeywords,
   availableDates,
   onFormChange,
+  photographerId,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
     "personal" | "mood" | "additional"
@@ -432,6 +434,7 @@ export function PersonalInfoForm({
                               date={form.watch("desired_date")}
                               selectedSlotId={field.value}
                               onSelect={field.onChange}
+                              photographerId={photographerId}
                             />
                           </FormControl>
                           <FormMessage />

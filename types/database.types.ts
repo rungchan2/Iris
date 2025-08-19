@@ -362,11 +362,14 @@ export type Database = {
         Row: {
           admin_note: string | null
           ai_generation_id: string | null
+          conversation_preference: string | null
+          conversation_topics: string | null
           created_at: string | null
           current_mood_keywords: string[] | null
           desired_date: string | null
           desired_mood_keywords: string[] | null
           difficulty_note: string | null
+          favorite_music: string | null
           gender: string | null
           id: string
           instagram_id: string | null
@@ -381,6 +384,7 @@ export type Database = {
           selected_slot_id: string | null
           selection_history: Json | null
           selection_path: string[] | null
+          shooting_meaning: string | null
           special_request: string | null
           status: string | null
           updated_at: string | null
@@ -388,11 +392,14 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           ai_generation_id?: string | null
+          conversation_preference?: string | null
+          conversation_topics?: string | null
           created_at?: string | null
           current_mood_keywords?: string[] | null
           desired_date?: string | null
           desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
+          favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
@@ -407,6 +414,7 @@ export type Database = {
           selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
+          shooting_meaning?: string | null
           special_request?: string | null
           status?: string | null
           updated_at?: string | null
@@ -414,11 +422,14 @@ export type Database = {
         Update: {
           admin_note?: string | null
           ai_generation_id?: string | null
+          conversation_preference?: string | null
+          conversation_topics?: string | null
           created_at?: string | null
           current_mood_keywords?: string[] | null
           desired_date?: string | null
           desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
+          favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
@@ -433,6 +444,7 @@ export type Database = {
           selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
+          shooting_meaning?: string | null
           special_request?: string | null
           status?: string | null
           updated_at?: string | null
@@ -693,24 +705,30 @@ export type Database = {
           bio: string | null
           birth_year: number | null
           created_at: string | null
+          directing_style: string | null
           email: string | null
           equipment_info: string | null
           gender: string | null
           id: string
           instagram_handle: string | null
+          is_admin_account: boolean | null
           name: string | null
+          personality_type: string | null
           phone: string | null
+          photography_approach: string | null
           portfolio_submitted_at: string | null
           price_description: string | null
           price_range_max: number | null
           price_range_min: number | null
           profile_completed: boolean | null
+          profile_image_url: string | null
           rejection_reason: string | null
           specialties: string[] | null
           studio_location: string | null
           updated_at: string | null
           website_url: string | null
           years_experience: number | null
+          youtube_intro_url: string | null
         }
         Insert: {
           age_range?: string | null
@@ -721,24 +739,30 @@ export type Database = {
           bio?: string | null
           birth_year?: number | null
           created_at?: string | null
+          directing_style?: string | null
           email?: string | null
           equipment_info?: string | null
           gender?: string | null
           id: string
           instagram_handle?: string | null
+          is_admin_account?: boolean | null
           name?: string | null
+          personality_type?: string | null
           phone?: string | null
+          photography_approach?: string | null
           portfolio_submitted_at?: string | null
           price_description?: string | null
           price_range_max?: number | null
           price_range_min?: number | null
           profile_completed?: boolean | null
+          profile_image_url?: string | null
           rejection_reason?: string | null
           specialties?: string[] | null
           studio_location?: string | null
           updated_at?: string | null
           website_url?: string | null
           years_experience?: number | null
+          youtube_intro_url?: string | null
         }
         Update: {
           age_range?: string | null
@@ -749,24 +773,30 @@ export type Database = {
           bio?: string | null
           birth_year?: number | null
           created_at?: string | null
+          directing_style?: string | null
           email?: string | null
           equipment_info?: string | null
           gender?: string | null
           id?: string
           instagram_handle?: string | null
+          is_admin_account?: boolean | null
           name?: string | null
+          personality_type?: string | null
           phone?: string | null
+          photography_approach?: string | null
           portfolio_submitted_at?: string | null
           price_description?: string | null
           price_range_max?: number | null
           price_range_min?: number | null
           profile_completed?: boolean | null
+          profile_image_url?: string | null
           rejection_reason?: string | null
           specialties?: string[] | null
           studio_location?: string | null
           updated_at?: string | null
           website_url?: string | null
           years_experience?: number | null
+          youtube_intro_url?: string | null
         }
         Relationships: []
       }
@@ -1048,7 +1078,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cancel_reservation: {
+        Args: { p_inquiry_id: string }
+        Returns: boolean
+      }
+      get_available_slots: {
+        Args: {
+          p_admin_id?: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          admin_id: string
+          end_time: string
+          is_available: boolean
+          slot_date: string
+          slot_id: string
+          start_time: string
+        }[]
+      }
+      get_reserved_slots: {
+        Args: {
+          p_admin_id?: string
+          p_end_date?: string
+          p_start_date?: string
+        }
+        Returns: {
+          admin_id: string
+          customer_name: string
+          end_time: string
+          inquiry_id: string
+          inquiry_status: string
+          slot_date: string
+          slot_id: string
+          start_time: string
+        }[]
+      }
+      is_slot_available: {
+        Args: { p_slot_id: string }
+        Returns: boolean
+      }
+      reserve_slot: {
+        Args: { p_inquiry_id: string; p_slot_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -79,15 +79,20 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
   const handleStatusChange = async (id: string, newStatus: "new" | "contacted" | "completed") => {
     setUpdatingId(id)
 
-    const { error } = await supabase.from("inquiries").update({ status: newStatus }).eq("id", id)
+    try {
+      const { error } = await supabase.from("inquiries").update({ status: newStatus }).eq("id", id)
 
-    if (!error) {
-      router.refresh()
-    } else {
+      if (error) {
+        console.error("Error updating status:", error)
+        throw error
+      }
+
+      // Force a hard refresh to ensure data is updated
+      window.location.reload()
+    } catch (error) {
       console.error("Error updating status:", error)
+      setUpdatingId(null)
     }
-
-    setUpdatingId(null)
   }
 
   return (

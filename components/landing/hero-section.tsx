@@ -6,9 +6,19 @@ import { ChevronDown, Camera, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import Marquee from "react-fast-marquee";
 
 export function LandingHeroSection() {
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const marqueeTexts = [
+    "오랜만에 혼자 떠나는 여행이에요.",
+    "지금의 나를 꼭 남기고 싶었어요.",
+    "퇴사를 앞두고, 새로운 시작을 앞두고 있어서",
+    "나만의 의식을 만들고 싶었어요.",
+    "연애 중인데, 일상의 소소한 순간을",
+    "우리 둘만의 방식으로 기록하고 싶었어요."
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +38,29 @@ export function LandingHeroSection() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100">
+      {/* Marquee Background */}
+      <div className="absolute inset-0 z-0 opacity-10">
+        <Marquee
+          gradient={false}
+          speed={30}
+          className="h-full flex items-center"
+        >
+          {marqueeTexts.map((text, index) => (
+            <span
+              key={index}
+              className="text-6xl md:text-8xl font-bold text-orange-600 mx-12 whitespace-nowrap"
+            >
+              {text}
+            </span>
+          ))}
+        </Marquee>
+      </div>
+
+      {/* Iris Logo */}
+      <div className="absolute top-8 left-8 z-20">
+        <span className="text-2xl font-bold text-orange-600">Iris</span>
+      </div>
+
       {/* Navigation Links */}
       <div className="absolute top-8 right-8 z-20 flex flex-col md:flex-row items-end md:items-center space-y-2 md:space-y-0 md:space-x-6">
         <Link
@@ -105,7 +138,7 @@ export function LandingHeroSection() {
               성향 진단 시작하기
             </Button>
           </Link>
-          <Link href="/photographers">
+          <Link href="/style-match">
             <Button
               variant="outline"
               size="lg"

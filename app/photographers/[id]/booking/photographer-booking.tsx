@@ -85,6 +85,14 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
     fetchData()
   }, [supabase])
 
+  // Pass photographer ID to PersonalInfoForm
+  const personalInfoFormProps = {
+    onSubmit: handlePersonalInfoSubmit,
+    moodKeywords,
+    availableDates,
+    photographerId: photographer.id
+  }
+
   const handlePersonalInfoSubmit = async (data: InquiryFormValues) => {
     setFormData(data)
     setIsSubmitting(true)
@@ -402,6 +410,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
                 onSubmit={handlePersonalInfoSubmit}
                 moodKeywords={moodKeywords}
                 availableDates={availableDates}
+                photographerId={photographer.id}
               />
             </div>
           </div>

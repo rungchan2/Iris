@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { CategoryManager } from "@/components/admin/category-manager"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 
 export default async function CategoryPage() {
   const supabase = await createClient()
@@ -22,11 +23,16 @@ export default async function CategoryPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">카테고리 관리</h1>
+    <PermissionGuard 
+      requiredPermission="category"
+      fallbackMessage="카테고리 관리 권한이 없습니다. 관리자만 접근 가능합니다."
+    >
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">카테고리 관리</h1>
+        </div>
+        <CategoryManager initialCategories={categories as any} />
       </div>
-      <CategoryManager initialCategories={categories as any} />
-    </div>
+    </PermissionGuard>
   )
 }

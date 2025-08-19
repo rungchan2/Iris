@@ -5,8 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { Eye, Trash2, Download } from "lucide-react"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
+import { PhotoDetailModal } from "@/components/admin/photo-detail-modal"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
@@ -18,6 +17,7 @@ interface Photo {
   width?: number
   height?: number
   size_kb?: number
+  uploaded_by?: string | null
   created_at: string
   photo_categories?: Array<{
     category_id: string
@@ -38,6 +38,14 @@ interface PhotoContextMenuProps {
 export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenuProps) {
   const [viewOpen, setViewOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  
+  const handleViewOpen = () => {
+    setViewOpen(true)
+  }
+  
+  const handleViewClose = () => {
+    setViewOpen(false)
+  }
 
   const handleDelete = async () => {
     if (!confirm("Delete this photo? This action cannot be undone.")) return
@@ -91,7 +99,7 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
       <ContextMenu>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => setViewOpen(true)} className="flex items-center gap-2">
+          <ContextMenuItem onClick={handleViewOpen} className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             크게 보기
           </ContextMenuItem>
@@ -110,52 +118,12 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* View Dialog */}
-      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogTitle className="sr-only">사진 보기 - {photo.filename}</DialogTitle>
-          <div className="relative">
-            <img
-              src={photo.storage_url || "/placeholder.svg"}
-              alt={photo.filename}
-              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-            />
-            <div className="mt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-muted-foreground">파일명:</span>
-                  <p className="font-mono">{photo.filename}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">크기:</span>
-                  <p>{photo.size_kb ? `${photo.size_kb}KB` : "Unknown"}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">크기:</span>
-                  <p>{photo.width && photo.height ? `${photo.width} × ${photo.height}` : "Unknown"}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">업로드 일자:</span>
-                  <p>{new Date(photo.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {photo.photo_categories && photo.photo_categories.length > 0 && (
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">카테고리:</span>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {photo.photo_categories.map((pc) => (
-                      <Badge key={pc.category_id} variant="secondary">
-                        {pc.categories.path}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* View Modal - Separated Component */}
+      <PhotoDetailModal 
+        photo={viewOpen ? photo : null}
+        open={viewOpen} 
+        onClose={handleViewClose} 
+      />
     </>
   )
 }

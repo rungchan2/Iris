@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React from "react"
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { PhotoUploader } from "@/components/admin/photo-uploader"
@@ -46,20 +46,21 @@ interface Category {
 interface PhotoManagerProps {
   categories: Category[]
   userId: string
+  isAdmin: boolean
   initialPage: number
   filterCategory?: string
   showUnassigned: boolean
 }
 
-export function PhotoManager({ categories, userId, initialPage, filterCategory, showUnassigned }: PhotoManagerProps) {
-  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
-  const [assignModalOpen, setAssignModalOpen] = useState(false)
+export function PhotoManager({ categories, userId, isAdmin, initialPage, filterCategory, showUnassigned }: PhotoManagerProps) {
+  const [selectedPhotos, setSelectedPhotos] = React.useState<Set<string>>(new Set())
+  const [assignModalOpen, setAssignModalOpen] = React.useState(false)
   const supabase = createClient()
   const queryClient = useQueryClient()
 
   // Infinite query for photos
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ["photos", filterCategory, showUnassigned],
+    queryKey: ["photos", filterCategory, showUnassigned, userId, isAdmin],
     queryFn: async ({ pageParam = 0 }) => {
       let query = supabase
         .from("photos")
@@ -79,6 +80,11 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
+
+      // If not admin, filter to only show user's own photos
+      if (!isAdmin) {
+        query = query.eq("uploaded_by", userId)
+      }
 
       if (filterCategory) {
         // Use inner join to only get photos that have the specific category
@@ -101,11 +107,16 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
           .eq("photo_categories.category_id", filterCategory)
           .order("created_at", { ascending: false })
           .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
+
+        // If not admin, filter to only show user's own photos
+        if (!isAdmin) {
+          query = query.eq("uploaded_by", userId)
+        }
       }
 
       if (showUnassigned) {
         // For unassigned photos, we need to use a different approach
-        const { data: allPhotos } = await supabase
+        let unassignedQuery = supabase
           .from("photos")
           .select(
             `
@@ -119,6 +130,12 @@ export function PhotoManager({ categories, userId, initialPage, filterCategory, 
           .order("created_at", { ascending: false })
           .range(pageParam * PHOTOS_PER_PAGE, (pageParam + 1) * PHOTOS_PER_PAGE - 1)
 
+        // If not admin, filter to only show user's own photos
+        if (!isAdmin) {
+          unassignedQuery = unassignedQuery.eq("uploaded_by", userId)
+        }
+
+        const { data: allPhotos } = await unassignedQuery
         const unassignedPhotos = allPhotos?.filter((photo) => !photo.photo_categories?.length) || []
         return unassignedPhotos as any
       }

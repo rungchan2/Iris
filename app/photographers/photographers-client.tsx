@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { PhotographerCard } from '@/components/photographers/photographer-card'
 import { PhotographerFilters } from '@/components/photographers/photographer-filters'
 import { Button } from '@/components/ui/button'
 import { Users, Search } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 interface PhotographerData {
   id: string
@@ -13,6 +14,11 @@ interface PhotographerData {
   email: string
   created_at: string
   portfolioCount: number
+  personality_type?: string | null
+  directing_style?: string | null
+  photography_approach?: string | null
+  youtube_intro_url?: string | null
+  profile_image_url?: string | null
   personalityTypes: Array<{
     code: string
     name: string
@@ -36,11 +42,32 @@ export function PhotographersClient({
   initialPhotographers, 
   personalityTypes 
 }: PhotographersClientProps) {
+  const searchParams = useSearchParams()
+  
   const [filters, setFilters] = useState({
     search: '',
     personalityCode: null as string | null,
-    sortBy: 'name'
+    sortBy: 'name',
+    personalityType: null as string | null,
+    directingStyle: null as string | null,
+    photographyApproach: null as string | null
   })
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const personalityType = searchParams.get('personality_type')
+    const directingStyle = searchParams.get('directing_style')
+    const photographyApproach = searchParams.get('photography_approach')
+    
+    if (personalityType || directingStyle || photographyApproach) {
+      setFilters(prev => ({
+        ...prev,
+        personalityType,
+        directingStyle,
+        photographyApproach
+      }))
+    }
+  }, [searchParams])
 
   const filteredPhotographers = useMemo(() => {
     let filtered = [...initialPhotographers]
@@ -57,6 +84,25 @@ export function PhotographersClient({
     if (filters.personalityCode) {
       filtered = filtered.filter(photographer =>
         photographer.personalityTypes.some(pt => pt.code === filters.personalityCode)
+      )
+    }
+
+    // Apply style filters from URL parameters
+    if (filters.personalityType) {
+      filtered = filtered.filter(photographer =>
+        photographer.personality_type === filters.personalityType
+      )
+    }
+
+    if (filters.directingStyle) {
+      filtered = filtered.filter(photographer =>
+        photographer.directing_style === filters.directingStyle
+      )
+    }
+
+    if (filters.photographyApproach) {
+      filtered = filtered.filter(photographer =>
+        photographer.photography_approach === filters.photographyApproach
       )
     }
 
@@ -143,11 +189,18 @@ export function PhotographersClient({
           </span>
         </div>
         
-        {filters.personalityCode && (
-          <div className="text-sm text-muted-foreground">
-            {personalityTypes.find(pt => pt.code === filters.personalityCode)?.name} 전문 작가
-          </div>
-        )}
+        <div className="flex flex-col items-end gap-1">
+          {filters.personalityCode && (
+            <div className="text-sm text-muted-foreground">
+              {personalityTypes.find(pt => pt.code === filters.personalityCode)?.name} 전문 작가
+            </div>
+          )}
+          {(filters.personalityType || filters.directingStyle || filters.photographyApproach) && (
+            <div className="text-sm text-orange-600 font-medium">
+              맞춤 추천 작가
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Photographers Grid */}

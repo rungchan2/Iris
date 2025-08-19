@@ -64,7 +64,7 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
       email_confirm: true, // 자동으로 이메일 확인됨으로 설정
       user_metadata: {
         name,
-        role: inviteData.role
+        user_type: 'admin' // admin 타입으로 설정
       }
     })
 
@@ -72,7 +72,26 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
       return { error: '회원가입 중 오류가 발생했습니다: ' + authError?.message }
     }
 
-    // admin 사용자는 auth.users 테이블에만 존재하므로 별도 테이블에 저장하지 않음
+    // 4. admin도 photographers 테이블에 기본 프로필 생성 (권한 체크를 위해)
+    const { error: profileError } = await supabaseService
+      .from('photographers')
+      .insert({
+        id: authData.user.id,
+        email,
+        name,
+        phone: '', // 기본값
+        bio: 'Iris 관리자', // admin임을 표시
+        personality_type: '', // 기본값
+        directing_style: '', // 기본값  
+        photography_approach: '', // 기본값
+        youtube_intro_url: '', // 기본값
+        profile_image_url: '' // 기본값
+      })
+
+    if (profileError) {
+      console.error('Admin profile creation error:', profileError)
+      // 프로필 생성 실패해도 계속 진행 (auth 사용자는 이미 생성됨)
+    }
 
     // 5. 초대 코드 사용 처리
     const { error: codeUpdateError } = await supabaseService
@@ -114,6 +133,12 @@ export async function createInviteCode(params: CreateInviteCodeParams) {
       return { error: '로그인이 필요합니다.' }
     }
 
+    // Admin 권한 확인
+    const isAdmin = user.user_metadata?.user_type === 'admin'
+    if (!isAdmin) {
+      return { error: '초대 코드 생성 권한이 없습니다.' }
+    }
+
     // 랜덤 코드 생성 (12자리)
     const code = Math.random().toString(36).substring(2, 14).toUpperCase()
     
@@ -127,7 +152,8 @@ export async function createInviteCode(params: CreateInviteCodeParams) {
         code,
         role: params.role,
         expires_at: expiresAt.toISOString(),
-        notes: params.notes
+        notes: params.notes,
+        created_by: user.id
       })
       .select()
       .single()
@@ -160,6 +186,12 @@ export async function getInviteCodes() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return { error: '로그인이 필요합니다.' }
+    }
+
+    // Admin 권한 확인
+    const isAdmin = user.user_metadata?.user_type === 'admin'
+    if (!isAdmin) {
+      return { error: '초대 코드 조회 권한이 없습니다.' }
     }
 
     const { data, error } = await supabase

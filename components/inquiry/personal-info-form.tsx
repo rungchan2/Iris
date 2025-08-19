@@ -45,7 +45,7 @@ export function PersonalInfoForm({
   onFormChange,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
-    "personal" | "mood" | "additional"
+    "personal" | "mood" | "additional" | "final"
   >("personal");
   const [dateSlotCounts, setDateSlotCounts] = useState<
     Record<string, { total: number; available: number }>
@@ -66,6 +66,10 @@ export function PersonalInfoForm({
       desired_mood_keywords: [],
       special_request: "",
       difficulty_note: "",
+      conversation_preference: "",
+      conversation_topics: "",
+      favorite_music: "",
+      shooting_meaning: "",
     },
   });
 
@@ -197,6 +201,16 @@ export function PersonalInfoForm({
       if (isValid) {
         setActiveSection("additional");
       }
+    } else if (activeSection === "additional") {
+      // Validate additional section fields
+      const isValid = await form.trigger([
+        "special_request",
+        "difficulty_note",
+      ]);
+
+      if (isValid) {
+        setActiveSection("final");
+      }
     }
   };
 
@@ -205,6 +219,8 @@ export function PersonalInfoForm({
       setActiveSection("personal");
     } else if (activeSection === "additional") {
       setActiveSection("mood");
+    } else if (activeSection === "final") {
+      setActiveSection("additional");
     }
   };
 
@@ -239,8 +255,14 @@ export function PersonalInfoForm({
             />
             <div
               className={cn(
-                "flex-1 h-1 rounded-r-full transition-colors",
+                "flex-1 h-1 transition-colors",
                 activeSection === "additional" ? "bg-primary" : "bg-primary/30"
+              )}
+            />
+            <div
+              className={cn(
+                "flex-1 h-1 rounded-r-full transition-colors",
+                activeSection === "final" ? "bg-primary" : "bg-primary/30"
               )}
             />
           </div>
@@ -705,13 +727,134 @@ export function PersonalInfoForm({
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
+                  <Button
+                    type="button"
+                    onClick={nextSection}
+                  >
+                    다음 <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+
+              {/* Final Questions Section (Step 4) */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: activeSection === "final" ? 1 : 0,
+                  x: activeSection === "final" ? 0 : 20,
+                }}
+                transition={{ duration: 0.3 }}
+                className={cn(
+                  "space-y-4",
+                  activeSection !== "final" && "hidden"
+                )}
+              >
+                <h3 className="text-xl font-semibold">마지막 질문</h3>
+                <p className="text-sm text-muted-foreground">
+                  촬영을 더 편안하고 즐겁게 만들기 위해 몇 가지만 더 여쭤볼게요!
+                </p>
+
+                <FormField
+                  control={form.control}
+                  name="conversation_preference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>1. 처음 보는 사람과 대화는 많이 or 적게?</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="많이" />
+                            </FormControl>
+                            <FormLabel className="font-normal">많이 - 대화를 나누며 편안한 분위기를 만들고 싶어요</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="적게" />
+                            </FormControl>
+                            <FormLabel className="font-normal">적게 - 조용하고 집중된 분위기를 선호해요</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="적당히" />
+                            </FormControl>
+                            <FormLabel className="font-normal">적당히 - 상황에 맞게 편하게 진행해주세요</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="conversation_topics"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>2. 어떤 주제로 대화하는 걸 좋아하세요?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="예: 영화, 음악, 여행, 책, 일상 이야기, 취미 등 편하게 이야기할 수 있는 주제를 알려주세요"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="favorite_music"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>3. 좋아하시는 음악이 있으신가요?</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="예: 재즈, 인디, 클래식, K-POP 등 촬영 중 듣고 싶은 음악이 있다면 알려주세요"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="shooting_meaning"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>4. 이번 촬영은 본인에게 어떤 의미인가요?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="특별한 기념일, 새로운 시작, 자기 자신을 위한 선물 등 이번 촬영의 의미를 자유롭게 나눠주세요"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4 items-center">
+                  <Button type="button" variant="outline" onClick={prevSection}>
+                    뒤로가기
+                  </Button>
                   {!form.formState.isValid && (
                     <span className="text-sm text-red-500">
                       모든 필수 필드를 입력해주세요.
                     </span>
                   )}
                   <Button type="submit" disabled={!form.formState.isValid}>
-                    다음
+                    제출하기
                   </Button>
                 </div>
               </motion.div>
