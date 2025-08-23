@@ -12,11 +12,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Camera, Users, Star } from "lucide-react";
+import { Camera, Users, Star, PlayCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { getPhotographers, type PhotographerData } from "@/lib/actions/photographers";
 import { getReviewStats } from "@/lib/actions/reviews";
+import { YouTubeModal } from "@/components/ui/youtube-modal";
 
 interface PhotographerWithReviews extends PhotographerData {
   averageRating?: number;
@@ -26,6 +27,33 @@ interface PhotographerWithReviews extends PhotographerData {
 export function PhotographersSection() {
   const [photographers, setPhotographers] = useState<PhotographerWithReviews[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<{ id: string | null; title: string }>({ id: null, title: '' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const extractYouTubeId = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    
+    // Handle various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    
+    return null;
+  };
+
+  const handleVideoClick = (photographer: PhotographerWithReviews) => {
+    const videoId = extractYouTubeId(photographer.youtube_intro_url);
+    if (videoId) {
+      setSelectedVideo({ id: videoId, title: `${photographer.name} 소개 영상` });
+      setIsModalOpen(true);
+    }
+  };
 
   useEffect(() => {
     async function fetchPhotographers() {
@@ -182,15 +210,16 @@ export function PhotographersSection() {
                       </Badge>
                     </div>
 
-                    {/* View portfolio button */}
-                    <Link href={`/photographers/${photographer.id}`}>
-                      <Button 
-                        variant="default" 
-                        className="w-full bg-orange-500 text-white hover:bg-orange-600 border border-orange-500 shine-effect"
-                      >
-                        1분 자기소개 영상 보기
-                      </Button>
-                    </Link>
+                    {/* View video and portfolio buttons */}
+                    <Button 
+                      variant="default" 
+                      className="w-full bg-orange-500 text-white hover:bg-orange-600 border border-orange-500 shine-effect mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => handleVideoClick(photographer)}
+                      disabled={!photographer.youtube_intro_url}
+                    >
+                      <PlayCircle className="w-4 h-4 mr-2" />
+                      {photographer.youtube_intro_url ? '1분 자기소개 영상 보기' : '영상 준비중'}
+                    </Button>
                     <Link href={`/photographers/${photographer.id}`}>
                       <Button 
                         variant="outline" 
@@ -229,6 +258,17 @@ export function PhotographersSection() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* YouTube Modal */}
+      <YouTubeModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedVideo({ id: null, title: '' });
+        }}
+        videoId={selectedVideo.id}
+        title={selectedVideo.title}
+      />
     </section>
   );
 }

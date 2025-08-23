@@ -37,24 +37,7 @@ export function LandingHeroSection() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100">
-      {/* Marquee Background */}
-      <div className="absolute inset-0 z-0 opacity-10">
-        <Marquee
-          gradient={false}
-          speed={30}
-          className="h-full flex items-center"
-        >
-          {marqueeTexts.map((text, index) => (
-            <span
-              key={index}
-              className="text-6xl md:text-8xl font-bold text-orange-600 mx-12 whitespace-nowrap"
-            >
-              {text}
-            </span>
-          ))}
-        </Marquee>
-      </div>
+    <div className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100">
 
       {/* Iris Logo */}
       <div className="absolute top-8 left-8 z-20">
@@ -94,7 +77,8 @@ export function LandingHeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
+      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto flex-1 flex items-center justify-center">
+        <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,6 +155,25 @@ export function LandingHeroSection() {
           </div>
           
         </motion.div>
+        </div>
+      </div>
+
+      {/* Bottom Marquee */}
+      <div className="relative z-10 w-full py-3 bg-gradient-to-r from-orange-50/50 to-orange-100/50 backdrop-blur-sm">
+        <Marquee
+          gradient={false}
+          speed={30}
+          className="flex items-center"
+        >
+          {marqueeTexts.map((text, index) => (
+            <span
+              key={index}
+              className="text-2xl md:text-3xl font-medium text-orange-600/60 mx-8 whitespace-nowrap"
+            >
+              {text}
+            </span>
+          ))}
+        </Marquee>
       </div>
 
       {/* Scroll Indicator */}

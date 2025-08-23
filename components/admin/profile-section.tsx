@@ -2,12 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Mail, Calendar, Clock } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, Mail, Calendar, Clock, Camera } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/utils"
@@ -18,6 +19,7 @@ interface AdminUser {
   name: string
   created_at: string
   updated_at: string
+  profile_image_url?: string | null
 }
 
 interface ProfileSectionProps {
@@ -26,9 +28,35 @@ interface ProfileSectionProps {
 
 export function ProfileSection({ adminUser }: ProfileSectionProps) {
   const [name, setName] = useState(adminUser.name)
+  const [profileImageUrl, setProfileImageUrl] = useState(adminUser.profile_image_url || '')
   const [isUpdating, setIsUpdating] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const supabase = createClient()
+
+  // Listen for profile image updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('profile-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'photographers',
+          filter: `id=eq.${adminUser.id}`,
+        },
+        (payload) => {
+          if (payload.new.profile_image_url !== profileImageUrl) {
+            setProfileImageUrl(payload.new.profile_image_url || '')
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, adminUser.id, profileImageUrl])
 
   const handleNameChange = (value: string) => {
     setName(value)
@@ -78,6 +106,23 @@ export function ProfileSection({ adminUser }: ProfileSectionProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Profile Image */}
+        <div className="flex items-center justify-center">
+          <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+            <AvatarImage 
+              src={profileImageUrl || undefined} 
+              alt={`${name}의 프로필`}
+            />
+            <AvatarFallback className="bg-gradient-to-br from-orange-400 to-orange-600 text-white text-lg font-bold">
+              {name
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+
         {/* Email (Read-only) */}
         <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">

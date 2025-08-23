@@ -8,6 +8,7 @@ export interface AdminUser {
   name: string
   created_at: string
   updated_at: string
+  profile_image_url?: string | null
 }
 
 interface Statistics {

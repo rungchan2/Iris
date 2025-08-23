@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Youtube, Camera, Palette, Users, Focus } from "lucide-react"
+import { User, Youtube, Camera, Palette, Users, Focus, Trash2, Upload } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
@@ -69,29 +69,102 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("파일 크기는 5MB를 초과할 수 없습니다")
+      return
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("이미지 파일만 업로드할 수 있습니다")
+      return
+    }
+
     setUploadingImage(true)
     try {
-      // Upload to Supabase Storage
+      // Delete old profile image if exists
+      if (formData.profile_image_url) {
+        await handleImageDelete(false) // Don't show toast for old image deletion
+      }
+
+      // Upload to Supabase Storage (use same path structure as photo-uploader)
       const fileExt = file.name.split('.').pop()
-      const fileName = `${photographer.id}-${Date.now()}.${fileExt}`
+      const fileName = `profile-${Date.now()}.${fileExt}`
+      const path = `${photographer.id}/profile/${fileName}`
+      
       const { data, error } = await supabase.storage
         .from('photos')
-        .upload(`profiles/${fileName}`, file)
+        .upload(path, file, {
+          upsert: false
+        })
 
       if (error) throw error
 
-      // Get public URL
+      // Get public URL (use same path as upload)
       const { data: { publicUrl } } = supabase.storage
         .from('photos')
-        .getPublicUrl(`profiles/${fileName}`)
+        .getPublicUrl(path)
+
+      // Update profile image URL in database immediately
+      const { error: updateError } = await supabase
+        .from("photographers")
+        .update({
+          profile_image_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", photographer.id)
+
+      if (updateError) throw updateError
 
       setFormData(prev => ({ ...prev, profile_image_url: publicUrl }))
       toast.success("프로필 이미지가 업로드되었습니다")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error)
-      toast.error("이미지 업로드에 실패했습니다")
+      toast.error(`이미지 업로드에 실패했습니다: ${error.message}`)
     } finally {
       setUploadingImage(false)
+    }
+  }
+
+  const handleImageDelete = async (showToast = true) => {
+    if (!formData.profile_image_url) return
+
+    try {
+      // Delete from storage if it's a Supabase storage URL
+      if (formData.profile_image_url.includes('supabase')) {
+        // Extract the full path from URL
+        const url = new URL(formData.profile_image_url)
+        const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)$/)
+        
+        if (pathMatch) {
+          const fullPath = pathMatch[1]
+          await supabase.storage
+            .from('photos')
+            .remove([fullPath])
+        }
+      }
+
+      // Update database
+      const { error: updateError } = await supabase
+        .from("photographers")
+        .update({
+          profile_image_url: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", photographer.id)
+
+      if (updateError) throw updateError
+
+      setFormData(prev => ({ ...prev, profile_image_url: '' }))
+      if (showToast) {
+        toast.success("프로필 이미지가 삭제되었습니다")
+      }
+    } catch (error: any) {
+      console.error("Error deleting image:", error)
+      if (showToast) {
+        toast.error("이미지 삭제에 실패했습니다")
+      }
     }
   }
 
@@ -137,35 +210,97 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            {formData.profile_image_url && (
-              <img
-                src={formData.profile_image_url}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover"
-              />
-            )}
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="profile-image">프로필 이미지 업로드</Label>
-              <Input
-                id="profile-image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploadingImage}
-              />
-              {uploadingImage && <p className="text-sm text-muted-foreground">업로드 중...</p>}
+          <div className="flex items-center gap-6">
+            <div className="flex-shrink-0">
+              {formData.profile_image_url ? (
+                <div className="relative">
+                  <img
+                    src={formData.profile_image_url}
+                    alt="Profile"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute -top-2 -right-2 w-8 h-8 rounded-full p-0"
+                    onClick={() => handleImageDelete()}
+                    title="이미지 삭제"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
+                  <Camera className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="profile-url">또는 이미지 URL 입력</Label>
-            <Input
-              id="profile-url"
-              value={formData.profile_image_url}
-              onChange={(e) => setFormData(prev => ({ ...prev, profile_image_url: e.target.value }))}
-              placeholder="https://example.com/image.jpg"
-            />
+            
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="profile-image" className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  프로필 이미지 업로드
+                </Label>
+                <Input
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                />
+                {uploadingImage && (
+                  <div className="text-sm text-muted-foreground flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                    업로드 중...
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  JPG, PNG 파일만 가능 (최대 5MB)
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="profile-url">또는 이미지 URL 직접 입력</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="profile-url"
+                    value={formData.profile_image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, profile_image_url: e.target.value }))}
+                    placeholder="https://example.com/image.jpg"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      // Update database immediately when URL is manually set
+                      if (formData.profile_image_url.trim()) {
+                        supabase
+                          .from("photographers")
+                          .update({
+                            profile_image_url: formData.profile_image_url.trim(),
+                            updated_at: new Date().toISOString(),
+                          })
+                          .eq("id", photographer.id)
+                          .then(({ error }) => {
+                            if (error) {
+                              toast.error('URL 저장에 실패했습니다')
+                            } else {
+                              toast.success('프로필 이미지 URL이 저장되었습니다')
+                            }
+                          })
+                      }
+                    }}
+                    disabled={!formData.profile_image_url.trim()}
+                  >
+                    저장
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

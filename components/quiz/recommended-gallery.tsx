@@ -8,7 +8,8 @@ import Image from "next/image";
 import { ImageIcon, Sparkles, X } from "lucide-react";
 import { PersonalityType } from "@/lib/quiz-data";
 import { getPersonalityPhotos } from "@/lib/actions/personality";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface RecommendedGalleryProps {
   personalityCode: PersonalityType;
@@ -171,6 +172,11 @@ export function RecommendedGallery({ personalityCode }: RecommendedGalleryProps)
       {/* Image Modal */}
       <Dialog open={!!selectedPhoto} onOpenChange={() => setSelectedPhoto(null)}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>
+              {selectedPhoto ? selectedPhoto.title : '사진 상세보기'}
+            </DialogTitle>
+          </VisuallyHidden>
           {selectedPhoto && (
             <div className="relative">
               <button

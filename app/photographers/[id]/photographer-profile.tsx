@@ -5,6 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { 
   Star, 
   MapPin, 
@@ -13,12 +18,22 @@ import {
   Phone, 
   Mail, 
   ArrowLeft,
-  Heart,
-  Share,
-  ExternalLink
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import {
+  FacebookShareButton,
+  TwitterShareButton,
+  LineShareButton,
+  WhatsappShareButton,
+  FacebookIcon,
+  TwitterIcon,
+  LineIcon,
+  WhatsappIcon,
+} from 'react-share'
 
 interface PhotographerProfileProps {
   photographer: any
@@ -26,6 +41,17 @@ interface PhotographerProfileProps {
 
 export function PhotographerProfile({ photographer }: PhotographerProfileProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareTitle = `${photographer.name} 작가님의 프로필 | Iris`
+  const shareDescription = `${photographer.name} 작가님의 멋진 포트폴리오를 확인해보세요!`
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
   
   const initials = photographer.name
     .split(' ')
@@ -57,14 +83,51 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                 </Link>
               </Button>
               <div className="flex gap-2 ml-auto">
-                <Button variant="outline" size="sm">
-                  <Heart className="w-4 h-4 mr-2" />
-                  찜하기
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Share className="w-4 h-4 mr-2" />
-                  공유
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Share2 className="w-4 h-4 mr-2" />
+                      공유
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3" align="end">
+                    <div className="flex flex-col gap-2">
+                      <div className="text-sm font-medium mb-2">프로필 공유하기</div>
+                      <div className="flex gap-2">
+                        <FacebookShareButton url={shareUrl} title={shareTitle}>
+                          <FacebookIcon size={32} round />
+                        </FacebookShareButton>
+                        <TwitterShareButton url={shareUrl} title={shareTitle}>
+                          <TwitterIcon size={32} round />
+                        </TwitterShareButton>
+                        <LineShareButton url={shareUrl} title={shareTitle}>
+                          <LineIcon size={32} round />
+                        </LineShareButton>
+                        <WhatsappShareButton url={shareUrl} title={shareTitle}>
+                          <WhatsappIcon size={32} round />
+                        </WhatsappShareButton>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={handleCopyLink}
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            복사됨!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-2" />
+                            링크 복사
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
@@ -127,9 +190,11 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                     예약하기
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg">
-                  <Mail className="w-4 h-4 mr-2" />
-                  문의하기
+                <Button variant="outline" size="lg" asChild>
+                  <Link href={`mailto:${photographer.email}`}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    문의하기
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -226,21 +291,6 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                   </CardContent>
                 </Card>
               )}
-
-              {/* Quick Booking */}
-              <Card className="bg-gradient-to-br from-purple-50 to-pink-50">
-                <CardContent className="p-6 text-center">
-                  <h3 className="font-semibold mb-2">빠른 예약</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    지금 바로 촬영 일정을 예약하세요
-                  </p>
-                  <Button className="w-full" asChild>
-                    <Link href={`/photographers/${photographer.id}/booking`}>
-                      예약하기
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>

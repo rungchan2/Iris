@@ -248,8 +248,8 @@ export function QuizFlow({ onComplete }: QuizFlowProps) {
           {/* Progress */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="font-medium text-gray-700">진행률</span>
-              <span className="text-gray-500">
+              <span className="font-medium">진행률</span>
+              <span>
                 {currentQuestion + 1} / {questions.length}
               </span>
             </div>
