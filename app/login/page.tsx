@@ -16,7 +16,27 @@ export default async function Page() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {
-    redirect("/admin");
+    // Check user type and redirect accordingly
+    const userType = session.user.user_metadata?.user_type;
+    
+    if (userType === 'admin') {
+      redirect("/admin");
+    } else {
+      // Check if user is photographer
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (photographer) {
+        redirect("/photographer-admin");
+      } else {
+        // No matching user type, sign out and redirect to login
+        await supabase.auth.signOut();
+        redirect("/login");
+      }
+    }
   }
   return (
     <>

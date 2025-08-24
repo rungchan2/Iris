@@ -48,7 +48,6 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
         profile_image_url,
         admin_portfolio_photos(count)
       `)
-      .eq('is_admin_account', false)
     
     // Apply search filter
     if (filters.search) {
@@ -161,7 +160,6 @@ export async function getPhotographerById(id: string) {
         )
       `)
       .eq('id', id)
-      .eq('is_admin_account', false) // admin 계정 제외
       .single()
     
     if (error) {

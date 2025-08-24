@@ -60,7 +60,6 @@ export function PermissionGuard({
                 photography_approach: '',
                 youtube_intro_url: '',
                 profile_image_url: '',
-                is_admin_account: true
               })
             
             if (createError) {

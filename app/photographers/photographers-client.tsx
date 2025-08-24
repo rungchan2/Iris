@@ -176,7 +176,9 @@ export function PhotographersClient({
       <div className="bg-white/50 backdrop-blur-sm border rounded-lg p-6">
         <PhotographerFilters
           personalityTypes={personalityTypes}
-          onFiltersChange={setFilters}
+          onFiltersChange={(newFilters) => 
+            setFilters(prev => ({ ...prev, ...newFilters }))
+          }
         />
       </div>
 
@@ -213,7 +215,14 @@ export function PhotographersClient({
           </p>
           <Button 
             variant="outline" 
-            onClick={() => setFilters({ search: '', personalityCode: null, sortBy: 'name' })}
+            onClick={() => setFilters({ 
+              search: '', 
+              personalityCode: null, 
+              sortBy: 'name',
+              personalityType: null,
+              directingStyle: null,
+              photographyApproach: null
+            })}
           >
             필터 초기화
           </Button>

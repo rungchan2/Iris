@@ -1,0 +1,125 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+/**
+ * Redirect user based on their type after login
+ */
+export async function redirectUserByType() {
+  const supabase = await createClient()
+  
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  if (!session) {
+    redirect('/login')
+  }
+
+  // Check user type from auth metadata
+  const userType = session.user.user_metadata?.user_type
+
+  if (userType === 'admin') {
+    // Admin user - redirect to admin dashboard
+    redirect('/admin')
+  } else {
+    // Check if user exists in photographers table
+    const { data: photographer } = await supabase
+      .from('photographers')
+      .select('id')
+      .eq('id', session.user.id)
+      .single()
+
+    if (photographer) {
+      // Photographer - redirect to photographer admin dashboard
+      redirect('/photographer-admin')
+    } else {
+      // No matching record - redirect to login
+      redirect('/login')
+    }
+  }
+}
+
+/**
+ * Get user type for client-side routing
+ */
+export async function getUserType() {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      return { userType: null }
+    }
+
+    // Check user type from auth metadata
+    const userType = session.user.user_metadata?.user_type
+
+    if (userType === 'admin') {
+      return { userType: 'admin' }
+    } else {
+      // Check if user exists in photographers table
+      const { data: photographer } = await supabase
+        .from('photographers')
+        .select('id')
+        .eq('id', session.user.id)
+        .single()
+
+      if (photographer) {
+        return { userType: 'photographer' }
+      } else {
+        return { userType: null }
+      }
+    }
+  } catch (error) {
+    console.error('Get user type error:', error)
+    return { userType: null }
+  }
+}
+
+/**
+ * Check if current user has admin access
+ */
+export async function checkAdminAccess() {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      return { hasAccess: false }
+    }
+
+    const userType = session.user.user_metadata?.user_type
+    return { hasAccess: userType === 'admin' }
+  } catch (error) {
+    console.error('Check admin access error:', error)
+    return { hasAccess: false }
+  }
+}
+
+/**
+ * Check if current user has photographer access
+ */
+export async function checkPhotographerAccess() {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      return { hasAccess: false }
+    }
+
+    const { data: photographer } = await supabase
+      .from('photographers')
+      .select('id')
+      .eq('id', session.user.id)
+      .single()
+
+    return { hasAccess: !!photographer }
+  } catch (error) {
+    console.error('Check photographer access error:', error)
+    return { hasAccess: false }
+  }
+}

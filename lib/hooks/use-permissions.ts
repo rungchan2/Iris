@@ -45,28 +45,25 @@ export function usePermissions() {
 
         // Admin has access to everything
         if (isAdmin) {
-          // Admin인데 photographers 테이블에 프로필이 없으면 기본 프로필 생성
-          if (!photographer) {
-            const { error: createError } = await supabase
-              .from('photographers')
+          // Ensure admin record exists in admins table
+          const { data: adminRecord } = await supabase
+            .from('admins')
+            .select('id')
+            .eq('id', session.user.id)
+            .single()
+
+          if (!adminRecord) {
+            // Create admin record if it doesn't exist
+            await supabase
+              .from('admins')
               .insert({
                 id: session.user.id,
                 email: session.user.email || '',
                 name: session.user.user_metadata?.name || 'Admin User',
-                phone: '',
-                bio: 'Iris 관리자',
-                personality_type: '',
-                directing_style: '',
-                photography_approach: '',
-                youtube_intro_url: '',
-                profile_image_url: '',
-                is_admin_account: true
+                role: 'admin'
               })
-            
-            if (createError) {
-              console.error('Failed to create admin profile:', createError)
-            }
           }
+
           setPermissions({
             userType: 'admin',
             canAccessUsers: true,

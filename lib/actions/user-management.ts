@@ -44,7 +44,7 @@ export async function createAdminUser(params: CreateAdminUserParams) {
 
     const { email, password, name } = params
     
-    // Auth 사용자 생성 (service role 사용)
+    // Auth 사용자 생성 (service role 사용) - admin은 auth.users에만 저장
     const { data: authData, error: authError } = await supabaseService.auth.admin.createUser({
       email,
       password,
@@ -57,30 +57,6 @@ export async function createAdminUser(params: CreateAdminUserParams) {
 
     if (authError || !authData.user) {
       return { error: '사용자 생성 중 오류가 발생했습니다: ' + authError?.message }
-    }
-
-    // Admin도 photographers 테이블에 기본 프로필 생성 (권한 체크 및 필터링용)
-    const { error: profileError } = await supabaseService
-      .from('photographers')
-      .insert({
-        id: authData.user.id,
-        email,
-        name,
-        phone: '',
-        bio: 'Iris 관리자',
-        personality_type: '',
-        directing_style: '',
-        photography_approach: '',
-        youtube_intro_url: '',
-        profile_image_url: '',
-        is_admin_account: true, // Admin 계정임을 표시
-        created_at: new Date().toISOString(),
-        approval_status: 'approved'
-      })
-
-    if (profileError) {
-      console.error('Admin profile creation error:', profileError)
-      // 프로필 생성 실패해도 계속 진행 (auth 사용자는 이미 생성됨)
     }
 
     revalidatePath('/admin/users')
@@ -150,7 +126,6 @@ export async function createPhotographerUser(params: CreatePhotographerParams) {
         website_url: website_url || null,
         instagram_handle: instagram_handle || null,
         bio: bio || null,
-        is_admin_account: false, // 일반 작가 계정임을 표시
         created_at: new Date().toISOString(),
         approval_status: 'approved',
         profile_completed: true
@@ -231,7 +206,6 @@ export async function getPhotographerUsers() {
     const { data, error } = await supabase
       .from('photographers')
       .select('id, email, name, phone, website_url, instagram_handle, bio, created_at, approval_status')
-      .eq('is_admin_account', false) // admin 계정 제외
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -375,7 +349,7 @@ export async function deleteUser(userId: string, userType: 'admin' | 'photograph
 
     // photographer의 경우 photographers 테이블에서도 명시적으로 삭제
     if (userType === 'photographer') {
-      await supabase.from('photographers').delete().eq('id', userId)
+      await supabaseService.from('photographers').delete().eq('id', userId)
     }
     // admin의 경우 auth.users에만 존재하므로 별도 삭제 불필요
 

@@ -146,6 +146,42 @@ export type Database = {
           },
         ]
       }
+      admins: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          id: string
+          last_login_at: string | null
+          name: string
+          phone: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id: string
+          last_login_at?: string | null
+          name: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: string
+          last_login_at?: string | null
+          name?: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_image_generations: {
         Row: {
           api_provider: string
@@ -711,7 +747,6 @@ export type Database = {
           gender: string | null
           id: string
           instagram_handle: string | null
-          is_admin_account: boolean | null
           name: string | null
           personality_type: string | null
           phone: string | null
@@ -745,7 +780,6 @@ export type Database = {
           gender?: string | null
           id: string
           instagram_handle?: string | null
-          is_admin_account?: boolean | null
           name?: string | null
           personality_type?: string | null
           phone?: string | null
@@ -779,7 +813,6 @@ export type Database = {
           gender?: string | null
           id?: string
           instagram_handle?: string | null
-          is_admin_account?: boolean | null
           name?: string | null
           personality_type?: string | null
           phone?: string | null
