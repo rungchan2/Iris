@@ -12,7 +12,6 @@ interface SignupWithInviteParams {
 }
 
 interface CreateInviteCodeParams {
-  role: 'admin' | 'photographer'
   expiresInDays: number
   notes?: string
 }
@@ -69,22 +68,7 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
       return { error: '회원가입 중 오류가 발생했습니다: ' + authError?.message }
     }
 
-    // 4. Admin profile is stored in admins table
-    const { error: profileError } = await supabaseService
-      .from('admins')
-      .insert({
-        id: authData.user.id,
-        email,
-        name,
-        role: 'admin'
-      })
-
-    if (profileError) {
-      console.error('Admin profile creation error:', profileError)
-      // Delete auth user if admin profile creation fails
-      await supabaseService.auth.admin.deleteUser(authData.user.id)
-      return { error: '관리자 프로필 생성 중 오류가 발생했습니다.' }
-    }
+    // 4. Admin은 auth.users에만 저장됨 (새 시스템에서는 별도 테이블 불필요)
 
     // 5. 초대 코드 사용 처리
     const { error: codeUpdateError } = await supabaseService
@@ -106,7 +90,7 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
         id: authData.user.id,
         email,
         name,
-        role: inviteData.role
+        user_type: 'admin'
       }
     }
 
@@ -143,7 +127,6 @@ export async function createInviteCode(params: CreateInviteCodeParams) {
       .from('admin_invite_codes')
       .insert({
         code,
-        role: params.role,
         expires_at: expiresAt.toISOString(),
         notes: params.notes,
         created_by: user.id
@@ -210,7 +193,7 @@ export async function validateInviteCode(code: string) {
   try {
     const { data, error } = await supabaseService
       .from('admin_invite_codes')
-      .select('role, expires_at, used_at')
+      .select('expires_at, used_at')
       .eq('code', code)
       .single()
 
@@ -227,8 +210,7 @@ export async function validateInviteCode(code: string) {
     }
 
     return { 
-      valid: true, 
-      role: data.role,
+      valid: true,
       message: '유효한 초대 코드입니다.' 
     }
 

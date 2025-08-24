@@ -33,7 +33,7 @@ export async function getRecommendedPhotographers(personalityCode: string) {
     //   .from('personality_admin_mapping')
     //   .select(`
     //     id,
-    //     admin_id,
+    //     uploaded_by,
     //     compatibility_score,
     //     notes,
     //     is_primary,
@@ -68,11 +68,11 @@ export async function getRecommendedPhotographers(personalityCode: string) {
     // const photographerIds = mappings.map(m => m.admin_id)
     
     // const { data: portfolioPhotos, error: portfolioError } = await supabase
-    //   .from('admin_portfolio_photos')
+    //   .from('photos')
     //   .select(`
     //     id,
-    //     admin_id,
-    //     photo_url,
+    //     uploaded_by,
+    //     storage_url,
     //     thumbnail_url,
     //     title,
     //     style_tags,
@@ -134,7 +134,7 @@ export async function getAllPhotographers() {
         name,
         email,
         created_at,
-        admin_portfolio_photos!inner (
+        photos!uploaded_by (
           id,
           is_representative,
           is_public
@@ -176,13 +176,13 @@ export async function getPhotographerDetails(photographerId: string) {
       return { success: false, error: photographerError.message }
     }
     
-    // TODO: admin_portfolio_photos 테이블 생성 후 활성화
+    // TODO: photos 테이블 활용하도록 수정 필요
     // Get portfolio photos
     // const { data: portfolioPhotos, error: portfolioError } = await supabase
-    //   .from('admin_portfolio_photos')
+    //   .from('photos')
     //   .select(`
     //     id,
-    //     photo_url,
+    //     storage_url,
     //     thumbnail_url,
     //     title,
     //     description,

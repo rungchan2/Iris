@@ -49,6 +49,11 @@ export default async function PhotographerLayout({
     }
   }
 
+  // Check approval status - redirect unapproved photographers to approval status page
+  if (photographer.approval_status !== 'approved') {
+    redirect("/photographer/approval-status");
+  }
+
   // Use photographer record as user object for the interface
   const user = {
     id: photographer.id,

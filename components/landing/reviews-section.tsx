@@ -22,7 +22,7 @@ interface Review {
     specialty: string
     experience: string
     image?: string
-    profile_image_url?: string
+    profile_image_url?: string | null
   }
 }
 

@@ -13,7 +13,7 @@ export interface PublicReview {
     name: string
     specialty?: string
     experience?: string
-    profile_image_url?: string
+    profile_image_url?: string | null
   }
   personality?: string
 }
@@ -25,11 +25,7 @@ export async function getPublicReviews() {
     const { data: reviews, error } = await supabase
       .from('reviews')
       .select(`
-        id,
-        reviewer_name,
-        rating,
-        comment,
-        created_at,
+        *,
         inquiries!inner (
           id,
           photographer_id,

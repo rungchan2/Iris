@@ -44,35 +44,32 @@ export async function loginWithUserType(
   }
 
   try {
-    // 먼저 photographers 테이블에서 확인
-    const { data: adminData } = await supabase
-      .from('photographers')
-      .select('id')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (adminData) {
+    const user = authData.user;
+    
+    // 새 시스템: user_metadata에서 user_type 확인
+    const userType = user.user_metadata?.user_type;
+    
+    if (userType === 'admin') {
       return {
         data: authData,
         error: null,
         userType: 'admin' as const,
-        role: undefined,
         redirectPath: '/admin'
       };
     }
-
-    // role이 photographer인 경우 추가 정보 확인
+    
+    // Photographer인 경우 photographers 테이블에서 추가 정보 확인
     const { data: photographerData } = await supabase
       .from('photographers')
       .select('id, approval_status')
-      .eq('id', authData.user.id)
+      .eq('id', user.id)
       .single();
 
     if (photographerData) {
       // 작가 승인 상태에 따라 다른 경로로 리디렉션
       const redirectPath = photographerData.approval_status === 'approved' 
-        ? '/admin' // 승인된 작가는 관리자 페이지로 (제한된 권한)
-        : '/admin/my-account'; // 미승인 작가는 마이페이지로
+        ? '/photographer-admin' // 승인된 작가는 작가 전용 페이지로
+        : '/photographer/approval-status'; // 미승인 작가는 승인 상태 페이지로
 
       return {
         data: authData,
@@ -83,10 +80,10 @@ export async function loginWithUserType(
       };
     }
 
-    // 둘 다 없으면 에러
+    // Admin도 Photographer도 아닌 경우
     return {
       data: authData,
-      error: { message: '등록되지 않은 사용자입니다.' },
+      error: { message: '등록되지 않은 사용자입니다. 관리자에게 문의하세요.' },
       userType: null,
       redirectPath: null
     };

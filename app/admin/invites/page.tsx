@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import { InviteCodeManager } from '@/components/admin/invite-code-manager'
-import { PermissionGuard } from '@/components/auth/permission-guard'
 
 export const metadata: Metadata = {
   title: '초대 코드 관리 - Iris',
@@ -9,20 +8,15 @@ export const metadata: Metadata = {
 
 export default async function InviteCodesPage() {
   return (
-    <PermissionGuard 
-      requiredPermission="users"
-      fallbackMessage="초대 코드 관리 권한이 없습니다. 관리자만 접근 가능합니다."
-    >
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">초대 코드 관리</h1>
-          <p className="text-muted-foreground">
-            새로운 어드민 사용자를 위한 초대 코드를 생성하고 관리합니다.
-          </p>
-        </div>
-        
-        <InviteCodeManager />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">초대 코드 관리</h1>
+        <p className="text-muted-foreground">
+          새로운 어드민 사용자를 위한 초대 코드를 생성하고 관리합니다.
+        </p>
       </div>
-    </PermissionGuard>
+      
+      <InviteCodeManager />
+    </div>
   )
 }

@@ -20,15 +20,22 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { signUpNewUser } from "@/lib/login"
+import { signUpNewUser, login } from "@/lib/login"
 import { validateInvitationCode } from "@/lib/actions/code"
+import { signupWithInviteCode } from "@/lib/actions/admin-auth"
 import { useForm, Controller } from "react-hook-form"
-import { createPhotographerApplication } from "@/lib/actions/photographer"
+import { createPhotographerProfile, uploadPortfolioImages } from "@/lib/actions/photographer-client"
 
 import { useState, useCallback } from "react"
-import { Eye, EyeOff, Upload, X, ChevronRight, ChevronLeft, Camera, User, MapPin, DollarSign, FileImage } from "lucide-react"
+import { Eye, EyeOff, Upload, X, ChevronRight, ChevronLeft, Camera, User, MapPin, DollarSign, FileImage, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast, Toaster } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type PhotographerSignupFormData = {
   // Step 1: 기본 정보
@@ -86,11 +93,32 @@ const KOREAN_CITIES = [
   '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
 ];
 
+interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  isAdmin?: boolean;
+}
+
+// Admin 회원가입을 위한 간단한 타입
+type AdminSignupFormData = {
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  name: string;
+  inviteCode: string;
+}
+
 export function SignupForm({
   className,
+  isAdmin = false,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: SignupFormProps) {
   const router = useRouter();
+  
+  // Admin인 경우 간단한 양식 렌더링
+  if (isAdmin) {
+    return <AdminSignupFormComponent className={className} {...props} />;
+  }
+  
+  // Photographer인 경우 기존 복잡한 양식
   const { register, handleSubmit, formState: { errors }, setError, watch, control, setValue } = useForm<PhotographerSignupFormData>({
     defaultValues: {
       step3_specialties: [],
@@ -106,10 +134,14 @@ export function SignupForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
+  const [submissionStep, setSubmissionStep] = useState<'idle' | 'signup' | 'profile' | 'upload' | 'complete'>('idle');
+  const [submissionMessage, setSubmissionMessage] = useState('');
 
   const password = watch("step1_password");
   const watchedSpecialties = watch("step3_specialties");
   const watchedPortfolioFiles = watch("step5_portfolioFiles");
+  const watchedAgreeToTerms = watch("step5_agreeToTerms");
+  const watchedAgreeToPrivacy = watch("step5_agreeToPrivacy");
 
   // 파일 업로드 핸들러
   const handleFileUpload = useCallback((files: File[]) => {
@@ -249,11 +281,11 @@ export function SignupForm({
           toast.error('최소 3장의 포트폴리오 이미지를 업로드해주세요.');
           return false;
         }
-        if (!formData.step5_agreeToTerms) {
+        if (!watchedAgreeToTerms) {
           toast.error('이용약관에 동의해주세요.');
           return false;
         }
-        if (!formData.step5_agreeToPrivacy) {
+        if (!watchedAgreeToPrivacy) {
           toast.error('개인정보처리방침에 동의해주세요.');
           return false;
         }
@@ -292,6 +324,8 @@ export function SignupForm({
 
   const onSubmit = async (data: PhotographerSignupFormData) => {
     setIsLoading(true);
+    setSubmissionStep('signup');
+    setSubmissionMessage('회원가입을 진행하고 있습니다...');
 
     try {
       // 1. 가입 코드 검증
@@ -299,6 +333,7 @@ export function SignupForm({
       if (!isCodeValid) {
         setError("step1_code", { message: "유효하지 않은 가입 코드입니다." });
         setIsLoading(false);
+        setSubmissionStep('idle');
         return;
       }
 
@@ -309,17 +344,40 @@ export function SignupForm({
         console.error("회원가입 오류:", signupError);
         toast.error("회원가입에 실패했습니다. 다시 시도해주세요.");
         setIsLoading(false);
+        setSubmissionStep('idle');
         return;
       }
 
       if (!signupData?.user) {
         toast.error("회원가입 데이터를 받아올 수 없습니다.");
         setIsLoading(false);
+        setSubmissionStep('idle');
         return;
       }
 
-      // 3. 작가 지원서 생성
-      const applicationResult = await createPhotographerApplication({
+      // 3. 로그인 준비 단계
+      setSubmissionStep('profile');
+      setSubmissionMessage('로그인 준비 중입니다...');
+
+      // 4. 로그인 수행
+      setSubmissionMessage('로그인을 수행하고 있습니다...');
+      const { data: loginData, error: loginError } = await login(data.step1_email, data.step1_password);
+      
+      if (loginError || !loginData?.user) {
+        console.error("로그인 오류:", loginError);
+        toast.error("자동 로그인에 실패했습니다. 수동으로 로그인해주세요.");
+        router.push("/login?message=application-submitted");
+        return;
+      }
+
+      // 로그인 성공 후 잠시 대기 (브라우저가 쿠키를 인식할 시간)
+      setSubmissionMessage('세션을 설정하고 있습니다...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 5. 작가 프로필 생성 (로그인 후 실행)
+      setSubmissionMessage('작가 프로필을 생성하고 있습니다...');
+      
+      const profileResult = await createPhotographerProfile({
         userId: signupData.user.id,
         email: data.step1_email,
         name: data.step1_name,
@@ -336,22 +394,46 @@ export function SignupForm({
         priceRangeMin: data.step4_priceRangeMin,
         priceRangeMax: data.step4_priceRangeMax,
         priceDescription: data.step4_priceDescription,
-        portfolioFiles: data.step5_portfolioFiles,
-        portfolioDescriptions: data.step5_portfolioDescriptions
       });
 
-      if (!applicationResult.success) {
-        toast.error(applicationResult.error || "지원서 제출에 실패했습니다.");
-        setIsLoading(false);
+      if (!profileResult.success) {
+        toast.error(profileResult.error || "작가 프로필 생성에 실패했습니다.");
+        // 회원가입은 성공했으므로 로그인 페이지로 이동
+        router.push("/login?message=profile-creation-failed");
         return;
       }
 
+      // 6. 포트폴리오 이미지 업로드
+      setSubmissionStep('upload');
+      setSubmissionMessage(`포트폴리오 이미지를 업로드하고 있습니다... (0/${data.step5_portfolioFiles.length})`);
+      
+      const uploadResult = await uploadPortfolioImages(
+        data.step5_portfolioFiles,
+        data.step5_portfolioDescriptions
+      );
+
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || "포트폴리오 업로드에 실패했습니다.");
+        // 포트폴리오 업로드 실패해도 회원가입은 성공했으므로 로그인 페이지로 이동
+        router.push("/login?message=portfolio-upload-failed");
+        return;
+      }
+
+      // 7. 성공 처리
+      setSubmissionStep('complete');
+      setSubmissionMessage('회원가입이 완료되었습니다!');
+      
       toast.success("작가 지원서가 성공적으로 제출되었습니다! 검토 후 연락드리겠습니다.");
-      router.push("/login?message=application-submitted");
+      
+      // 지연 후 승인 상태 페이지로 이동
+      setTimeout(() => {
+        router.push("/photographer/approval-status");
+      }, 2000);
       
     } catch (error) {
       console.error("예상치 못한 오류:", error);
       toast.error("예상치 못한 오류가 발생했습니다. 다시 시도해주세요.");
+      setSubmissionStep('idle');
     } finally {
       setIsLoading(false);
     }
@@ -465,10 +547,11 @@ export function SignupForm({
 
       case 2:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" key="step-2-container">
             <div className="grid gap-2">
               <Label htmlFor="step2-phone">전화번호 *</Label>
               <Input
+                key="step2-phone-input"
                 id="step2-phone"
                 type="tel"
                 placeholder="010-1234-5678"
@@ -489,7 +572,7 @@ export function SignupForm({
                 name="step2_gender"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select key="step2-gender-select" value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="성별을 선택해주세요" />
                     </SelectTrigger>
@@ -509,7 +592,7 @@ export function SignupForm({
                 name="step2_ageRange"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select key="step2-ageRange-select" value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="연령대를 선택해주세요" />
                     </SelectTrigger>
@@ -526,6 +609,7 @@ export function SignupForm({
             <div className="grid gap-2">
               <Label htmlFor="step2-instagramHandle">인스타그램 핸들</Label>
               <Input
+                key="step2-instagramHandle-input"
                 id="step2-instagramHandle"
                 type="text"
                 placeholder="@photographer_name"
@@ -536,6 +620,7 @@ export function SignupForm({
             <div className="grid gap-2">
               <Label htmlFor="step2-websiteUrl">웹사이트</Label>
               <Input
+                key="step2-websiteUrl-input"
                 id="step2-websiteUrl"
                 type="url"
                 placeholder="https://photographer.com"
@@ -547,10 +632,11 @@ export function SignupForm({
 
       case 3:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" key="step-3-container">
             <div className="grid gap-2">
               <Label htmlFor="step3-yearsExperience">사진 경력 (년) *</Label>
               <Input
+                key="step3-yearsExperience-input"
                 id="step3-yearsExperience"
                 type="number"
                 min="0"
@@ -591,7 +677,7 @@ export function SignupForm({
                 control={control}
                 rules={{ required: "활동 지역을 선택해주세요." }}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select key="step3-studioLocation-select" value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="주요 활동 지역을 선택해주세요" />
                     </SelectTrigger>
@@ -609,6 +695,7 @@ export function SignupForm({
             <div className="grid gap-2">
               <Label htmlFor="step3-equipmentInfo">보유 장비</Label>
               <Textarea
+                key="step3-equipmentInfo-textarea"
                 id="step3-equipmentInfo"
                 placeholder="주요 보유 장비를 입력해주세요 (카메라, 렌즈 등)"
                 {...register("step3_equipmentInfo")}
@@ -619,6 +706,7 @@ export function SignupForm({
             <div className="grid gap-2">
               <Label htmlFor="step3-bio">자기소개 및 작업 스타일 *</Label>
               <Textarea
+                key="step3-bio-textarea"
                 id="step3-bio"
                 placeholder="본인의 작업 스타일, 철학, 특장점 등을 소개해주세요"
                 {...register("step3_bio", {
@@ -637,11 +725,12 @@ export function SignupForm({
 
       case 4:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" key="step-4-container">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="step4-priceRangeMin">최소 가격 (원)</Label>
                 <Input
+                  key="step4-priceRangeMin-input"
                   id="step4-priceRangeMin"
                   type="number"
                   min="0"
@@ -653,6 +742,7 @@ export function SignupForm({
               <div className="grid gap-2">
                 <Label htmlFor="step4-priceRangeMax">최대 가격 (원)</Label>
                 <Input
+                  key="step4-priceRangeMax-input"
                   id="step4-priceRangeMax"
                   type="number"
                   min="0"
@@ -666,6 +756,7 @@ export function SignupForm({
             <div className="grid gap-2">
               <Label htmlFor="step4-priceDescription">가격 정책 설명</Label>
               <Textarea
+                key="step4-priceDescription-textarea"
                 id="step4-priceDescription"
                 placeholder="촬영 시간, 포함 서비스, 추가 옵션 등 가격 정책을 상세히 설명해주세요"
                 {...register("step4_priceDescription")}
@@ -677,7 +768,7 @@ export function SignupForm({
 
       case 5:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4" key="step-5-container">
             <div className="grid gap-2">
               <Label>포트폴리오 이미지 * (최소 3장, 최대 10장)</Label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -735,18 +826,36 @@ export function SignupForm({
               <Label>이용약관 및 개인정보처리방침 동의 *</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="step5-agreeToTerms"
-                    {...register("step5_agreeToTerms", { required: "이용약관에 동의해주세요." })}
+                  <Controller
+                    name="step5_agreeToTerms"
+                    control={control}
+                    rules={{ required: "이용약관에 동의해주세요." }}
+                    render={({ field }) => (
+                      <Checkbox
+                        key="step5-agreeToTerms-checkbox"
+                        id="step5-agreeToTerms"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
                   />
                   <Label htmlFor="step5-agreeToTerms" className="text-sm">
                     이용약관에 동의합니다.
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="step5-agreeToPrivacy"
-                    {...register("step5_agreeToPrivacy", { required: "개인정보처리방침에 동의해주세요." })}
+                  <Controller
+                    name="step5_agreeToPrivacy"
+                    control={control}
+                    rules={{ required: "개인정보처리방침에 동의해주세요." }}
+                    render={({ field }) => (
+                      <Checkbox
+                        key="step5-agreeToPrivacy-checkbox"
+                        id="step5-agreeToPrivacy"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
                   />
                   <Label htmlFor="step5-agreeToPrivacy" className="text-sm">
                     개인정보처리방침에 동의합니다.
@@ -767,6 +876,88 @@ export function SignupForm({
 
   return (
     <>
+      {/* 제출 중 모달 */}
+      <AlertDialog open={submissionStep !== 'idle'} onOpenChange={() => {}}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogTitle className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            회원가입 진행 중
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4">
+              <div className="text-center py-4">
+                <div className="text-sm text-muted-foreground">{submissionMessage}</div>
+                
+                {/* 진행 상태 표시 */}
+                <div className="flex justify-between items-center mt-6 space-x-2">
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium",
+                    submissionStep === 'signup' || submissionStep === 'profile' || submissionStep === 'upload' || submissionStep === 'complete'
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-200 text-gray-500"
+                  )}>
+                    1
+                  </div>
+                  <div className={cn(
+                    "flex-1 h-0.5",
+                    submissionStep === 'profile' || submissionStep === 'upload' || submissionStep === 'complete'
+                      ? "bg-blue-500" 
+                      : "bg-gray-200"
+                  )} />
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium",
+                    submissionStep === 'profile' || submissionStep === 'upload' || submissionStep === 'complete'
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-200 text-gray-500"
+                  )}>
+                    2
+                  </div>
+                  <div className={cn(
+                    "flex-1 h-0.5",
+                    submissionStep === 'upload' || submissionStep === 'complete'
+                      ? "bg-blue-500" 
+                      : "bg-gray-200"
+                  )} />
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium",
+                    submissionStep === 'upload' || submissionStep === 'complete'
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-200 text-gray-500"
+                  )}>
+                    3
+                  </div>
+                  <div className={cn(
+                    "flex-1 h-0.5",
+                    submissionStep === 'complete'
+                      ? "bg-green-500" 
+                      : "bg-gray-200"
+                  )} />
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium",
+                    submissionStep === 'complete'
+                      ? "bg-green-500 text-white" 
+                      : "bg-gray-200 text-gray-500"
+                  )}>
+                    ✓
+                  </div>
+                </div>
+                
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <span>회원가입</span>
+                  <span>프로필</span>
+                  <span>업로드</span>
+                  <span>완료</span>
+                </div>
+              </div>
+              
+              <div className="text-center text-xs text-muted-foreground">
+                잠시만 기다려주세요. 페이지를 새로고침하거나 뒤로가기를 하지 마세요.
+              </div>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className={cn("flex flex-col gap-6 items-center justify-center", className)} {...props}>
         <Card className="min-w-[700px] w-full max-w-4xl">
         <CardHeader>
@@ -856,4 +1047,166 @@ export function SignupForm({
       <Toaster richColors position="top-right" />
     </>
   )
+}
+
+// Admin 회원가입을 위한 간단한 컴포넌트
+function AdminSignupFormComponent({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const router = useRouter();
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<AdminSignupFormData>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+
+  const password = watch("password");
+
+  const onSubmit = async (data: AdminSignupFormData) => {
+    setIsLoading(true);
+
+    try {
+      const result = await signupWithInviteCode({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        inviteCode: data.inviteCode
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.success) {
+        toast.success(result.message);
+        router.push("/login/admin?message=signup-success");
+      }
+    } catch (error) {
+      console.error("Admin signup error:", error);
+      toast.error("회원가입 중 예상치 못한 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">관리자 회원가입</CardTitle>
+            <CardDescription>
+              초대 코드를 사용하여 관리자 계정을 생성합니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="admin-email">이메일 *</Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  {...register("email", {
+                    required: "이메일을 입력해주세요.",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "유효한 이메일 주소를 입력해주세요."
+                    }
+                  })}
+                />
+                {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="admin-name">이름 *</Label>
+                <Input
+                  id="admin-name"
+                  type="text"
+                  placeholder="관리자"
+                  {...register("name", {
+                    required: "이름을 입력해주세요.",
+                    minLength: {
+                      value: 2,
+                      message: "이름은 최소 2글자 이상이어야 합니다."
+                    }
+                  })}
+                />
+                {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="admin-password">비밀번호 *</Label>
+                <div className="relative">
+                  <Input
+                    id="admin-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="최소 6자 이상"
+                    {...register("password", {
+                      required: "비밀번호를 입력해주세요.",
+                      minLength: {
+                        value: 6,
+                        message: "비밀번호는 최소 6글자 이상이어야 합니다."
+                      }
+                    })}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="admin-passwordConfirm">비밀번호 확인 *</Label>
+                <div className="relative">
+                  <Input
+                    id="admin-passwordConfirm"
+                    type={showPasswordConfirm ? "text" : "password"}
+                    placeholder="비밀번호를 다시 입력해주세요"
+                    {...register("passwordConfirm", {
+                      required: "비밀번호 확인을 입력해주세요.",
+                      validate: (value) => value === password || "비밀번호가 일치하지 않습니다."
+                    })}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                  >
+                    {showPasswordConfirm ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                  </button>
+                </div>
+                {errors.passwordConfirm && <p className="text-sm text-red-600">{errors.passwordConfirm.message}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="admin-inviteCode">초대 코드 *</Label>
+                <Input
+                  id="admin-inviteCode"
+                  type="text"
+                  placeholder="초대 코드를 입력해주세요"
+                  {...register("inviteCode", {
+                    required: "초대 코드를 입력해주세요."
+                  })}
+                />
+                {errors.inviteCode && <p className="text-sm text-red-600">{errors.inviteCode.message}</p>}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "회원가입 중..." : "회원가입"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+      <Toaster richColors position="top-right" />
+    </>
+  );
 }

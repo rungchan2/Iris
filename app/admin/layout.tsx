@@ -32,40 +32,18 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  // Check if user is admin
+  // Check if user is admin (새 시스템에서는 user_metadata만 확인)
   const isAdmin = session.user.user_metadata?.user_type === 'admin'
   if (!isAdmin) {
     redirect("/login");
   }
 
-  // Get admin profile from admins table
-  let { data: admin } = await supabase
-    .from('admins')
-    .select('*')
-    .eq('id', session.user.id)
-    .single()
-
-  // If admin record doesn't exist, create it
-  if (!admin) {
-    const { data: newAdmin } = await supabase
-      .from('admins')
-      .insert({
-        id: session.user.id,
-        email: session.user.email || '',
-        name: session.user.user_metadata?.name || 'Admin User',
-        role: 'admin'
-      })
-      .select()
-      .single()
-
-    admin = newAdmin
-  }
-
-  // Use admin record as user object for the interface
-  const user = admin || {
+  // Admin 정보는 auth.users의 metadata에서 가져옴 (admins 테이블 불필요)
+  const user = {
     id: session.user.id,
     email: session.user.email || '',
-    name: session.user.user_metadata?.name || 'Admin User'
+    name: session.user.user_metadata?.name || 'Admin User',
+    user_type: 'admin'
   };
 
   return (

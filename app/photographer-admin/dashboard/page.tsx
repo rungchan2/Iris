@@ -14,14 +14,14 @@ export default async function PhotographersDashboard() {
     redirect("/login");
   }
 
-  // Get photographer data
-  const { data: photographer } = await supabase
+  // Get photographer data (layout already handles approval check)
+  const { data: photographer, error } = await supabase
     .from('photographers')
     .select('*')
     .eq('id', session.user.id)
     .single();
 
-  if (!photographer) {
+  if (error || !photographer) {
     redirect("/login");
   }
 

@@ -46,7 +46,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
     .toUpperCase()
 
   const primaryPersonality = photographer.personality_admin_mapping?.find((m: any) => m.is_primary)
-  const portfolioCount = photographer.admin_portfolio_photos?.length || 0
+  const portfolioCount = photographer.photos?.length || 0
   const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
   // Generate deterministic rating based on photographer ID to avoid hydration issues
   const rating = portfolioCount > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined

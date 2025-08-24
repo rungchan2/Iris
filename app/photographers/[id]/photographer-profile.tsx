@@ -88,7 +88,7 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
     .join('')
     .toUpperCase()
 
-  const portfolioPhotos = photographer.admin_portfolio_photos || []
+  const portfolioPhotos = photographer.photos || []
   const personalityMappings = photographer.personality_admin_mapping || []
   const primaryPersonality = personalityMappings.find((m: any) => m.is_primary)
   const compatiblePersonalities = personalityMappings.filter((m: any) => !m.is_primary)
@@ -261,10 +261,10 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                     <div 
                       key={photo.id}
                       className="group relative aspect-[4/5] overflow-hidden rounded-lg cursor-pointer"
-                      onClick={() => setSelectedImage(photo.photo_url)}
+                      onClick={() => setSelectedImage(photo.storage_url)}
                     >
                       <Image
-                        src={photo.photo_url}
+                        src={photo.storage_url}
                         alt={photo.title || '포트폴리오'}
                         fill
                         className="object-cover transition-transform group-hover:scale-105"

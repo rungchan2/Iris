@@ -46,7 +46,7 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
         photography_approach,
         youtube_intro_url,
         profile_image_url,
-        admin_portfolio_photos(count)
+        photos!uploaded_by(count)
       `)
     
     // Apply search filter
@@ -76,7 +76,7 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
       photography_approach: photographer.photography_approach,
       youtube_intro_url: photographer.youtube_intro_url,
       profile_image_url: photographer.profile_image_url,
-      portfolioCount: photographer.admin_portfolio_photos?.length || 0,
+      portfolioCount: photographer.photos?.length || 0,
       personalityTypes: [] // TODO: personality_admin_mapping 테이블 생성 후 활성화
     }))
     
@@ -130,16 +130,17 @@ export async function getPhotographerById(id: string) {
       .from('photographers')
       .select(`
         *,
-        admin_portfolio_photos(
+        photos!uploaded_by(
           id,
-          photo_url,
+          storage_url,
           thumbnail_url,
           title,
           description,
           style_tags,
           display_order,
           is_representative,
-          view_count
+          view_count,
+          is_public
         ),
         personality_admin_mapping(
           personality_code,

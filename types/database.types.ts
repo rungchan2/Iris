@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_invite_codes: {
@@ -846,41 +821,62 @@ export type Database = {
       photos: {
         Row: {
           created_at: string | null
+          description: string | null
+          display_order: number | null
           filename: string
           height: number | null
           id: string
           is_active: boolean | null
+          is_public: boolean | null
+          is_representative: boolean | null
           size_kb: number | null
           storage_url: string
+          style_tags: string[] | null
           thumbnail_url: string | null
+          title: string | null
           updated_at: string | null
           uploaded_by: string | null
+          view_count: number | null
           width: number | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
+          display_order?: number | null
           filename: string
           height?: number | null
           id?: string
           is_active?: boolean | null
+          is_public?: boolean | null
+          is_representative?: boolean | null
           size_kb?: number | null
           storage_url: string
+          style_tags?: string[] | null
           thumbnail_url?: string | null
+          title?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+          view_count?: number | null
           width?: number | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
+          display_order?: number | null
           filename?: string
           height?: number | null
           id?: string
           is_active?: boolean | null
+          is_public?: boolean | null
+          is_representative?: boolean | null
           size_kb?: number | null
           storage_url?: string
+          style_tags?: string[] | null
           thumbnail_url?: string | null
+          title?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+          view_count?: number | null
           width?: number | null
         }
         Relationships: [
@@ -1293,9 +1289,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

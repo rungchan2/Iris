@@ -23,18 +23,22 @@ export default async function Page() {
       redirect("/admin");
     } else {
       // Check if user is photographer
-      const { data: photographer } = await supabase
+      const { data: photographer, error } = await supabase
         .from('photographers')
-        .select('id')
+        .select('id, approval_status')
         .eq('id', session.user.id)
         .single();
         
-      if (photographer) {
-        redirect("/photographer-admin");
+      if (photographer && !error) {
+        // 작가 승인 상태에 따라 다른 경로로 리디렉션
+        const redirectPath = photographer.approval_status === 'approved' 
+          ? '/photographer-admin' 
+          : '/photographer/approval-status';
+        redirect(redirectPath);
       } else {
-        // No matching user type, sign out and redirect to login
-        await supabase.auth.signOut();
-        redirect("/login");
+        // No matching user type - just show login form without redirecting
+        // This prevents infinite redirect loop
+        console.log('User has session but no matching role, showing login form');
       }
     }
   }

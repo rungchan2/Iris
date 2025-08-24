@@ -25,7 +25,6 @@ export interface PhotographerFilters {
 }
 
 export interface PhotographerApplicationData {
-  userId: string
   email: string
   name: string
   phone: string
@@ -41,23 +40,22 @@ export interface PhotographerApplicationData {
   priceRangeMin?: number
   priceRangeMax?: number
   priceDescription?: string
-  portfolioFiles: File[]
-  portfolioDescriptions?: string[]
 }
 
 /**
- * 작가 지원서 제출 및 포트폴리오 업로드
+ * 작가 프로필 정보 생성 (회원가입 후 photographers 테이블에 정보 저장)
  */
-export async function createPhotographerApplication(
-  data: PhotographerApplicationData
-): Promise<{ success: boolean; error?: string; applicationId?: string }> {
+export async function createPhotographerProfile(
+  data: PhotographerApplicationData & { userId: string }
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient()
 
-    // 1. photographers 테이블에 작가 정보 업데이트
-    const { data: updatedUser, error: userError } = await supabase
+    // photographers 테이블에 작가 정보 생성
+    const { error: userError } = await supabase
       .from('photographers')
-      .update({
+      .insert({
+        id: data.userId,
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -73,26 +71,49 @@ export async function createPhotographerApplication(
         price_range_min: data.priceRangeMin,
         price_range_max: data.priceRangeMax,
         price_description: data.priceDescription,
-        application_status: 'pending',
+        approval_status: 'pending',
         portfolio_submitted_at: new Date().toISOString(),
         profile_completed: true,
-        updated_at: new Date().toISOString()
       })
-      .eq('id', data.userId)
-      .select()
-      .single()
 
     if (userError) {
-      console.error('Error updating admin user:', userError)
-      return { success: false, error: `작가 정보 업데이트 실패: ${userError.message}` }
+      console.error('Error creating photographer profile:', userError)
+      return { success: false, error: `작가 프로필 생성 실패: ${userError.message}` }
     }
 
-    // 2. 포트폴리오 이미지 업로드
+    return { success: true }
+
+  } catch (error: any) {
+    console.error('Photographer profile creation error:', error)
+    return { 
+      success: false, 
+      error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.' 
+    }
+  }
+}
+
+/**
+ * 포트폴리오 이미지 업로드 (로그인 후 실행)
+ */
+export async function uploadPortfolioImages(
+  portfolioFiles: File[],
+  portfolioDescriptions?: string[]
+): Promise<{ success: boolean; error?: string; uploadedCount?: number }> {
+  try {
+    const supabase = await createClient()
+    
+    // 현재 로그인한 사용자 확인
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return { success: false, error: '사용자 인증 실패. 로그인이 필요합니다.' }
+    }
+
     const portfolioUploadResults = []
     
-    for (let i = 0; i < data.portfolioFiles.length; i++) {
-      const file = data.portfolioFiles[i]
-      const description = data.portfolioDescriptions?.[i] || ''
+    for (let i = 0; i < portfolioFiles.length; i++) {
+      const file = portfolioFiles[i]
+      const description = portfolioDescriptions?.[i] || ''
 
       try {
         // 파일을 Buffer로 변환
@@ -101,7 +122,7 @@ export async function createPhotographerApplication(
         
         // 고유한 파일명 생성
         const fileExt = file.name.split('.').pop() || 'jpg'
-        const fileName = `portfolio/${data.userId}/${Date.now()}_${i + 1}.${fileExt}`
+        const fileName = `portfolio/${user.id}/${Date.now()}_${i + 1}.${fileExt}`
         
         // Supabase Storage에 업로드
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -128,31 +149,32 @@ export async function createPhotographerApplication(
         // 썸네일 URL 생성 (Supabase의 이미지 변환 기능 사용)
         const thumbnailUrl = `${publicUrlData.publicUrl}?width=400&height=400&resize=cover&quality=80`
 
-        // admin_portfolio_photos 테이블에 레코드 생성
-        const { data: portfolioPhoto, error: portfolioError } = await supabase
-          .from('admin_portfolio_photos')
+        // photos 테이블에 레코드 생성
+        const { data: photo, error: photoError } = await supabase
+          .from('photos')
           .insert({
-            admin_id: data.userId,
-            photo_url: publicUrlData.publicUrl,
+            uploaded_by: user.id,
+            filename: `portfolio_${i + 1}_${Date.now()}.jpg`,
+            storage_url: publicUrlData.publicUrl,
             thumbnail_url: thumbnailUrl,
             title: `Portfolio ${i + 1}`,
             description: description,
-            display_order: i + 1,
             is_public: false, // 승인 전까지는 비공개
-            is_representative: i === 0, // 첫 번째 이미지를 대표 이미지로 설정
+            is_representative: i === 0,
+            display_order: i + 1
           })
           .select()
           .single()
 
-        if (portfolioError) {
-          console.error('Portfolio record creation error:', portfolioError)
-          throw new Error(`포트폴리오 레코드 생성 실패: ${portfolioError.message}`)
+        if (photoError) {
+          console.error('Photo record creation error:', photoError)
+          throw new Error(`포트폴리오 레코드 생성 실패: ${photoError.message}`)
         }
 
         portfolioUploadResults.push({
           success: true,
           url: publicUrlData.publicUrl,
-          portfolioId: portfolioPhoto.id
+          photoId: photo.id
         })
 
       } catch (error: any) {
@@ -179,20 +201,16 @@ export async function createPhotographerApplication(
       console.warn(`${failedUploads.length}개의 포트폴리오 이미지 업로드 실패`)
     }
 
-    // 3. 관리자에게 알림 메일 발송 (선택사항)
-    // TODO: 이메일 알림 시스템 구현 (Supabase Edge Functions 또는 다른 메일 서비스)
-
-    // 4. 성공 응답
     return { 
       success: true, 
-      applicationId: data.userId,
+      uploadedCount: successfulUploads.length
     }
 
   } catch (error: any) {
-    console.error('Photographer application creation error:', error)
+    console.error('Portfolio upload error:', error)
     return { 
       success: false, 
-      error: error.message || '작가 지원서 처리 중 오류가 발생했습니다. 다시 시도해주세요.' 
+      error: error.message || '포트폴리오 업로드 중 오류가 발생했습니다.' 
     }
   }
 }
