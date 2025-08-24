@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 export interface PublicReview {
   id: string
@@ -20,8 +20,12 @@ export interface PublicReview {
 
 export async function getPublicReviews() {
   try {
-    const supabase = await createClient()
-    
+    // Service Role 클라이언트 사용하여 RLS 우회
+    const supabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const { data: reviews, error } = await supabase
       .from('reviews')
       .select(`
@@ -38,12 +42,13 @@ export async function getPublicReviews() {
           )
         )
       `)
-      .eq('is_public', true)
       .eq('is_submitted', true)
+      .eq('is_public', true)
       .not('rating', 'is', null)
-      .not('comment', 'is', null)
-      .order('created_at', { ascending: false })
+      .order('rating', { ascending: false })
       .limit(10)
+
+    console.log("reviews", reviews)
 
     if (error) {
       console.error('Error fetching public reviews:', error.message)
@@ -58,7 +63,7 @@ export async function getPublicReviews() {
     const transformedReviews: PublicReview[] = reviews
       .filter(review => review.inquiries?.photographers)
       .map(review => {
-        const photographer = review.inquiries.photographers
+        const photographer = review.inquiries?.photographers
         const experience = photographer?.created_at 
           ? Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
           : 3
