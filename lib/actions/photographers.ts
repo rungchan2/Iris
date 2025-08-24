@@ -129,10 +129,7 @@ export async function getPhotographerById(id: string) {
     const { data: photographer, error } = await supabase
       .from('photographers')
       .select(`
-        id,
-        name,
-        email,
-        created_at,
+        *,
         admin_portfolio_photos(
           id,
           photo_url,

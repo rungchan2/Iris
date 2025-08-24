@@ -49,7 +49,7 @@ export async function getInquiryById(inquiryId: string): Promise<{
       .from('inquiries')
       .select(`
         *,
-        assigned_admin:photographers(name, email)
+        assigned_admin:photographers!matched_admin_id(name, email)
       `)
       .eq('id', inquiryId)
       .single()

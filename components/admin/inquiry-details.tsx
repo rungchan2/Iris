@@ -265,6 +265,49 @@ export function InquiryDetails({
               </div>
             )}
 
+            {/* 4가지 촬영 전 질문 */}
+            {(inquiry.conversation_preference || inquiry.conversation_topics || inquiry.favorite_music || inquiry.shooting_meaning) && (
+              <div className="pt-4 border-t">
+                <p className="text-sm font-medium text-muted-foreground mb-3">
+                  촬영 전 질문
+                </p>
+                <div className="space-y-3">
+                  {inquiry.conversation_preference && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        처음 보는 사람과 대화는 많이 or 적게?
+                      </p>
+                      <p className="text-sm mt-1">{inquiry.conversation_preference}</p>
+                    </div>
+                  )}
+                  {inquiry.conversation_topics && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        어떤 주제로 대화하는 걸 좋아하세요?
+                      </p>
+                      <p className="text-sm mt-1">{inquiry.conversation_topics}</p>
+                    </div>
+                  )}
+                  {inquiry.favorite_music && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        좋아하시는 음악이 있으신가요?
+                      </p>
+                      <p className="text-sm mt-1">{inquiry.favorite_music}</p>
+                    </div>
+                  )}
+                  {inquiry.shooting_meaning && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        이번 촬영은 본인에게 어떤 의미인가요?
+                      </p>
+                      <p className="text-sm mt-1">{inquiry.shooting_meaning}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* 의상/악세서리 추천 - 성별에 따라 조건부 렌더링 */}
             {inquiry.gender &&
               inquiry.gender !== "other" &&

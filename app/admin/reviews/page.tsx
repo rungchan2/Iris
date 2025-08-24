@@ -1,245 +1,202 @@
-import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ReviewManagement } from "@/components/admin/review-management";
-import { getReviewStats } from "@/lib/actions/reviews";
-import { StarDisplay } from "@/components/review/star-rating";
-import { 
-  MessageSquare, 
-  Star, 
-  TrendingUp, 
-  Users,
-  Clock,
-  CheckCircle
-} from "lucide-react";
+import { AdminAllReviewsManagement } from "@/components/admin/admin-all-reviews-management";
 
-async function getInquiriesWithReviews() {
+export default async function AdminReviewsPage() {
   const supabase = await createClient();
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
     redirect("/login");
   }
 
-  // Get all inquiries for the current photographer
-  const { data: inquiries, error: inquiriesError } = await supabase
-    .from("inquiries")
+  // Check if user is admin
+  const isAdmin = session.user.user_metadata?.user_type === 'admin'
+  if (!isAdmin) {
+    redirect("/unauthorized");
+  }
+
+  // Get all photographers
+  const { data: photographers } = await supabase
+    .from("photographers")
+    .select("id, name, email")
+    .order("name", { ascending: true });
+
+  // Get all reviews with inquiry and photographer information
+  const { data: reviews } = await supabase
+    .from("reviews")
     .select(`
-      id,
-      name,
-      phone,
-      created_at,
-      status
+      *,
+      inquiries!inner (
+        id,
+        name,
+        photographer_id
+      )
     `)
-    .eq("matched_admin_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (inquiriesError) {
-    throw new Error("Failed to fetch inquiries");
-  }
-
-  // Get all reviews for these inquiries
-  const inquiryIds = inquiries?.map(i => i.id) || [];
-  const { data: reviews, error: reviewsError } = await supabase
-    .from("reviews")
-    .select("*")
-    .in("inquiry_id", inquiryIds);
-
-  if (reviewsError) {
-    throw new Error("Failed to fetch reviews");
-  }
-
-  // Group reviews by inquiry_id
-  const reviewsByInquiry = (reviews || []).reduce((acc, review) => {
-    const inquiryId = review.inquiry_id;
-    if (!inquiryId) return acc;
+  // Calculate photographer statistics
+  const photographerStats = photographers?.map(photographer => {
+    const photographerReviews = reviews?.filter(
+      review => review.inquiries?.photographer_id === photographer.id
+    ) || [];
     
-    if (!acc[inquiryId]) {
-      acc[inquiryId] = [];
+    const totalReviews = photographerReviews.length;
+    const averageRating = totalReviews > 0
+      ? photographerReviews.reduce((sum, review) => sum + (review.rating || 0), 0) / totalReviews
+      : 0;
+    
+    const publicReviews = photographerReviews.filter(review => review.is_public === true).length;
+    const anonymousReviews = photographerReviews.filter(review => review.is_anonymous === true).length;
+    
+    // Calculate rating distribution
+    const ratingCounts = [0, 0, 0, 0, 0]; // for 1-5 stars
+    photographerReviews.forEach(review => {
+      if (review.rating && review.rating >= 1 && review.rating <= 5) {
+        ratingCounts[review.rating - 1]++;
+      }
+    });
+    
+    return {
+      ...photographer,
+      totalReviews,
+      averageRating: Math.round(averageRating * 10) / 10,
+      publicReviews,
+      anonymousReviews,
+      ratingDistribution: ratingCounts,
+      recentReviews: photographerReviews.slice(0, 3)
+    };
+  }) || [];
+
+  // Sort by average rating (desc) and total reviews (desc)
+  photographerStats.sort((a, b) => {
+    if (b.averageRating !== a.averageRating) {
+      return b.averageRating - a.averageRating;
     }
-    acc[inquiryId].push(review);
-    return acc;
-  }, {} as Record<string, any[]>);
+    return b.totalReviews - a.totalReviews;
+  });
 
-  return {
-    inquiries: inquiries || [],
-    reviews: reviewsByInquiry,
-  };
-}
-
-async function ReviewStats() {
-  const statsResult = await getReviewStats();
-  
-  if (statsResult.error || !statsResult.data) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-gray-500">
-              통계를 불러올 수 없습니다
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const { total_reviews, average_rating, rating_distribution } = statsResult.data;
-  const pendingReviews = 0; // This would need to be calculated from inquiries without reviews
+  // Calculate overall statistics
+  const totalReviews = reviews?.length || 0;
+  const overallAverage = totalReviews > 0
+    ? reviews?.reduce((sum, review) => sum + (review.rating || 0), 0)! / totalReviews
+    : 0;
+  const publicReviewsCount = reviews?.filter(review => review.is_public === true).length || 0;
+  const anonymousReviewsCount = reviews?.filter(review => review.is_anonymous === true).length || 0;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">총 리뷰 수</CardTitle>
-          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{total_reviews}</div>
-          <p className="text-xs text-muted-foreground">
-            고객 후기
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">평균 평점</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">{average_rating}</span>
-            <StarDisplay rating={average_rating} size="sm" />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            5점 만점
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">완료된 리뷰</CardTitle>
-          <CheckCircle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{total_reviews}</div>
-          <p className="text-xs text-muted-foreground">
-            제출 완료
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">대기 중</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-amber-600">{pendingReviews}</div>
-          <p className="text-xs text-muted-foreground">
-            리뷰 대기
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-async function ReviewContent() {
-  const { inquiries, reviews } = await getInquiriesWithReviews();
-
-  return (
-    <div className="space-y-8">
-      <Suspense fallback={
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      }>
-        <ReviewStats />
-      </Suspense>
-
+    <div className="space-y-6">
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">리뷰 관리</h2>
-            <p className="text-gray-600">
-              고객들에게 리뷰 링크를 생성하고 전송하세요
-            </p>
+        <h1 className="text-3xl font-bold">전체 리뷰 관리</h1>
+        <p className="text-muted-foreground">모든 작가의 리뷰를 관리하고 통계를 확인하세요</p>
+      </div>
+
+      {/* Overall Statistics */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-sm font-medium text-muted-foreground">전체 리뷰</div>
+          <div className="text-2xl font-bold">{totalReviews}</div>
+          <div className="text-xs text-muted-foreground">총 리뷰 수</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-sm font-medium text-muted-foreground">평균 평점</div>
+          <div className="text-2xl font-bold text-yellow-600">
+            {Math.round(overallAverage * 10) / 10} ⭐
+          </div>
+          <div className="text-xs text-muted-foreground">전체 평균</div>
+        </div>
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-sm font-medium text-muted-foreground">공개 리뷰</div>
+          <div className="text-2xl font-bold text-green-600">{publicReviewsCount}</div>
+          <div className="text-xs text-muted-foreground">
+            {totalReviews > 0 ? Math.round((publicReviewsCount / totalReviews) * 100) : 0}% 공개율
           </div>
         </div>
-
-        <ReviewManagement 
-          inquiries={inquiries.map(inq => ({
-            ...inq,
-            created_at: inq.created_at || '',
-            status: inq.status || 'pending'
-          }))} 
-          reviews={reviews} 
-        />
+        <div className="bg-white rounded-lg border p-4">
+          <div className="text-sm font-medium text-muted-foreground">익명 리뷰</div>
+          <div className="text-2xl font-bold text-blue-600">{anonymousReviewsCount}</div>
+          <div className="text-xs text-muted-foreground">
+            {totalReviews > 0 ? Math.round((anonymousReviewsCount / totalReviews) * 100) : 0}% 익명율
+          </div>
+        </div>
       </div>
+
+      {/* Photographer Review Statistics */}
+      <div className="bg-white rounded-lg border">
+        <div className="p-6 border-b">
+          <h2 className="text-xl font-semibold">작가별 리뷰 통계</h2>
+          <p className="text-sm text-muted-foreground">각 작가의 리뷰 현황과 평균 평점을 확인하세요</p>
+        </div>
+        <div className="p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-2 font-medium text-sm">작가명</th>
+                  <th className="text-center p-2 font-medium text-sm">총 리뷰</th>
+                  <th className="text-center p-2 font-medium text-sm">평균 평점</th>
+                  <th className="text-center p-2 font-medium text-sm">공개 리뷰</th>
+                  <th className="text-center p-2 font-medium text-sm">익명 리뷰</th>
+                  <th className="text-center p-2 font-medium text-sm">평점 분포</th>
+                </tr>
+              </thead>
+              <tbody>
+                {photographerStats.map((photographer) => (
+                  <tr key={photographer.id} className="border-b hover:bg-gray-50">
+                    <td className="p-2">
+                      <div>
+                        <div className="font-medium">{photographer.name}</div>
+                        <div className="text-xs text-muted-foreground">{photographer.email}</div>
+                      </div>
+                    </td>
+                    <td className="text-center p-2">{photographer.totalReviews}</td>
+                    <td className="text-center p-2">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-bold text-yellow-600">
+                          {photographer.averageRating}
+                        </span>
+                        <span className="text-yellow-500">⭐</span>
+                      </div>
+                    </td>
+                    <td className="text-center p-2 text-green-600">{photographer.publicReviews}</td>
+                    <td className="text-center p-2 text-blue-600">{photographer.anonymousReviews}</td>
+                    <td className="text-center p-2">
+                      <div className="flex items-center justify-center gap-1">
+                        {photographer.ratingDistribution.map((count, index) => (
+                          <div key={index} className="text-center">
+                            <div
+                              className="h-16 w-6 bg-gray-200 rounded relative"
+                              title={`${index + 1}점: ${count}개`}
+                            >
+                              <div
+                                className="absolute bottom-0 left-0 right-0 bg-yellow-500 rounded"
+                                style={{
+                                  height: photographer.totalReviews > 0 
+                                    ? `${(count / photographer.totalReviews) * 100}%`
+                                    : '0%'
+                                }}
+                              />
+                            </div>
+                            <div className="text-xs mt-1">{index + 1}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Review Management Component */}
+      <AdminAllReviewsManagement 
+        reviews={reviews || []} 
+        photographers={photographers || []}
+      />
     </div>
   );
 }
-
-export default function ReviewsPage() {
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">리뷰 관리</h1>
-        <p className="text-gray-600">
-          고객 만족도를 확인하고 새로운 리뷰를 요청하세요
-        </p>
-      </div>
-
-      <Suspense fallback={
-        <div className="space-y-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <div className="animate-pulse">
-                    <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      }>
-        <ReviewContent />
-      </Suspense>
-    </div>
-  );
-}
-
-export const metadata = {
-  title: "리뷰 관리 - Iris Admin",
-  description: "고객 리뷰를 관리하고 새로운 리뷰 링크를 생성하세요.",
-};

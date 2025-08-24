@@ -46,14 +46,11 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
       return { error: '유효하지 않거나 만료된 초대 코드입니다.' }
     }
 
-    // 2. 이메일 중복 확인
-    const { data: existingUser } = await supabaseService
-      .from('photographers')
-      .select('id')
-      .eq('email', email)
-      .single()
-
-    if (existingUser) {
+    // 2. 이메일 중복 확인 (auth.users와 admins 테이블 모두 확인)
+    const { data: existingAuthUser } = await supabaseService.auth.admin.listUsers()
+    const emailExists = existingAuthUser.users.some(user => user.email === email)
+    
+    if (emailExists) {
       return { error: '이미 가입된 이메일입니다.' }
     }
 
@@ -72,25 +69,21 @@ export async function signupWithInviteCode(params: SignupWithInviteParams) {
       return { error: '회원가입 중 오류가 발생했습니다: ' + authError?.message }
     }
 
-    // 4. admin도 photographers 테이블에 기본 프로필 생성 (권한 체크를 위해)
+    // 4. Admin profile is stored in admins table
     const { error: profileError } = await supabaseService
-      .from('photographers')
+      .from('admins')
       .insert({
         id: authData.user.id,
         email,
         name,
-        phone: '', // 기본값
-        bio: 'Iris 관리자', // admin임을 표시
-        personality_type: '', // 기본값
-        directing_style: '', // 기본값  
-        photography_approach: '', // 기본값
-        youtube_intro_url: '', // 기본값
-        profile_image_url: '' // 기본값
+        role: 'admin'
       })
 
     if (profileError) {
       console.error('Admin profile creation error:', profileError)
-      // 프로필 생성 실패해도 계속 진행 (auth 사용자는 이미 생성됨)
+      // Delete auth user if admin profile creation fails
+      await supabaseService.auth.admin.deleteUser(authData.user.id)
+      return { error: '관리자 프로필 생성 중 오류가 발생했습니다.' }
     }
 
     // 5. 초대 코드 사용 처리

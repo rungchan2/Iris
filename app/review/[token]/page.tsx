@@ -14,15 +14,14 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   
   const result = await getReviewByToken(token);
 
+  console.log("result", result)
+
   if (result.error || !result.data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50 flex items-center justify-center p-4">
         <div className="max-w-md mx-auto text-center">
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              리뷰를 찾을 수 없습니다
-            </h1>
+            
             <div className="space-y-2 text-gray-600">
               {result.error === "Review not found" && (
                 <p>유효하지 않은 리뷰 링크입니다.</p>
@@ -36,7 +35,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
               )}
               {result.error === "Review has already been submitted" && (
                 <>
-                  <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto mb-2" />
+                  <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-2" />
                   <p>이미 리뷰가 제출되었습니다.</p>
                   <p className="text-sm">소중한 후기를 남겨주셔서 감사합니다!</p>
                 </>
@@ -103,14 +102,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
           </div>
         </div>
 
-        {/* Important Notice */}
-        <Alert className="mb-8 border-orange-200 bg-orange-50">
-          <AlertCircle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            <strong>안내사항:</strong> 리뷰는 한 번만 작성할 수 있으며, 제출 후에는 수정이 불가능합니다. 
-            신중하게 작성해주세요.
-          </AlertDescription>
-        </Alert>
+        
 
         {/* Review Form */}
         <ReviewForm
@@ -123,7 +115,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
             리뷰 작성에 문제가 있으시면{" "}
-            <a href="mailto:support@Iris.com" className="text-orange-600 hover:underline">
+            <a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`} className="text-orange-600 hover:underline">
               고객센터
             </a>로 연락해주세요.
           </p>

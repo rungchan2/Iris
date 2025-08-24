@@ -29,7 +29,7 @@ import {
   type InquiryFormValues,
   type MoodKeyword,
 } from "@/types/inquiry.types";
-import { TimeSlotSelector } from "@/components/inquiry/time-slot-selector";
+import { TimeSlotSelector } from "@/components/booking/time-slot-selector";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -47,7 +47,7 @@ export function PersonalInfoForm({
   photographerId,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
-    "personal" | "mood" | "additional"
+    "personal" | "mood" | "additional" | "final_questions"
   >("personal");
   const [dateSlotCounts, setDateSlotCounts] = useState<
     Record<string, { total: number; available: number }>
@@ -68,6 +68,10 @@ export function PersonalInfoForm({
       desired_mood_keywords: [],
       special_request: "",
       difficulty_note: "",
+      conversation_preference: "",
+      conversation_topics: "",
+      favorite_music: "",
+      shooting_meaning: "",
     },
   });
 
@@ -114,10 +118,17 @@ export function PersonalInfoForm({
     const fetchSlotCounts = async () => {
       if (availableDates.length === 0) return;
 
-      const { data: slots, error } = await supabase
+      let query = supabase
         .from("available_slots")
         .select("date, is_available")
         .in("date", availableDates);
+
+      // Filter by photographer ID if provided
+      if (photographerId) {
+        query = query.eq("admin_id", photographerId);
+      }
+
+      const { data: slots, error } = await query;
 
       if (error) {
         console.error("Error fetching slot counts:", error);
@@ -138,7 +149,7 @@ export function PersonalInfoForm({
     };
 
     fetchSlotCounts();
-  }, [availableDates, supabase]);
+  }, [availableDates, supabase, photographerId]);
 
   const currentMoodKeywords = moodKeywords.filter(
     (keyword) => keyword.type === "current_mood"
@@ -199,6 +210,9 @@ export function PersonalInfoForm({
       if (isValid) {
         setActiveSection("additional");
       }
+    } else if (activeSection === "additional") {
+      // Additional section is optional, no validation needed
+      setActiveSection("final_questions");
     }
   };
 
@@ -207,6 +221,8 @@ export function PersonalInfoForm({
       setActiveSection("personal");
     } else if (activeSection === "additional") {
       setActiveSection("mood");
+    } else if (activeSection === "final_questions") {
+      setActiveSection("additional");
     }
   };
 
@@ -229,20 +245,26 @@ export function PersonalInfoForm({
           <div className="flex justify-between mb-8">
             <div
               className={cn(
-                "flex-1 h-1 rounded-l-full transition-colors",
+                "flex-1 h-1 rounded-l-full transition-colors mr-1",
                 activeSection === "personal" ? "bg-primary" : "bg-primary/30"
               )}
             />
             <div
               className={cn(
-                "flex-1 h-1 transition-colors",
+                "flex-1 h-1 transition-colors mx-1",
                 activeSection === "mood" ? "bg-primary" : "bg-primary/30"
               )}
             />
             <div
               className={cn(
-                "flex-1 h-1 rounded-r-full transition-colors",
+                "flex-1 h-1 transition-colors mx-1",
                 activeSection === "additional" ? "bg-primary" : "bg-primary/30"
+              )}
+            />
+            <div
+              className={cn(
+                "flex-1 h-1 rounded-r-full transition-colors ml-1",
+                activeSection === "final_questions" ? "bg-primary" : "bg-primary/30"
               )}
             />
           </div>
@@ -708,13 +730,124 @@ export function PersonalInfoForm({
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
+                  <Button type="button" onClick={nextSection}>
+                    다음
+                  </Button>
+                </div>
+              </motion.div>
+
+              {/* Final Questions Section */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: activeSection === "final_questions" ? 1 : 0,
+                  x: activeSection === "final_questions" ? 0 : 20,
+                }}
+                transition={{ duration: 0.3 }}
+                className={cn(
+                  "space-y-4",
+                  activeSection !== "final_questions" && "hidden"
+                )}
+              >
+                <h3 className="text-xl font-semibold">촬영 전 마지막 질문</h3>
+                <p className="text-sm text-muted-foreground">작가와의 더 나은 소통을 위해 몇 가지만 더 알려주세요!</p>
+
+                <FormField
+                  control={form.control}
+                  name="conversation_preference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>처음 보는 사람과 대화는 많이 or 적게?</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="많이" id="conversation_much" />
+                            <label htmlFor="conversation_much" className="text-sm">많이 (대화를 즐기는 편)</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="적게" id="conversation_little" />
+                            <label htmlFor="conversation_little" className="text-sm">적게 (조용한 편)</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="보통" id="conversation_normal" />
+                            <label htmlFor="conversation_normal" className="text-sm">보통 (상황에 따라)</label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="conversation_topics"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>어떤 주제로 대화하는 걸 좋아하세요?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="관심사, 취미, 좋아하는 것들을 자유롭게 적어주세요. (예: 음악, 영화, 여행, 음식 등)"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="favorite_music"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>좋아하시는 음악이 있으신가요?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="장르, 아티스트, 특정 곡 등 자유롭게 적어주세요. (예: 발라드, IU, 카페 분위기 음악 등)"
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="shooting_meaning"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>이번 촬영은 본인에게 어떤 의미인가요?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="기념일, 새로운 시작, 자신감 회복, 추억 남기기 등 어떤 의미든 좋습니다."
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4 items-center">
+                  <Button type="button" variant="outline" onClick={prevSection}>
+                    뒤로가기
+                  </Button>
                   {!form.formState.isValid && (
                     <span className="text-sm text-red-500">
                       모든 필수 필드를 입력해주세요.
                     </span>
                   )}
                   <Button type="submit" disabled={!form.formState.isValid}>
-                    다음
+                    예약 문의 완료
                   </Button>
                 </div>
               </motion.div>

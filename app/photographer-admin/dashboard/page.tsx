@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Calendar, MessageSquare, Star, TrendingUp } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function PhotographersDashboard() {
   const supabase = await createClient();
@@ -24,40 +25,102 @@ export default async function PhotographersDashboard() {
     redirect("/login");
   }
 
-  // Get basic stats (mock data for now - you can implement real data later)
+  // Get real statistics
+  const currentDate = new Date();
+  const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+
+  // Get inquiries stats
+  const { data: thisMonthInquiries } = await supabase
+    .from('inquiries')
+    .select('id, created_at')
+    .eq('photographer_id', photographer.id)
+    .gte('created_at', currentMonth.toISOString());
+
+  const { data: lastMonthInquiries } = await supabase
+    .from('inquiries')
+    .select('id, created_at')
+    .eq('photographer_id', photographer.id)
+    .gte('created_at', lastMonth.toISOString())
+    .lt('created_at', currentMonth.toISOString());
+
+  // Get reviews stats
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select('rating, inquiries!inner(photographer_id)')
+    .eq('inquiries.photographer_id', photographer.id)
+    .eq('is_submitted', true);
+
+  // Get portfolio stats
+  const { data: portfolioPhotos } = await supabase
+    .from('photos')
+    .select('id, created_at')
+    .eq('uploaded_by', photographer.id);
+
+  // Get recent inquiries for response calculation
+  const { data: recentInquiries } = await supabase
+    .from('inquiries')
+    .select('id, created_at, updated_at')
+    .eq('photographer_id', photographer.id)
+    .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
+
+  // Calculate stats
+  const thisMonthCount = thisMonthInquiries?.length || 0;
+  const lastMonthCount = lastMonthInquiries?.length || 0;
+  const monthlyGrowth = lastMonthCount > 0 ? ((thisMonthCount - lastMonthCount) / lastMonthCount * 100) : 0;
+
+  const totalReviews = reviews?.length || 0;
+  const averageRating = totalReviews > 0 
+    ? (reviews || []).reduce((sum, review) => sum + (review.rating || 0), 0) / totalReviews
+    : 0;
+
+  const portfolioCount = portfolioPhotos?.length || 0;
+
+  // Calculate response rate (assuming inquiries with updated_at different from created_at means responded)
+  const respondedInquiries = recentInquiries?.filter(inq => {
+    const updatedAt = inq.updated_at || inq.created_at;
+    const createdAt = inq.created_at;
+    if (!updatedAt || !createdAt) return false;
+    return new Date(updatedAt).getTime() > new Date(createdAt).getTime();
+  })?.length || 0;
+  const responseRate = (recentInquiries?.length || 0) > 0 
+    ? Math.round((respondedInquiries / (recentInquiries?.length || 1)) * 100)
+    : 0;
+
   const stats = [
     {
       title: "이번 달 예약",
-      value: "12",
-      description: "지난달 대비 +20%",
+      value: thisMonthCount.toString(),
+      description: `지난달 대비 ${monthlyGrowth >= 0 ? '+' : ''}${monthlyGrowth.toFixed(0)}%`,
       icon: Calendar,
-      trend: "+20%"
+      trend: `${monthlyGrowth >= 0 ? '+' : ''}${monthlyGrowth.toFixed(0)}%`
     },
     {
       title: "총 리뷰",
-      value: "48",
-      description: "평균 평점 4.8/5",
+      value: totalReviews.toString(),
+      description: `평균 평점 ${averageRating.toFixed(1)}/5`,
       icon: Star,
-      trend: "4.8⭐"
+      trend: `${averageRating.toFixed(1)}⭐`
     },
     {
-      title: "포트폴리오 조회",
-      value: "156",
-      description: "이번 주 조회수",
+      title: "포트폴리오",
+      value: portfolioCount.toString(),
+      description: "업로드된 사진",
       icon: Camera,
-      trend: "+12%"
+      trend: `${portfolioCount}개`
     },
     {
       title: "응답률",
-      value: "98%",
-      description: "24시간 내 응답",
+      value: `${responseRate}%`,
+      description: "최근 30일",
       icon: MessageSquare,
-      trend: "98%"
+      trend: `${responseRate}%`
     }
   ];
 
   return (
-    <div className="flex-1 space-y-4 p-4 pt-6">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">대시보드</h2>
       </div>
@@ -100,20 +163,20 @@ export default async function PhotographersDashboard() {
               <div className="border-l-4 border-orange-500 pl-4">
                 <h4 className="font-semibold text-sm">최근 예약 현황</h4>
                 <p className="text-sm text-muted-foreground">
-                  새로운 예약 문의가 3건 있습니다. 빠른 답변을 통해 고객 만족도를 높여보세요.
+                  새로운 예약 문의가 {thisMonthCount}건 있습니다. 빠른 답변을 통해 고객 만족도를 높여보세요.
                 </p>
               </div>
               <div className="border-l-4 border-blue-500 pl-4">
                 <h4 className="font-semibold text-sm">포트폴리오 업데이트</h4>
                 <p className="text-sm text-muted-foreground">
-                  최근 촬영한 작품들을 포트폴리오에 추가해보세요. 더 많은 고객들이 볼 수 있습니다.
+                  포트폴리오에 {portfolioCount}개의 작품이 있습니다. 최근 촬영한 작품들을 추가해보세요.
                 </p>
               </div>
               <div className="border-l-4 border-green-500 pl-4">
-                <h4 className="font-semibold text-sm">성격유형 매칭</h4>
+                <h4 className="font-semibold text-sm">리뷰 현황</h4>
                 <p className="text-sm text-muted-foreground">
-                  회원님과 잘 맞는 성격유형은 <strong>A1, B1, E2</strong>입니다. 
-                  해당 고객들의 예약이 많이 들어오고 있어요.
+                  {totalReviews}개의 리뷰를 받았으며 평균 평점은 <strong>{averageRating.toFixed(1)}점</strong>입니다.
+                  고객 만족도가 높아지고 있어요!
                 </p>
               </div>
             </div>
@@ -127,29 +190,35 @@ export default async function PhotographersDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <div className="flex items-center space-x-3">
-                  <Camera className="h-5 w-5 text-orange-500" />
-                  <span className="font-medium">포트폴리오 관리</span>
+              <Link href="/photographer-admin/photos" className="block">
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <Camera className="h-5 w-5 text-orange-500" />
+                    <span className="font-medium">포트폴리오 관리</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">→</span>
                 </div>
-                <span className="text-xs text-muted-foreground">→</span>
-              </div>
+              </Link>
               
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <span className="font-medium">예약 관리</span>
+              <Link href="/photographer-admin/inquiries" className="block">
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="h-5 w-5 text-blue-500" />
+                    <span className="font-medium">예약 관리</span>
+                  </div>
+                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">{thisMonthCount}</span>
                 </div>
-                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">3</span>
-              </div>
+              </Link>
               
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <div className="flex items-center space-x-3">
-                  <MessageSquare className="h-5 w-5 text-green-500" />
-                  <span className="font-medium">리뷰 관리</span>
+              <Link href="/photographer-admin/reviews" className="block">
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    <MessageSquare className="h-5 w-5 text-green-500" />
+                    <span className="font-medium">리뷰 관리</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">→</span>
                 </div>
-                <span className="text-xs text-muted-foreground">→</span>
-              </div>
+              </Link>
             </div>
           </CardContent>
         </Card>

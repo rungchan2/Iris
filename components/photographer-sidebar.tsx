@@ -3,6 +3,7 @@
 import type * as React from "react"
 import { useEffect, useState } from "react"
 import { Camera, User, LogOut, Calendar, MessageSquare, BarChart3, Inbox, Image, Star } from "lucide-react"
+import NextImage from "next/image"
 
 import {
   Sidebar,
@@ -66,6 +67,7 @@ interface PhotographerUser {
   name: string
   phone?: string
   bio?: string
+  profile_image_url?: string
 }
 
 export function PhotographerSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: PhotographerUser }) {
@@ -129,8 +131,18 @@ export function PhotographerSidebar({ user, ...props }: React.ComponentProps<typ
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <div>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                  <User className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600 overflow-hidden">
+                  {user.profile_image_url ? (
+                    <NextImage
+                      src={user.profile_image_url}
+                      alt={user.name}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <User className="size-4" />
+                  )}
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user.name}</span>

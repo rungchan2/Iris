@@ -79,13 +79,13 @@ export async function getAllAdminUsersWithStats(
         const { count: totalInquiries } = await supabase
           .from('inquiries')
           .select('*', { count: 'exact', head: true })
-          .eq('assigned_admin_id', user.id)
+          .eq('matched_admin_id', user.id)
 
         // 완료된 문의 수
         const { count: completedInquiries } = await supabase
           .from('inquiries')
           .select('*', { count: 'exact', head: true })
-          .eq('assigned_admin_id', user.id)
+          .eq('matched_admin_id', user.id)
           .eq('status', 'completed')
 
         // 사용 가능한 슬롯 수
@@ -103,7 +103,7 @@ export async function getAllAdminUsersWithStats(
         const { count: recentBookings } = await supabase
           .from('inquiries')
           .select('*', { count: 'exact', head: true })
-          .eq('assigned_admin_id', user.id)
+          .eq('matched_admin_id', user.id)
           .gte('created_at', thirtyDaysAgo.toISOString())
 
         // 매칭률 계산 (완료된 문의 / 총 문의)
@@ -196,14 +196,14 @@ export async function getAdminUserDetail(adminId: string): Promise<{
       const { count: inquiries } = await supabase
         .from('inquiries')
         .select('*', { count: 'exact', head: true })
-        .eq('assigned_admin_id', adminId)
+        .eq('matched_admin_id', adminId)
         .gte('created_at', startOfMonth.toISOString())
         .lte('created_at', endOfMonth.toISOString())
       
       const { count: completed } = await supabase
         .from('inquiries')
         .select('*', { count: 'exact', head: true })
-        .eq('assigned_admin_id', adminId)
+        .eq('matched_admin_id', adminId)
         .eq('status', 'completed')
         .gte('created_at', startOfMonth.toISOString())
         .lte('created_at', endOfMonth.toISOString())
@@ -225,7 +225,7 @@ export async function getAdminUserDetail(adminId: string): Promise<{
     const { data: lastActivity } = await supabase
       .from('inquiries')
       .select('updated_at')
-      .eq('assigned_admin_id', adminId)
+      .eq('matched_admin_id', adminId)
       .order('updated_at', { ascending: false })
       .limit(1)
 

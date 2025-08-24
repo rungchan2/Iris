@@ -413,6 +413,7 @@ export type Database = {
           name: string
           people_count: number | null
           phone: string
+          photographer_id: string | null
           quiz_session_id: string | null
           relationship: string | null
           selected_category_id: string | null
@@ -443,6 +444,7 @@ export type Database = {
           name: string
           people_count?: number | null
           phone: string
+          photographer_id?: string | null
           quiz_session_id?: string | null
           relationship?: string | null
           selected_category_id?: string | null
@@ -473,6 +475,7 @@ export type Database = {
           name?: string
           people_count?: number | null
           phone?: string
+          photographer_id?: string | null
           quiz_session_id?: string | null
           relationship?: string | null
           selected_category_id?: string | null
@@ -496,6 +499,13 @@ export type Database = {
           {
             foreignKeyName: "inquiries_matched_admin_id_fkey"
             columns: ["matched_admin_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_photographer_id_fkey"
+            columns: ["photographer_id"]
             isOneToOne: false
             referencedRelation: "photographers"
             referencedColumns: ["id"]

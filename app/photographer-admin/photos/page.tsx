@@ -42,6 +42,7 @@ export default async function PhotosPage({
         initialPage={Number.parseInt(params.page || "1")}
         filterCategory={params.category}
         showUnassigned={params.unassigned === "true"}
+        basePath="/photographer-admin/photos"
       />
     </div>
   )

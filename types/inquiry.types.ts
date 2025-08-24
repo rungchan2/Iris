@@ -98,6 +98,11 @@ export interface Inquiry {
   admin_note?: string
   place_recommendation?: string
   difficulty_note?: string
+  // Final Questions (Step 4)
+  conversation_preference?: string
+  conversation_topics?: string
+  favorite_music?: string
+  shooting_meaning?: string
   categories?: {
     id: string
     name: string

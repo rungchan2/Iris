@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ReviewManagement } from "@/components/admin/review-management";
-import { getReviewStats } from "@/lib/actions/reviews";
+import { getReviewStats, getPhotographerInquiries } from "@/lib/actions/reviews";
 import { StarDisplay } from "@/components/review/star-rating";
 import { 
   MessageSquare, 
@@ -16,55 +16,37 @@ import {
 } from "lucide-react";
 
 async function getInquiriesWithReviews() {
+  // Check authentication
   const supabase = await createClient();
-  
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     redirect("/login");
   }
 
-  // Get all inquiries for the current photographer
-  const { data: inquiries, error: inquiriesError } = await supabase
-    .from("inquiries")
-    .select(`
-      id,
-      name,
-      phone,
-      created_at,
-      status
-    `)
-    .eq("matched_admin_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (inquiriesError) {
-    throw new Error("Failed to fetch inquiries");
+  // Use the new server action to get photographer-specific inquiries with reviews
+  const result = await getPhotographerInquiries();
+  if (result.error) {
+    throw new Error(result.error);
   }
 
-  // Get all reviews for these inquiries
-  const inquiryIds = inquiries?.map(i => i.id) || [];
-  const { data: reviews, error: reviewsError } = await supabase
-    .from("reviews")
-    .select("*")
-    .in("inquiry_id", inquiryIds);
+  const inquiries = result.data || [];
 
-  if (reviewsError) {
-    throw new Error("Failed to fetch reviews");
-  }
-
-  // Group reviews by inquiry_id
-  const reviewsByInquiry = (reviews || []).reduce((acc, review) => {
-    const inquiryId = review.inquiry_id;
-    if (!inquiryId) return acc;
-    
-    if (!acc[inquiryId]) {
-      acc[inquiryId] = [];
+  // Group reviews by inquiry_id for the ReviewManagement component
+  const reviewsByInquiry = inquiries.reduce((acc, inquiry) => {
+    if (inquiry.reviews && inquiry.reviews.length > 0) {
+      acc[inquiry.id] = inquiry.reviews;
     }
-    acc[inquiryId].push(review);
     return acc;
   }, {} as Record<string, any[]>);
 
   return {
-    inquiries: inquiries || [],
+    inquiries: inquiries.map(inquiry => ({
+      id: inquiry.id,
+      name: inquiry.name,
+      phone: inquiry.phone,
+      created_at: inquiry.created_at,
+      status: inquiry.status
+    })),
     reviews: reviewsByInquiry,
   };
 }
@@ -196,7 +178,7 @@ async function ReviewContent() {
 
 export default function ReviewsPage() {
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">리뷰 관리</h1>
         <p className="text-gray-600">

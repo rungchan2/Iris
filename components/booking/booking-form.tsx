@@ -91,6 +91,9 @@ export function BookingForm({
 
       while (retryCount < 3) {
         try {
+          // First get slot data to extract photographer_id
+          const { data: getSlotData, error: slotError } = await getSlot(formData.selected_slot_id || "");
+          
           const { data: newInquiry, error } = await supabase
             .from("inquiries")
             .insert({
@@ -106,18 +109,21 @@ export function BookingForm({
               desired_mood_keywords: formData.desired_mood_keywords,
               special_request: formData.special_request || null,
               difficulty_note: formData.difficulty_note || null,
+              conversation_preference: formData.conversation_preference || null,
+              conversation_topics: formData.conversation_topics || null,
+              favorite_music: formData.favorite_music || null,
+              shooting_meaning: formData.shooting_meaning || null,
               selected_category_id: category.id,
               selection_path: path,
               selection_history: {
                 steps: history,
                 completed_at: new Date().toISOString(),
               },
+              photographer_id: getSlotData?.admin_id || null, // Set photographer_id from selected slot
               status: "new",
             } as any)
             .select()
             .single();
-
-          const { data: getSlotData, error: slotError } = await getSlot(formData.selected_slot_id || "");
 
 
             

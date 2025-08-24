@@ -2,6 +2,7 @@ import { InquiryTable } from "@/components/admin/inquiry-table"
 import { AdminFilters } from "@/components/admin/admin-filters"
 import { Pagination } from "@/components/admin/pagination"
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function AdminPage({
   searchParams,
@@ -19,6 +20,12 @@ export default async function AdminPage({
 }) {
   const supabase = await createClient()
   
+  // Get current photographer
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect("/login")
+  }
+
   const params = await searchParams
   const page = Number.parseInt(params.page || "1")
   const status = params.status || "all"
@@ -50,6 +57,7 @@ export default async function AdminPage({
     `,
     { count: "exact" },
   )
+  .eq("photographer_id", user.id) // Much faster direct FK filtering
 
   // Apply status filter
   if (status !== "all") {
@@ -112,7 +120,7 @@ export default async function AdminPage({
         initialSearch={search}
       />
 
-      <InquiryTable inquiries={(inquiries || []) as any} />
+      <InquiryTable inquiries={(inquiries || []) as any} basePath="/photographer-admin" />
 
       <Pagination currentPage={page} totalPages={totalPages} />
     </div>

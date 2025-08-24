@@ -29,7 +29,7 @@ import {
   type InquiryFormValues,
   type MoodKeyword,
 } from "@/types/inquiry.types";
-import { TimeSlotSelector } from "@/components/inquiry/time-slot-selector";
+import { TimeSlotSelector } from "@/components/inquiry[not-in-use]/time-slot-selector";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;

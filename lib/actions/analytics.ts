@@ -114,7 +114,7 @@ export async function getAnalyticsData(timeRange: TimeRange = '30d'): Promise<{
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
-      .not('result_personality_type', 'is', null)
+      .not('calculated_personality_code', 'is', null)
 
     // 예약 문의 수
     const { count: totalBookings } = await supabase
@@ -295,7 +295,7 @@ export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise
       .from('inquiries')
       .select(`
         *,
-        assigned_admin:photographers(name)
+        matched_admin:photographers!matched_admin_id(name)
       `, { count: 'exact' })
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
@@ -337,7 +337,7 @@ export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise
         if (!acc[adminId]) {
           acc[adminId] = {
             adminId,
-            adminName: inquiry.assigned_admin?.name || 'Unknown',
+            adminName: inquiry.matched_admin?.name || 'Unknown',
             bookings: 0,
             completed: 0
           }

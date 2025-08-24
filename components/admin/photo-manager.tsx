@@ -51,9 +51,10 @@ interface PhotoManagerProps {
   initialPage: number
   filterCategory?: string
   showUnassigned: boolean
+  basePath?: string
 }
 
-export default function PhotoManager({ categories, userId, isAdmin, initialPage, filterCategory, showUnassigned }: PhotoManagerProps) {
+export default function PhotoManager({ categories, userId, isAdmin, initialPage, filterCategory, showUnassigned, basePath = "/admin/photos" }: PhotoManagerProps) {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const supabase = createClient()
@@ -255,7 +256,7 @@ export default function PhotoManager({ categories, userId, isAdmin, initialPage,
       />
 
       {/* Filters */}
-      <PhotoFilters categories={categories} selectedCategory={filterCategory} showUnassigned={showUnassigned} />
+      <PhotoFilters categories={categories} selectedCategory={filterCategory} showUnassigned={showUnassigned} basePath={basePath} />
 
       {/* Bulk Actions */}
       {selectedPhotos.size > 0 && (

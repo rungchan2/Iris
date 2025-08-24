@@ -12,7 +12,15 @@ import { formatDate } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Inquiry } from "@/types/inquiry.types"
 
-export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
+export function InquiryTable({ 
+  inquiries, 
+  basePath = "/admin", 
+  onStatusUpdate 
+}: { 
+  inquiries: Inquiry[], 
+  basePath?: string,
+  onStatusUpdate?: (id: string, newStatus: string) => void 
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -83,12 +91,17 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
       const { error } = await supabase.from("inquiries").update({ status: newStatus }).eq("id", id)
 
       if (error) {
-        console.error("Error updating status:", error)
+        console.error("Error updating status:", error.message)
         throw error
       }
 
-      // Force a hard refresh to ensure data is updated
-      window.location.reload()
+      // Call optional callback to update parent state
+      if (onStatusUpdate) {
+        onStatusUpdate(id, newStatus)
+      } else {
+        // Fallback to hard refresh if no callback provided
+        window.location.reload()
+      }
     } catch (error) {
       console.error("Error updating status:", error)
       setUpdatingId(null)
@@ -103,7 +116,7 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
             <TableHead className="w-12">#</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead className="hidden md:table-cell">Category</TableHead>
+            <TableHead>Instagram</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="hidden md:table-cell">
               <Button
@@ -143,9 +156,7 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
                 <TableCell className="font-medium">{index + 1}</TableCell>
                 <TableCell>{inquiry.name}</TableCell>
                 <TableCell>{inquiry.phone}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {inquiry.selection_path ? inquiry.selection_path.join(" > ") : "-"}
-                </TableCell>
+                <TableCell>{inquiry.instagram_id || "N/A"}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -191,7 +202,7 @@ export function InquiryTable({ inquiries }: { inquiries: Inquiry[] }) {
                   {mounted ? formatDate(inquiry.created_at) : inquiry.created_at}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/admin/inquiry/${inquiry.id}`}>
+                  <Link href={`${basePath}/inquiries/${inquiry.id}`}>
                     <Button size="sm" variant="ghost">
                       <Eye size={16} className="mr-1" />
                       View

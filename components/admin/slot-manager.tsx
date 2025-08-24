@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,8 +23,9 @@ interface SlotManagerProps {
 export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManagerProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [editingSlot, setEditingSlot] = useState<string | null>(null)
-  const [newSlot, setNewSlot] = useState<{ startTime: string }>({
+  const [newSlot, setNewSlot] = useState<{ startTime: string; durationMinutes: number }>({
     startTime: "09:00",
+    durationMinutes: 45,
   })
   const supabase = createClient()
 
@@ -41,11 +43,11 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
 
   const timeOptions = generateTimeOptions()
 
-  // Calculate end time (45 minutes after start)
-  const calculateEndTime = (startTime: string) => {
+  // Calculate end time based on custom duration
+  const calculateEndTime = (startTime: string, durationMinutes: number = 45) => {
     try {
       const start = parse(startTime, "HH:mm", new Date())
-      const end = addMinutes(start, 45)
+      const end = addMinutes(start, durationMinutes)
       return format(end, "HH:mm")
     } catch (error) {
       console.error("Error calculating end time:", error)
@@ -56,8 +58,8 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
   const handleAddSlot = async () => {
     console.log(newSlot)
     try {
-      // Calculate end time
-      const endTime = calculateEndTime(newSlot.startTime)
+      // Calculate end time based on custom duration
+      const endTime = calculateEndTime(newSlot.startTime, newSlot.durationMinutes)
 
       // Validate times
       if (newSlot.startTime >= endTime) {
@@ -83,14 +85,14 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
         date,
         start_time: newSlot.startTime,
         end_time: endTime,
-        duration_minutes: 45, // Fixed to 45 minutes
+        duration_minutes: newSlot.durationMinutes,
         is_available: true,
         admin_id: adminId,
       })
 
       if (error) throw error
 
-      setNewSlot({ startTime: "09:00" })
+      setNewSlot({ startTime: "09:00", durationMinutes: 45 })
       setIsAdding(false)
       onSlotsChange()
       toast.success("시간 슬롯이 성공적으로 추가되었습니다")
@@ -152,7 +154,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
                       {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
                     </span>
                     <Badge variant="outline" className="text-xs">
-                      45분
+                      {slot.duration_minutes}분
                     </Badge>
                     <Badge variant={slot.is_available ? "default" : "destructive"} className="text-xs">
                       {slot.is_available ? "예약 가능" : "예약됨"}
@@ -197,7 +199,10 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="startTime">시작 시간</Label>
-              <Select value={newSlot.startTime} onValueChange={(value) => setNewSlot({ startTime: value })}>
+              <Select 
+                value={newSlot.startTime} 
+                onValueChange={(value) => setNewSlot(prev => ({ ...prev, startTime: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -209,8 +214,22 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="duration">촬영 시간 (분)</Label>
+              <Input
+                id="duration"
+                type="number"
+                min="15"
+                max="480"
+                step="15"
+                value={newSlot.durationMinutes}
+                onChange={(e) => setNewSlot(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 45 }))}
+                placeholder="45"
+              />
               <div className="text-sm text-muted-foreground">
-                종료 시간: {formatTime(calculateEndTime(newSlot.startTime))} (45분 자동 계산)
+                종료 시간: {formatTime(calculateEndTime(newSlot.startTime, newSlot.durationMinutes))} ({newSlot.durationMinutes}분)
               </div>
             </div>
 

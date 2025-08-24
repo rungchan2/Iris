@@ -98,18 +98,6 @@ npx supabase db push
 
 ## Key Implementation Patterns
 
-### Personality Type System
-The platform revolves around 9 personality codes:
-- **A1**: 고요한 관찰자 (Quiet Observer)
-- **A2**: 따뜻한 동행자 (Warm Companion)
-- **B1**: 감성 기록자 (Emotional Recorder)
-- **C1**: 시네마틱 몽상가 (Cinematic Dreamer)
-- **D1**: 활력 가득 리더 (Energetic Leader)
-- **E1**: 도시의 드리머 (Urban Dreamer)
-- **E2**: 무심한 예술가 (Indifferent Artist)
-- **F1**: 자유로운 탐험가 (Free Explorer)
-- **F2**: 감각적 실험가 (Sensory Experimenter)
-
 ### State Management
 - Use React Query (`@tanstack/react-query`) for server state
 - Supabase client configurations in `lib/supabase/`
@@ -236,6 +224,64 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
 - `lib/actions/admin-auth.ts` - Removed role validations
 - `components/admin/user-management.tsx` - Removed role field
 
+## Recent Updates (2025.08.24)
+
+### Admin-Photographer System Separation Completed
+**MAJOR ARCHITECTURAL CHANGE**: Complete separation of Admin and Photographer systems with dedicated tables and routes.
+
+#### Database Schema Changes
+- ✅ **New `admins` table created**: Separate table for admin user profiles
+  - Fields: `id`, `email`, `name`, `role`, `department`, `phone`, `created_at`, `updated_at`, `last_login_at`
+  - Linked to Supabase `auth.users` via `id` field
+- ✅ **Updated `photographers` table**: Removed admin-related fields, cleaned up structure
+- ✅ **RLS Policies Fixed**: Resolved infinite recursion issues in `admins` table policies
+  - Removed complex role-based policies causing recursion
+  - Implemented simple authenticated user access: `auth.role() = 'authenticated'`
+
+#### Route Structure Reorganization
+- ✅ **Admin Routes** (`/admin/*`): System-wide management interface
+  - `/admin/my-page` - Admin profile management using `admins` table
+  - `/admin/schedule` - All photographers' schedules overview
+  - `/admin/reviews` - All reviews from all photographers with filtering
+  - `/admin/users` - User management (create admins/photographers)
+- ✅ **Photographer Routes** (`/photographer-admin/*`): Individual photographer management
+  - `/photographer-admin/dashboard` - Individual photographer dashboard
+  - `/photographer-admin/schedule` - Own schedule management
+  - `/photographer-admin/reviews` - Own reviews only
+- ✅ **Public Routes** (`/photographers/*`): Public photographer listings maintained
+
+#### Components Architecture
+- ✅ **AdminProfileSettings**: New component for admin profile management
+- ✅ **AdminScheduleOverview**: System-wide schedule calendar view
+- ✅ **AdminAllReviewsManagement**: All reviews management with photographer filtering
+- ✅ **Photographer Sidebar**: Dedicated navigation for photographer admin area
+
+#### Server Actions Updates
+- ✅ **`lib/actions/admin.ts`**: Complete admin CRUD operations
+  - `getCurrentAdmin()` - Get/create admin records
+  - `updateAdminProfile()` - Admin profile updates
+  - `createAdmin()` - Create new admin users (super admin only)
+  - `getAllAdmins()` - List all admins
+- ✅ **Authentication Flow**: Automatic user type detection and redirection
+- ✅ **Permission System**: Simplified from complex RBAC to authentication-based
+
+#### Bug Fixes Applied
+- ✅ **TypeScript Errors**: Fixed all null value handling in interfaces
+- ✅ **Database Query Issues**: Corrected field references (`matched_admin_id` vs `photographer_id`)
+- ✅ **RLS Policy Recursion**: Eliminated infinite recursion in admin table policies
+- ✅ **Component Type Mismatches**: Updated all interfaces to handle nullable database fields
+
+#### Security Improvements
+- ✅ **Row Level Security**: Proper policies without recursion issues
+- ✅ **Data Isolation**: Admins see system-wide data, Photographers see only their own
+- ✅ **Authentication Guards**: Proper checks for admin vs photographer access
+
+### Current System Status
+- **Admin System**: Fully operational with dedicated table and routes
+- **Photographer System**: Individual management interface at `/photographer-admin/*`
+- **Public Interface**: Maintained at `/photographers/*` for user browsing
+- **Authentication**: Simplified and secure with proper user type separation
+
 ## Tools and Workflow Notes
 
 - If needed, use Supabase MCP to:
@@ -243,4 +289,5 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
   - Modify table policies
   - Utilize supabase-heechan tool for project with ID `kypwcsgwjtnkiiwjedcn`
 - **Documentation**: New auth system documented at @specs/authentication-update-2025.md
+- **Daily Tasks**: Track ongoing work at @todos/20250824.md
 - and everytime you done your work, mark as checked in the @specs/feature.md file. it is important to keep track of the work that is finished and not finished that needs to worked on.

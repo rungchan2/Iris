@@ -141,9 +141,10 @@ export function PhotographersClient({
       email: photographer.email,
       portfolioCount: photographer.portfolioCount,
       personalityTypes: photographer.personalityTypes,
+      profileImage: photographer.profile_image_url || undefined,
       // Add mock data for display purposes
-      rating: photographer.portfolioCount > 0 ? 4.5 + Math.random() * 0.5 : undefined,
-      reviewCount: photographer.portfolioCount > 0 ? Math.floor(Math.random() * 20) + 5 : undefined,
+      rating: photographer.portfolioCount > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined,
+      reviewCount: photographer.portfolioCount > 0 ? Math.floor((photographer.id.charCodeAt(1) % 20)) + 5 : undefined,
       experience: Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1,
       location: '서울',
       bio: `${photographer.personalityTypes.find(pt => pt.isPrimary)?.name || '다양한'} 스타일 전문 작가입니다.`,

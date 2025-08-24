@@ -20,7 +20,8 @@ import {
   ArrowLeft,
   Share2,
   Copy,
-  Check
+  Check,
+  PlayCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -34,6 +35,7 @@ import {
   LineIcon,
   WhatsappIcon,
 } from 'react-share'
+import { YouTubeModal } from '@/components/ui/youtube-modal'
 
 interface PhotographerProfileProps {
   photographer: any
@@ -42,6 +44,8 @@ interface PhotographerProfileProps {
 export function PhotographerProfile({ photographer }: PhotographerProfileProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<{ id: string | null; title: string }>({ id: null, title: '' })
+  const [isModalOpen, setIsModalOpen] = useState(false)
   
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
   const shareTitle = `${photographer.name} 작가님의 프로필 | Iris`
@@ -51,6 +55,31 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
     navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const extractYouTubeId = (url: string | null | undefined): string | null => {
+    if (!url) return null
+    
+    // Handle various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/
+    ]
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern)
+      if (match) return match[1]
+    }
+    
+    return null
+  }
+
+  const handleVideoClick = () => {
+    const videoId = extractYouTubeId(photographer.youtube_intro_url)
+    if (videoId) {
+      setSelectedVideo({ id: videoId, title: `${photographer.name} 소개 영상` })
+      setIsModalOpen(true)
+    }
   }
   
   const initials = photographer.name
@@ -66,8 +95,8 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
 
   // Mock data for display
   const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
-  const rating = portfolioPhotos.length > 0 ? 4.5 + Math.random() * 0.5 : undefined
-  const reviewCount = portfolioPhotos.length > 0 ? Math.floor(Math.random() * 20) + 5 : 0
+  const rating = portfolioPhotos.length > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined
+  const reviewCount = portfolioPhotos.length > 0 ? Math.floor((photographer.id.charCodeAt(1) % 20)) + 5 : 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,7 +163,7 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
             <div className="flex flex-col md:flex-row items-start gap-8">
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
-                  <AvatarImage src={photographer.profileImage} />
+                  <AvatarImage src={photographer.profile_image_url} />
                   <AvatarFallback className="text-3xl bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                     {initials}
                   </AvatarFallback>
@@ -184,18 +213,31 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                   고객의 개성과 매력을 최대한 끌어내는 촬영을 지향합니다.
                 </p>
 
-                <Button size="lg" className="mr-4" asChild>
-                  <Link href={`/photographers/${photographer.id}/booking`}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    예약하기
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link href={`mailto:${photographer.email}`}>
-                    <Mail className="w-4 h-4 mr-2" />
-                    문의하기
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button size="lg" asChild>
+                    <Link href={`/photographers/${photographer.id}/booking`}>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      예약하기
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="lg" asChild>
+                    <Link href={`mailto:${photographer.email}`}>
+                      <Mail className="w-4 h-4 mr-2" />
+                      문의하기
+                    </Link>
+                  </Button>
+                  {photographer.youtube_intro_url && (
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      onClick={handleVideoClick}
+                      className="border-orange-200 text-orange-600 hover:bg-orange-50"
+                    >
+                      <PlayCircle className="w-4 h-4 mr-2" />
+                      소개 영상
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -321,6 +363,17 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
           </div>
         </div>
       )}
+
+      {/* YouTube Modal */}
+      <YouTubeModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedVideo({ id: null, title: '' })
+        }}
+        videoId={selectedVideo.id}
+        title={selectedVideo.title}
+      />
     </div>
   )
 }

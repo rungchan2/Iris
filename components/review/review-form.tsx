@@ -9,10 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { StarRating } from "./star-rating";
 import { submitReview } from "@/lib/actions/reviews";
-import { Camera, Upload, X, CheckCircle } from "lucide-react";
+import { Camera, Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const reviewSchema = z.object({
@@ -38,7 +45,12 @@ interface ReviewFormProps {
   onSuccess?: () => void;
 }
 
-export function ReviewForm({ token, photographerName, customerName, onSuccess }: ReviewFormProps) {
+export function ReviewForm({
+  token,
+  photographerName,
+  customerName,
+  onSuccess,
+}: ReviewFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -81,21 +93,23 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
     }
   };
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files) return;
 
     // Here you would typically upload to your storage service
     // For now, we'll simulate with placeholder URLs
-    const newPhotos = Array.from(files).map((file, index) => 
-      URL.createObjectURL(file) // In production, replace with actual upload
+    const newPhotos = Array.from(files).map(
+      (file, index) => URL.createObjectURL(file) // In production, replace with actual upload
     );
-    
-    setPhotos(prev => [...prev, ...newPhotos].slice(0, 5)); // Limit to 5 photos
+
+    setPhotos((prev) => [...prev, ...newPhotos].slice(0, 5)); // Limit to 5 photos
   };
 
   const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (isSubmitted) {
@@ -107,17 +121,21 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
             리뷰가 성공적으로 제출되었습니다!
           </h2>
           <p className="text-gray-600 mb-6">
-            소중한 후기를 남겨주셔서 감사합니다. 
+            소중한 후기를 남겨주셔서 감사합니다.
             <br />
             {photographerName} 작가님께 큰 도움이 될 것입니다.
           </p>
           <div className="bg-orange-50 p-4 rounded-lg">
             <p className="text-sm text-orange-800">
-              💡 더 많은 작가들의 작품을 보고 싶으시다면 
+              💡 더 많은 작가들의 작품을 보고 싶으시다면
               <br />
-              <a href="/gallery" className="font-medium underline hover:text-orange-600">
+              <a
+                href="/gallery"
+                className="font-medium underline hover:text-orange-600"
+              >
                 갤러리 페이지
-              </a>를 방문해보세요!
+              </a>
+              를 방문해보세요!
             </p>
           </div>
         </CardContent>
@@ -133,12 +151,14 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
             촬영은 어떠셨나요?
           </div>
           <div className="text-lg text-gray-600">
-            <span className="text-orange-600 font-semibold">{photographerName}</span> 작가님께 
-            솔직한 후기를 남겨주세요
+            <span className="text-orange-600 font-semibold">
+              {photographerName}
+            </span>{" "}
+            작가님께 솔직한 후기를 남겨주세요
           </div>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent>
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
@@ -181,7 +201,7 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
                 <FormItem>
                   <FormLabel>이름 (선택사항)</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       placeholder="익명으로 남기려면 비워두세요"
                       {...field}
                     />
@@ -199,7 +219,7 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
                 <FormItem>
                   <FormLabel>후기 내용 (선택사항)</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="촬영 경험에 대해 자세히 알려주세요. 다른 고객들에게 도움이 될 것입니다."
                       className="min-h-[120px]"
                       {...field}
@@ -209,64 +229,6 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
                 </FormItem>
               )}
             />
-
-            {/* Photo Upload */}
-            <div className="space-y-3">
-              <FormLabel>촬영 사진 (선택사항)</FormLabel>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                {photos.length === 0 ? (
-                  <div>
-                    <Camera className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-3">
-                      촬영된 사진을 공유해주세요 (최대 5장)
-                    </p>
-                    <label htmlFor="photo-upload">
-                      <Button type="button" variant="outline" className="cursor-pointer">
-                        <Upload className="w-4 h-4 mr-2" />
-                        사진 선택
-                      </Button>
-                    </label>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                      {photos.map((photo, index) => (
-                        <div key={index} className="relative">
-                          <img 
-                            src={photo} 
-                            alt={`업로드된 사진 ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    {photos.length < 5 && (
-                      <label htmlFor="photo-upload">
-                        <Button type="button" variant="outline" size="sm" className="cursor-pointer">
-                          <Upload className="w-4 h-4 mr-2" />
-                          사진 추가
-                        </Button>
-                      </label>
-                    )}
-                  </div>
-                )}
-                <input
-                  id="photo-upload"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-              </div>
-            </div>
 
             {/* Settings */}
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
@@ -282,9 +244,7 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        공개 리뷰로 게시하기
-                      </FormLabel>
+                      <FormLabel>공개 리뷰로 게시하기</FormLabel>
                       <p className="text-xs text-gray-600">
                         다른 고객들이 이 리뷰를 볼 수 있습니다
                       </p>
@@ -305,9 +265,7 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        익명으로 게시하기
-                      </FormLabel>
+                      <FormLabel>익명으로 게시하기</FormLabel>
                       <p className="text-xs text-gray-600">
                         이름 대신 "익명"으로 표시됩니다
                       </p>
@@ -317,9 +275,18 @@ export function ReviewForm({ token, photographerName, customerName, onSuccess }:
               />
             </div>
 
+            {/* Important Notice */}
+            <Alert className="mb-8 border-orange-200 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>안내사항:</strong> 리뷰는 한 번만 작성할 수 있으며, 제출
+                후에는 수정이 불가능합니다. 신중하게 작성해주세요.
+              </AlertDescription>
+            </Alert>
+
             {/* Submit Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-12 text-lg font-semibold bg-orange-600 hover:bg-orange-700"
               disabled={isSubmitting || form.watch("rating") === 0}
             >

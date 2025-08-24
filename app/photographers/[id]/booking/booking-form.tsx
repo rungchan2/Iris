@@ -61,7 +61,8 @@ export function BookingForm({ photographer }: BookingFormProps) {
   const primaryPersonality = photographer.personality_admin_mapping?.find((m: any) => m.is_primary)
   const portfolioCount = photographer.admin_portfolio_photos?.length || 0
   const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
-  const rating = portfolioCount > 0 ? 4.5 + Math.random() * 0.5 : undefined
+  // Generate deterministic rating based on photographer ID to avoid hydration issues
+  const rating = portfolioCount > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined
 
   // Mock available time slots
   const timeSlots = [
@@ -323,7 +324,7 @@ export function BookingForm({ photographer }: BookingFormProps) {
                   <div className="flex items-start gap-4 mb-4">
                     <div className="relative">
                       <Avatar className="w-16 h-16">
-                        <AvatarImage src={photographer.profileImage} />
+                        <AvatarImage src={photographer.profile_image_url} />
                         <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                           {initials}
                         </AvatarFallback>

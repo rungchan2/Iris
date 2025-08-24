@@ -46,12 +46,12 @@ export function LandingHeroSection() {
 
       {/* Navigation Links */}
       <div className="absolute top-8 right-8 z-20 flex flex-col md:flex-row items-end md:items-center space-y-2 md:space-y-0 md:space-x-6">
-        <Link
+        {/* <Link
           href="/gallery"
           className="text-gray-700 text-sm hover:text-orange-600 hover:underline hover:underline-offset-4 transition-all duration-200"
         >
           Gallery
-        </Link>
+        </Link> */}
         <Link
           href="/photographers"
           className="text-gray-700 text-sm hover:text-orange-600 hover:underline hover:underline-offset-4 transition-all duration-200"
@@ -159,7 +159,7 @@ export function LandingHeroSection() {
       </div>
 
       {/* Bottom Marquee */}
-      <div className="relative z-10 w-full py-3 bg-gradient-to-r from-orange-50/50 to-orange-100/50 backdrop-blur-sm">
+      <div className="relative z-10 w-full py-3 bg-gradient-to-r backdrop-blur-sm">
         <Marquee
           gradient={false}
           speed={30}

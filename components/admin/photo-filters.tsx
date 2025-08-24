@@ -16,9 +16,10 @@ interface PhotoFiltersProps {
   categories: Category[]
   selectedCategory?: string
   showUnassigned: boolean
+  basePath?: string // Add basePath prop to support different routes
 }
 
-export function PhotoFilters({ categories, selectedCategory, showUnassigned }: PhotoFiltersProps) {
+export function PhotoFilters({ categories, selectedCategory, showUnassigned, basePath = "/admin/photos" }: PhotoFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -31,7 +32,7 @@ export function PhotoFilters({ categories, selectedCategory, showUnassigned }: P
     }
     params.delete("unassigned")
     params.delete("page")
-    router.push(`/admin/photos?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
   }
 
   const handleUnassignedToggle = () => {
@@ -43,11 +44,11 @@ export function PhotoFilters({ categories, selectedCategory, showUnassigned }: P
     }
     params.delete("category")
     params.delete("page")
-    router.push(`/admin/photos?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
   }
 
   const clearFilters = () => {
-    router.push("/admin/photos")
+    router.push(basePath)
   }
 
   const hasFilters = selectedCategory || showUnassigned
@@ -65,7 +66,7 @@ export function PhotoFilters({ categories, selectedCategory, showUnassigned }: P
             <SelectItem value="all">모든 카테고리</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id}>
-                {category.path}
+                {category.name}
               </SelectItem>
             ))}
           </SelectContent>

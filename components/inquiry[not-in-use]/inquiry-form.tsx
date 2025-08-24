@@ -3,9 +3,9 @@
 import React from "react";
 
 import { useState } from "react";
-import { PersonalInfoForm } from "@/components/inquiry/personal-info-form";
-import { CategoryTournament } from "@/components/inquiry/category-tournament";
-import { SuccessScreen } from "@/components/inquiry/success-screen";
+import { PersonalInfoForm } from "@/components/inquiry[not-in-use]/personal-info-form";
+import { CategoryTournament } from "@/components/inquiry[not-in-use]/category-tournament";
+import { SuccessScreen } from "@/components/inquiry[not-in-use]/success-screen";
 import { createClient } from "@/lib/supabase/client";
 import { Toaster, toast } from "sonner";
 import type {

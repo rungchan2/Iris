@@ -55,7 +55,8 @@ export default async function PhotographerLayout({
     email: photographer.email || session.user.email || '',
     name: photographer.name || 'Photographer User',
     phone: photographer.phone || '',
-    bio: photographer.bio || ''
+    bio: photographer.bio || '',
+    profile_image_url: photographer.profile_image_url || '',
   };
 
   return (

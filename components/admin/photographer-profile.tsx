@@ -170,6 +170,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
 
   return (
     <div className="space-y-6">
+      
       {/* Basic Profile Info */}
       <Card>
         <CardHeader>

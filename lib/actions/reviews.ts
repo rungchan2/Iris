@@ -31,9 +31,9 @@ export async function generateReviewLink(inquiryId: string) {
     // Verify the inquiry belongs to the current photographer
     const { data: inquiry, error: inquiryError } = await supabase
       .from('inquiries')
-      .select('id, matched_admin_id, name, phone')
+      .select('id, photographer_id, name, phone')
       .eq('id', inquiryId)
-      .eq('matched_admin_id', user.id)
+      .eq('photographer_id', user.id)
       .single()
 
     if (inquiryError || !inquiry) {
@@ -53,7 +53,7 @@ export async function generateReviewLink(inquiryId: string) {
         return { 
           data: { 
             review_token: existingReview.review_token,
-            review_url: `${process.env.NEXT_PUBLIC_APP_URL}/review/${existingReview.review_token}`,
+            review_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/review/${existingReview.review_token}`,
             customer_name: inquiry.name,
             customer_phone: inquiry.phone
           }
@@ -83,7 +83,7 @@ export async function generateReviewLink(inquiryId: string) {
       return { error: 'Failed to create review link' }
     }
 
-    const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/review/${review.review_token}`
+    const reviewUrl = `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/review/${review.review_token}`
 
     return { 
       data: { 
@@ -111,8 +111,8 @@ export async function getReviewByToken(token: string) {
         inquiries (
           id,
           name,
-          matched_admin_id,
-          photographers (
+          photographer_id,
+          photographers!photographer_id (
             name,
             bio
           )
@@ -190,7 +190,7 @@ export async function submitReview(token: string, reviewData: ReviewSubmissionDa
       .single()
 
     if (updateError) {
-      return { error: 'Failed to submit review' }
+      return { error: 'Failed to submit review ' + updateError.message }
     }
 
     // Revalidate relevant pages
@@ -200,7 +200,7 @@ export async function submitReview(token: string, reviewData: ReviewSubmissionDa
     return { data: updatedReview }
   } catch (error) {
     console.error('Error submitting review:', error)
-    return { error: 'Failed to submit review' }
+    return { error: 'Failed to submit review ' + error }
   }
 }
 
@@ -218,9 +218,9 @@ export async function getReviewsForInquiry(inquiryId: string) {
     // Verify the inquiry belongs to the current photographer
     const { data: inquiry, error: inquiryError } = await supabase
       .from('inquiries')
-      .select('id, matched_admin_id')
+      .select('id, photographer_id')
       .eq('id', inquiryId)
-      .eq('matched_admin_id', user.id)
+      .eq('photographer_id', user.id)
       .single()
 
     if (inquiryError || !inquiry) {
@@ -264,7 +264,7 @@ export async function getPhotographerReviews() {
           created_at
         )
       `)
-      .eq('inquiries.matched_admin_id', user.id)
+      .eq('inquiries.photographer_id', user.id)
       .eq('is_submitted', true)
       .order('created_at', { ascending: false })
 
@@ -326,20 +326,20 @@ export async function getReviewStats(photographerId?: string) {
       .select(`
         rating,
         inquiries!inner (
-          matched_admin_id
+          photographer_id
         )
       `)
       .eq('is_submitted', true)
 
     if (photographerId) {
-      query = query.eq('inquiries.matched_admin_id', photographerId)
+      query = query.eq('inquiries.photographer_id', photographerId)
     } else {
       // Get stats for current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         return { error: 'Unauthorized' }
       }
-      query = query.eq('inquiries.matched_admin_id', user.id)
+      query = query.eq('inquiries.photographer_id', user.id)
     }
 
     const { data: reviews, error } = await query
@@ -382,6 +382,50 @@ export async function getReviewStats(photographerId?: string) {
   }
 }
 
+// Get inquiries for the current photographer (for review management)
+export async function getPhotographerInquiries() {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: 'Unauthorized' }
+    }
+
+    const { data: inquiries, error } = await supabase
+      .from('inquiries')
+      .select(`
+        id,
+        name,
+        phone,
+        created_at,
+        status,
+        reviews (
+          id,
+          rating,
+          comment,
+          is_submitted,
+          is_public,
+          review_token,
+          expires_at,
+          created_at
+        )
+      `)
+      .eq('photographer_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching photographer inquiries:', error)
+      return { error: 'Failed to fetch inquiries' }
+    }
+
+    return { data: inquiries }
+  } catch (error) {
+    console.error('Error in getPhotographerInquiries:', error)
+    return { error: 'Failed to fetch inquiries' }
+  }
+}
+
 // Toggle review visibility (public/private)
 export async function toggleReviewVisibility(reviewId: string) {
   try {
@@ -399,7 +443,7 @@ export async function toggleReviewVisibility(reviewId: string) {
         id,
         is_public,
         inquiries (
-          matched_admin_id
+          photographer_id
         )
       `)
       .eq('id', reviewId)
@@ -410,7 +454,7 @@ export async function toggleReviewVisibility(reviewId: string) {
     }
 
     // Check if the current user owns this review's inquiry
-    if (review.inquiries?.matched_admin_id !== user.id) {
+    if (review.inquiries?.photographer_id !== user.id) {
       return { error: 'Unauthorized' }
     }
 

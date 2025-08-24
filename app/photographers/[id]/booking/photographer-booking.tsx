@@ -48,7 +48,8 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   const primaryPersonality = photographer.personality_admin_mapping?.find((m: any) => m.is_primary)
   const portfolioCount = photographer.admin_portfolio_photos?.length || 0
   const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
-  const rating = portfolioCount > 0 ? 4.5 + Math.random() * 0.5 : undefined
+  // Generate deterministic rating based on photographer ID to avoid hydration issues
+  const rating = portfolioCount > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined
 
   // Fetch mood keywords and available dates on component mount
   React.useEffect(() => {
@@ -63,7 +64,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
         setMoodKeywords(keywords as MoodKeyword[])
       }
 
-      // Fetch available dates
+      // Fetch available dates for this specific photographer
       const currentDate = new Date()
       const threeMonthsLater = new Date()
       threeMonthsLater.setMonth(currentDate.getMonth() + 3)
@@ -71,6 +72,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
       const { data: availableSlots } = await supabase
         .from('available_slots')
         .select('date')
+        .eq('admin_id', photographer.id) // Filter by photographer ID
         .eq('is_available', true)
         .gte('date', currentDate.toISOString().split('T')[0])
         .lte('date', threeMonthsLater.toISOString().split('T')[0])
@@ -83,7 +85,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
     }
 
     fetchData()
-  }, [supabase])
+  }, [supabase, photographer.id])
 
   const handlePersonalInfoSubmit = async (data: InquiryFormValues) => {
     setFormData(data)
@@ -112,6 +114,10 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
               desired_mood_keywords: data.desired_mood_keywords,
               special_request: data.special_request || null,
               difficulty_note: data.difficulty_note || null,
+              conversation_preference: data.conversation_preference || null,
+              conversation_topics: data.conversation_topics || null,
+              favorite_music: data.favorite_music || null,
+              shooting_meaning: data.shooting_meaning || null,
               selected_category_id: null, // No category selection for photographer booking
               selection_path: [photographer.name], // Use photographer name as path
               selection_history: {
@@ -123,6 +129,8 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
                 }],
                 completed_at: new Date().toISOString(),
               },
+              matched_admin_id: photographer.id, // Add photographer ID for proper linking
+              photographer_id: photographer.id, // Set photographer_id FK for direct filtering
               status: 'new',
             } as any)
             .select()

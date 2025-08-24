@@ -9,6 +9,7 @@ import { PhotoGallery } from "@/components/admin/photo-gallery"
 import { InquiryExportPopup } from "@/components/admin/inquiry-export-popup"
 import { Inquiry } from "@/types/inquiry.types"
 import { Photo } from "@/app/gallery/gallery-client"
+import { useRouter } from "next/navigation"
 
 interface InquiryDetailClientProps {
   inquiry: Inquiry
@@ -19,6 +20,7 @@ export function InquiryDetailClient({ inquiry: initialInquiry, photos }: Inquiry
   const [isExportPopupOpen, setIsExportPopupOpen] = useState(false)
   const [inquiry, setInquiry] = useState<Inquiry>(initialInquiry)
   const [popupKey, setPopupKey] = useState(0)
+  const router = useRouter()
 
   // inquiry 업데이트 함수
   const handleInquiryUpdate = (updates: Partial<Inquiry>) => {
@@ -35,11 +37,9 @@ export function InquiryDetailClient({ inquiry: initialInquiry, photos }: Inquiry
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/admin">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ChevronLeft className="h-4 w-4 mr-1" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="sm" className="mr-2" onClick={() => router.back()}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+          </Button>
           <h1 className="text-2xl font-bold">문의 상세</h1>
         </div>
         <Button 
