@@ -6,7 +6,13 @@
 - **Database Type**: PostgreSQL (Supabase)
 - **Project ID**: `kypwcsgwjtnkiiwjedcn`
 - **Region**: ap-northeast-2
-- **Major Update**: 2025년 8월 - RBAC 시스템 도입 및 사용자 테이블 분리
+- **Major Update**: 2025년 8월 31일 - 결제 시스템 및 상품 관리 통합
+
+### 최신 변경사항 (2025.08.31)
+- **결제 시스템**: Multi-PG 지원 (NicePay, Eximbay, Adyen, Stripe, Toss 호환)
+- **상품 관리**: `photographer_pricing` + `pricing_options` → `products` 테이블로 통합
+- **사용자 시스템**: 일반 사용자 테이블 추가 (`users`)
+- **승인 워크플로우**: 작가 생성 → 관리자 승인 구조
 
 ## 🔐 핵심 아키텍처 변경사항 (2025.08)
 
@@ -349,7 +355,215 @@ CREATE INDEX idx_reviews_submitted ON reviews(is_submitted);
 - 공개/비공개, 익명/실명 옵션
 - 1회용 링크 (제출 후 재사용 불가)
 
-### 8. 기존 시스템 (레거시 유지)
+### 8. 결제 시스템 (2025.08.31 추가)
+
+#### `users` - 일반 사용자 (고객)
+```sql
+CREATE TABLE users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  
+  -- 기본 프로필
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  phone VARCHAR(20) UNIQUE,
+  
+  -- 추가 정보
+  birth_year INTEGER,
+  gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say')),
+  profile_image_url TEXT,
+  
+  -- 통계
+  total_bookings INTEGER DEFAULT 0,
+  total_spent INTEGER DEFAULT 0,
+  last_booking_at TIMESTAMPTZ,
+  
+  -- 설정
+  marketing_consent BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  is_verified BOOLEAN DEFAULT false,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+#### `products` - 통합 촬영 상품 관리 (photographer_pricing + pricing_options 통합)
+```sql
+CREATE TABLE products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- 기본 정보
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  product_code VARCHAR(50) NOT NULL,
+  
+  -- 가격 정보
+  price INTEGER NOT NULL, -- 기본 가격 (원 단위)
+  weekend_surcharge INTEGER DEFAULT 0,
+  holiday_surcharge INTEGER DEFAULT 0,
+  
+  -- 촬영 상세 옵션
+  shooting_duration INTEGER NOT NULL, -- 촬영 시간 (분)
+  photo_count_min INTEGER NOT NULL,
+  photo_count_max INTEGER,
+  retouched_count INTEGER DEFAULT 0,
+  
+  -- 부가 서비스
+  includes_makeup BOOLEAN DEFAULT false,
+  includes_styling BOOLEAN DEFAULT false,
+  includes_props BOOLEAN DEFAULT false,
+  
+  -- 관리 정보
+  photographer_id UUID NOT NULL REFERENCES photographers(id),
+  created_by UUID NOT NULL REFERENCES photographers(id),
+  approved_by UUID REFERENCES admins(id),
+  
+  -- 승인 시스템
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'inactive')),
+  approval_notes TEXT,
+  
+  -- 메타데이터
+  category VARCHAR(50),
+  tags TEXT[],
+  is_featured BOOLEAN DEFAULT false,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  approved_at TIMESTAMPTZ,
+  
+  UNIQUE(photographer_id, product_code)
+);
+```
+
+#### `payments` - PG 중립적 결제 시스템
+```sql
+CREATE TABLE payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- 주문 정보
+  order_id VARCHAR(100) UNIQUE NOT NULL,
+  amount INTEGER NOT NULL, -- 원 단위
+  currency VARCHAR(3) DEFAULT 'KRW',
+  
+  -- 연결 정보
+  user_id UUID REFERENCES users(id),
+  photographer_id UUID REFERENCES photographers(id),
+  inquiry_id UUID REFERENCES inquiries(id),
+  product_id UUID REFERENCES products(id),
+  
+  -- PG 정보 (중립적)
+  provider VARCHAR(20) NOT NULL DEFAULT 'nicepay',
+  provider_transaction_id VARCHAR(100),
+  payment_method VARCHAR(20),
+  
+  -- 구매자 정보
+  buyer_name VARCHAR(100),
+  buyer_email VARCHAR(255),
+  buyer_tel VARCHAR(20),
+  
+  -- 결제 상태
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'cancelled', 'refunded')),
+  paid_at TIMESTAMPTZ,
+  failed_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+  
+  -- PG 응답 데이터
+  raw_response JSONB,
+  card_info JSONB,
+  bank_info JSONB,
+  wallet_info JSONB,
+  
+  -- 기타
+  receipt_url TEXT,
+  error_message TEXT,
+  admin_memo TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+#### `refunds` - 환불 관리
+```sql
+CREATE TABLE refunds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  payment_id UUID NOT NULL REFERENCES payments(id),
+  
+  -- 환불 정보
+  refund_type VARCHAR(20) CHECK (refund_type IN ('full', 'partial')),
+  refund_category VARCHAR(50) NOT NULL,
+  refund_reason TEXT NOT NULL,
+  original_amount INTEGER NOT NULL,
+  refund_amount INTEGER NOT NULL,
+  remaining_amount INTEGER NOT NULL,
+  
+  -- PG 처리
+  provider VARCHAR(20) NOT NULL,
+  provider_refund_id VARCHAR(100),
+  refund_response JSONB,
+  
+  -- 계좌 정보 (계좌이체 환불시)
+  refund_holder VARCHAR(100),
+  refund_account VARCHAR(50),
+  refund_bank_code VARCHAR(10),
+  
+  -- 처리 상태
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  processed_at TIMESTAMPTZ,
+  requested_by UUID,
+  processed_by UUID,
+  
+  admin_note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+#### `settlements` - 작가 정산
+```sql
+CREATE TABLE settlements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  photographer_id UUID NOT NULL REFERENCES photographers(id),
+  
+  -- 정산 기간
+  settlement_date DATE NOT NULL,
+  settlement_period VARCHAR(20) NOT NULL, -- 'YYYY-MM'
+  
+  -- 금액 계산
+  total_payment_amount INTEGER NOT NULL,
+  total_platform_fee INTEGER NOT NULL,
+  total_gateway_fee INTEGER NOT NULL,
+  total_tax_amount INTEGER NOT NULL,
+  final_settlement_amount INTEGER NOT NULL,
+  
+  -- 통계
+  payment_count INTEGER NOT NULL,
+  settlement_item_count INTEGER NOT NULL,
+  refund_count INTEGER DEFAULT 0,
+  total_refund_amount INTEGER DEFAULT 0,
+  
+  -- 상태
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'transferred', 'completed')),
+  approved_at TIMESTAMPTZ,
+  approved_by UUID,
+  transferred_at TIMESTAMPTZ,
+  
+  -- 계좌 정보
+  transfer_holder VARCHAR(100),
+  transfer_bank_name VARCHAR(50),
+  transfer_account VARCHAR(50),
+  transfer_receipt_url TEXT,
+  
+  settlement_data JSONB, -- 상세 정산 내역
+  admin_note TEXT,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 9. 기존 시스템 (레거시 유지)
 
 #### `photos` - 사진 파일 관리
 ```sql
@@ -580,6 +794,28 @@ CREATE INDEX idx_inquiries_personality ON inquiries(selected_personality_code);
 ```
 
 ## 🔄 마이그레이션 이력
+
+### 2025년 8월 31일 - Multi-PG 결제 시스템 및 상품 관리 통합
+1. **상품 관리 통합**:
+   - `photographer_pricing` + `pricing_options` → `products` 테이블로 통합
+   - 작가 생성 → 관리자 승인 워크플로우 구축
+   - 카테고리, 태그, 추천 상품 관리 기능 추가
+
+2. **Multi-PG 결제 시스템 구축**:
+   - PG 중립적 `payments` 테이블 설계 (NicePay, Eximbay, Adyen, Stripe, Toss 호환)
+   - 종합적인 `refunds` 시스템 (부분/전체 환불, 계좌이체 지원)
+   - 자동화된 `settlements` 정산 시스템 (수수료, 세금 계산)
+   - 상세한 `payment_logs` 감사 추적
+
+3. **사용자 시스템 확장**:
+   - 일반 사용자 `users` 테이블 추가 (결제/환불 지원)
+   - `inquiries`, `payments` 테이블에 `user_id` 연결
+   - 고객 프로필 및 통계 관리 기능
+
+4. **보안 및 정책 강화**:
+   - 모든 새 테이블에 RLS 정책 적용
+   - 사용자별 데이터 접근 제어 (본인/작가/관리자)
+   - 결제 데이터 보안 정책 강화
 
 ### 2025년 8월 17일 - 간소화된 2단계 RBAC 시스템 도입
 1. **사용자 테이블 분리**:

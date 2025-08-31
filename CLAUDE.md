@@ -84,16 +84,25 @@ npx supabase db push
 - `quiz_responses` - Individual user answers
 
 **User Management:**
-- `photographers` - Photographer/admin accounts
-- `admin_portfolio_photos` - Photographer portfolios
+- `users` - General users (customers) for payment/booking system
+- `admins` - System administrators with full access
+- `photographers` - Photographer accounts (separated from admins)
+- `products` - Unified photo packages (replaces photographer_pricing + pricing_options)
 
 **Matching System:**
 - `personality_admin_mapping` - Photographer-personality compatibility scores
 - `personality_photos` - Curated gallery photos per personality type
 
+**Payment System (2025.08.31):**
+- `payments` - PG-neutral payment processing (NicePay, Eximbay, Adyen, Stripe, Toss)
+- `refunds` - Comprehensive refund management (full/partial, bank transfer)
+- `settlements` - Automated photographer settlement system
+- `payment_logs` - Detailed audit trail
+- `refund_reasons` - Standardized refund categorization
+
 **AI & Booking:**
 - `ai_image_generations` - AI preview generation tracking
-- `inquiries` - Booking requests and customer information
+- `inquiries` - Booking requests and customer information (now with user_id)
 - `available_slots` - Photographer availability
 
 **Review System:**
@@ -117,9 +126,11 @@ npx supabase db push
 
 ### Supabase Configuration
 - Project ID: `kypwcsgwjtnkiiwjedcn`
-- Uses Row Level Security (RLS) policies
+- Uses Row Level Security (RLS) policies for all tables
 - Edge functions in `supabase/functions/resend/` for email notifications
 - Image storage configured for `belqqpwnajsccgrqbzfd.supabase.co` domain
+- Multi-PG payment system with provider-neutral architecture
+- Automated settlement processing with fee calculation
 
 ### AI Image Generation
 - Integrates with OpenAI DALL-E and Runway APIs
@@ -227,7 +238,31 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
 - `lib/actions/admin-auth.ts` - Removed role validations
 - `components/admin/user-management.tsx` - Removed role field
 
-## Recent Updates (2025.08.24)
+## Recent Updates (2025.08.31)
+
+### Database Schema Consolidation
+**MAJOR ARCHITECTURAL CHANGE**: Payment system integration and product management consolidation.
+
+#### Payment System Implementation
+- ✅ **Multi-PG Payment Architecture**: Provider-neutral system supporting NicePay, Eximbay, Adyen, Stripe, Toss
+- ✅ **Comprehensive Refund System**: Full/partial refunds with bank transfer support
+- ✅ **Automated Settlement Processing**: Photographer payments with fee and tax calculation
+- ✅ **Payment Audit Trail**: Detailed logging system for all payment events
+- ✅ **User Integration**: General users table for customer payment/booking management
+
+#### Product Management Consolidation
+- ✅ **Products Table**: Unified photo package management (replaced photographer_pricing + pricing_options)
+- ✅ **Approval Workflow**: Photographer creates → Admin approves structure
+- ✅ **Enhanced Features**: Categories, tags, featured products, pricing options
+- ✅ **RLS Security**: Comprehensive access control for all new tables
+
+### Database Migration Status
+- All payment-related tables created and configured
+- RLS policies applied for secure data access
+- TypeScript types updated for new schema
+- Foreign key relationships established
+
+## Previous Updates (2025.08.24)
 
 ### Admin-Photographer System Separation Completed
 **MAJOR ARCHITECTURAL CHANGE**: Complete separation of Admin and Photographer systems with dedicated tables and routes.
@@ -291,6 +326,41 @@ Refer to detailed specifications in `specs/` directory for comprehensive feature
   - Change database schema
   - Modify table policies
   - Utilize supabase-heechan tool for project with ID `kypwcsgwjtnkiiwjedcn`
-- **Documentation**: New auth system documented at @specs/authentication-update-2025.md
+- **Documentation**: 
+  - Database schema: @specs/database-schema.md (updated 2025.08.31)
+  - Auth system: @specs/authentication-update-2025.md
+  - Payment system: Multi-PG architecture with automated settlements
 - **Daily Tasks**: Track ongoing work at @todos/20250824.md
-- and everytime you done your work, mark as checked in the @specs/feature.md file. it is important to keep track of the work that is finished and not finished that needs to worked on.
+- **Progress Tracking**: Mark completed work in @specs/feature.md
+
+## Key Database Changes (2025.08.31)
+
+### New Tables Added
+```sql
+-- General users (customers)
+users (id, name, email, phone, profile_info, booking_stats)
+
+-- Unified product management  
+products (id, name, price, shooting_options, approval_workflow)
+
+-- Multi-PG payment system
+payments (id, order_id, amount, provider, status, payment_info)
+refunds (id, payment_id, refund_amount, refund_type, status)
+settlements (id, photographer_id, settlement_amount, fees, taxes)
+payment_logs (id, event_type, provider, response_data)
+refund_reasons (id, category, description)
+```
+
+### Removed Tables
+```sql
+-- Consolidated into products table
+DROP TABLE photographer_pricing;
+DROP TABLE pricing_options;
+```
+
+### Updated Tables
+```sql
+-- Added user and product references
+ALTER TABLE inquiries ADD COLUMN user_id UUID, product_id UUID;
+ALTER TABLE payments ADD COLUMN product_id UUID, product_options JSONB;
+```
