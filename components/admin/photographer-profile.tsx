@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Youtube, Camera, Palette, Users, Focus, Trash2, Upload } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { User, Youtube, Camera, Palette, Users, Focus, Trash2, Upload, Phone, Globe, Instagram, MapPin, DollarSign, Award, Briefcase, FileText } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
@@ -19,6 +21,20 @@ interface PhotographerProfile {
   photography_approach?: string | null
   youtube_intro_url?: string | null
   profile_image_url?: string | null
+  phone?: string | null
+  website_url?: string | null
+  instagram_handle?: string | null
+  gender?: string | null
+  birth_year?: number | null
+  age_range?: string | null
+  years_experience?: number | null
+  specialties?: string[] | null
+  studio_location?: string | null
+  equipment_info?: string | null
+  bio?: string | null
+  price_range_min?: number | null
+  price_range_max?: number | null
+  price_description?: string | null
 }
 
 interface PhotographerProfileSectionProps {
@@ -33,6 +49,20 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
     photography_approach: photographer.photography_approach || "",
     youtube_intro_url: photographer.youtube_intro_url || "",
     profile_image_url: photographer.profile_image_url || "",
+    phone: photographer.phone || "",
+    website_url: photographer.website_url || "",
+    instagram_handle: photographer.instagram_handle || "",
+    gender: photographer.gender || "",
+    birth_year: photographer.birth_year?.toString() || "",
+    age_range: photographer.age_range || "",
+    years_experience: photographer.years_experience?.toString() || "",
+    specialties: photographer.specialties?.join(", ") || "",
+    studio_location: photographer.studio_location || "",
+    equipment_info: photographer.equipment_info || "",
+    bio: photographer.bio || "",
+    price_range_min: photographer.price_range_min?.toString() || "",
+    price_range_max: photographer.price_range_max?.toString() || "",
+    price_description: photographer.price_description || "",
   })
   const [isUpdating, setIsUpdating] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -41,6 +71,11 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
   const handleSave = async () => {
     setIsUpdating(true)
     try {
+      // Process specialties array
+      const specialtiesArray = formData.specialties
+        ? formData.specialties.split(",").map(s => s.trim()).filter(s => s)
+        : null
+
       const { error } = await supabase
         .from("photographers")
         .update({
@@ -50,6 +85,20 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
           photography_approach: formData.photography_approach || null,
           youtube_intro_url: formData.youtube_intro_url || null,
           profile_image_url: formData.profile_image_url || null,
+          phone: formData.phone || null,
+          website_url: formData.website_url || null,
+          instagram_handle: formData.instagram_handle || null,
+          gender: formData.gender || null,
+          birth_year: formData.birth_year ? parseInt(formData.birth_year) : null,
+          age_range: formData.age_range || null,
+          years_experience: formData.years_experience ? parseInt(formData.years_experience) : null,
+          specialties: specialtiesArray,
+          studio_location: formData.studio_location || null,
+          equipment_info: formData.equipment_info || null,
+          bio: formData.bio || null,
+          price_range_min: formData.price_range_min ? parseInt(formData.price_range_min) : null,
+          price_range_max: formData.price_range_max ? parseInt(formData.price_range_max) : null,
+          price_description: formData.price_description || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", photographer.id)
@@ -367,6 +416,249 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
                 <SelectItem value="client">내가 추구하는 이미지</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Contact Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="h-5 w-5" />
+            연락처 정보
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                전화번호
+              </Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="010-0000-0000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="website" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                웹사이트
+              </Label>
+              <Input
+                id="website"
+                value={formData.website_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="instagram" className="flex items-center gap-2">
+              <Instagram className="h-4 w-4" />
+              인스타그램 핸들
+            </Label>
+            <Input
+              id="instagram"
+              value={formData.instagram_handle}
+              onChange={(e) => setFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
+              placeholder="@username"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Personal Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            개인 정보
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gender">성별</Label>
+              <Select
+                value={formData.gender}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+              >
+                <SelectTrigger id="gender">
+                  <SelectValue placeholder="선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">남성</SelectItem>
+                  <SelectItem value="female">여성</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birth-year">출생년도</Label>
+              <Input
+                id="birth-year"
+                type="number"
+                value={formData.birth_year}
+                onChange={(e) => setFormData(prev => ({ ...prev, birth_year: e.target.value }))}
+                placeholder="1990"
+                min="1950"
+                max={new Date().getFullYear()}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age-range">연령대</Label>
+              <Select
+                value={formData.age_range}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, age_range: value }))}
+              >
+                <SelectTrigger id="age-range">
+                  <SelectValue placeholder="선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20s">20대</SelectItem>
+                  <SelectItem value="30s">30대</SelectItem>
+                  <SelectItem value="40s">40대</SelectItem>
+                  <SelectItem value="50s">50대</SelectItem>
+                  <SelectItem value="60s+">60대 이상</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="experience">경력 (년)</Label>
+            <Input
+              id="experience"
+              type="number"
+              value={formData.years_experience}
+              onChange={(e) => setFormData(prev => ({ ...prev, years_experience: e.target.value }))}
+              placeholder="5"
+              min="0"
+              max="50"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Briefcase className="h-5 w-5" />
+            전문 분야
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="specialties" className="flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              전문 분야 (쉼표로 구분)
+            </Label>
+            <Input
+              id="specialties"
+              value={formData.specialties}
+              onChange={(e) => setFormData(prev => ({ ...prev, specialties: e.target.value }))}
+              placeholder="포트레이트, 웨딩, 스냅, 제품촬영"
+            />
+            <p className="text-xs text-muted-foreground">
+              예: 포트레이트, 웨딩, 스냅, 제품촬영 (쉼표로 구분해주세요)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="studio-location" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              스튜디오 위치
+            </Label>
+            <Input
+              id="studio-location"
+              value={formData.studio_location}
+              onChange={(e) => setFormData(prev => ({ ...prev, studio_location: e.target.value }))}
+              placeholder="서울특별시 강남구"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="equipment" className="flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              장비 정보
+            </Label>
+            <Textarea
+              id="equipment"
+              value={formData.equipment_info}
+              onChange={(e) => setFormData(prev => ({ ...prev, equipment_info: e.target.value }))}
+              placeholder="Canon 5D Mark IV, 85mm f/1.4, 조명장비 등"
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              자기소개
+            </Label>
+            <Textarea
+              id="bio"
+              value={formData.bio}
+              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+              placeholder="작가로서의 철학, 경험, 스타일 등을 소개해주세요"
+              rows={4}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pricing Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            가격 정보
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price-min">최소 가격 (원)</Label>
+              <Input
+                id="price-min"
+                type="number"
+                value={formData.price_range_min}
+                onChange={(e) => setFormData(prev => ({ ...prev, price_range_min: e.target.value }))}
+                placeholder="100000"
+                min="0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price-max">최대 가격 (원)</Label>
+              <Input
+                id="price-max"
+                type="number"
+                value={formData.price_range_max}
+                onChange={(e) => setFormData(prev => ({ ...prev, price_range_max: e.target.value }))}
+                placeholder="500000"
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="price-description">가격 설명</Label>
+            <Textarea
+              id="price-description"
+              value={formData.price_description}
+              onChange={(e) => setFormData(prev => ({ ...prev, price_description: e.target.value }))}
+              placeholder="기본 패키지, 추가 옵션, 할인 조건 등을 설명해주세요"
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>

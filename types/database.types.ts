@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_invite_codes: {
@@ -59,62 +84,6 @@ export type Database = {
           {
             foreignKeyName: "admin_invite_codes_used_by_fkey"
             columns: ["used_by"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      admin_portfolio_photos: {
-        Row: {
-          admin_id: string | null
-          created_at: string | null
-          description: string | null
-          display_order: number
-          id: string
-          is_public: boolean | null
-          is_representative: boolean | null
-          photo_url: string
-          style_tags: string[] | null
-          thumbnail_url: string | null
-          title: string | null
-          updated_at: string | null
-          view_count: number | null
-        }
-        Insert: {
-          admin_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          display_order: number
-          id?: string
-          is_public?: boolean | null
-          is_representative?: boolean | null
-          photo_url: string
-          style_tags?: string[] | null
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string | null
-          view_count?: number | null
-        }
-        Update: {
-          admin_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          display_order?: number
-          id?: string
-          is_public?: boolean | null
-          is_representative?: boolean | null
-          photo_url?: string
-          style_tags?: string[] | null
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string | null
-          view_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_portfolio_photos_admin_id_fkey"
-            columns: ["admin_id"]
             isOneToOne: false
             referencedRelation: "photographers"
             referencedColumns: ["id"]
@@ -380,19 +349,28 @@ export type Database = {
           desired_date: string | null
           desired_mood_keywords: string[] | null
           difficulty_note: string | null
+          estimated_price: number | null
           favorite_music: string | null
           gender: string | null
           id: string
           instagram_id: string | null
           matched_admin_id: string | null
           name: string
+          payment_amount: number | null
+          payment_deadline: string | null
+          payment_id: string | null
+          payment_required: boolean | null
+          payment_status: string | null
           people_count: number | null
           phone: string
           photographer_id: string | null
+          product_id: string | null
           quiz_session_id: string | null
           relationship: string | null
           selected_category_id: string | null
+          selected_options: Json | null
           selected_personality_code: string | null
+          selected_pricing_id: string | null
           selected_slot_id: string | null
           selection_history: Json | null
           selection_path: string[] | null
@@ -411,19 +389,28 @@ export type Database = {
           desired_date?: string | null
           desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
+          estimated_price?: number | null
           favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
           matched_admin_id?: string | null
           name: string
+          payment_amount?: number | null
+          payment_deadline?: string | null
+          payment_id?: string | null
+          payment_required?: boolean | null
+          payment_status?: string | null
           people_count?: number | null
           phone: string
           photographer_id?: string | null
+          product_id?: string | null
           quiz_session_id?: string | null
           relationship?: string | null
           selected_category_id?: string | null
+          selected_options?: Json | null
           selected_personality_code?: string | null
+          selected_pricing_id?: string | null
           selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
@@ -442,19 +429,28 @@ export type Database = {
           desired_date?: string | null
           desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
+          estimated_price?: number | null
           favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
           matched_admin_id?: string | null
           name?: string
+          payment_amount?: number | null
+          payment_deadline?: string | null
+          payment_id?: string | null
+          payment_required?: boolean | null
+          payment_status?: string | null
           people_count?: number | null
           phone?: string
           photographer_id?: string | null
+          product_id?: string | null
           quiz_session_id?: string | null
           relationship?: string | null
           selected_category_id?: string | null
+          selected_options?: Json | null
           selected_personality_code?: string | null
+          selected_pricing_id?: string | null
           selected_slot_id?: string | null
           selection_history?: Json | null
           selection_path?: string[] | null
@@ -479,10 +475,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inquiries_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inquiries_photographer_id_fkey"
             columns: ["photographer_id"]
             isOneToOne: false
             referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -541,6 +551,177 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      payment_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_data: Json | null
+          event_type: string
+          http_status_code: number | null
+          id: string
+          ip_address: unknown | null
+          payment_id: string | null
+          provider: string
+          referer: string | null
+          response_time_ms: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type: string
+          http_status_code?: number | null
+          id?: string
+          ip_address?: unknown | null
+          payment_id?: string | null
+          provider?: string
+          referer?: string | null
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string
+          http_status_code?: number | null
+          id?: string
+          ip_address?: unknown | null
+          payment_id?: string | null
+          provider?: string
+          referer?: string | null
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          admin_memo: string | null
+          amount: number
+          bank_info: Json | null
+          buyer_email: string | null
+          buyer_name: string | null
+          buyer_tel: string | null
+          cancelled_at: string | null
+          card_info: Json | null
+          created_at: string | null
+          currency: string | null
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          inquiry_id: string | null
+          order_id: string
+          paid_at: string | null
+          payment_method: string | null
+          photographer_id: string | null
+          product_id: string | null
+          product_options: Json | null
+          provider: string
+          provider_transaction_id: string | null
+          raw_response: Json | null
+          receipt_url: string | null
+          status: string
+          total_price: number | null
+          updated_at: string | null
+          user_id: string | null
+          wallet_info: Json | null
+        }
+        Insert: {
+          admin_memo?: string | null
+          amount: number
+          bank_info?: Json | null
+          buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_tel?: string | null
+          cancelled_at?: string | null
+          card_info?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          photographer_id?: string | null
+          product_id?: string | null
+          product_options?: Json | null
+          provider?: string
+          provider_transaction_id?: string | null
+          raw_response?: Json | null
+          receipt_url?: string | null
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_info?: Json | null
+        }
+        Update: {
+          admin_memo?: string | null
+          amount?: number
+          bank_info?: Json | null
+          buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_tel?: string | null
+          cancelled_at?: string | null
+          card_info?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          photographer_id?: string | null
+          product_id?: string | null
+          product_options?: Json | null
+          provider?: string
+          provider_transaction_id?: string | null
+          raw_response?: Json | null
+          receipt_url?: string | null
+          status?: string
+          total_price?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          wallet_info?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       personality_admin_mapping: {
         Row: {
@@ -718,11 +899,14 @@ export type Database = {
       }
       photographers: {
         Row: {
+          account_holder: string | null
           age_range: string | null
           application_status: string | null
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
+          bank_account: string | null
+          bank_name: string | null
           bio: string | null
           birth_year: number | null
           created_at: string | null
@@ -743,19 +927,25 @@ export type Database = {
           profile_completed: boolean | null
           profile_image_url: string | null
           rejection_reason: string | null
+          settlement_day: number | null
+          settlement_ratio: number | null
           specialties: string[] | null
           studio_location: string | null
+          tax_rate: number | null
           updated_at: string | null
           website_url: string | null
           years_experience: number | null
           youtube_intro_url: string | null
         }
         Insert: {
+          account_holder?: string | null
           age_range?: string | null
           application_status?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
           bio?: string | null
           birth_year?: number | null
           created_at?: string | null
@@ -776,19 +966,25 @@ export type Database = {
           profile_completed?: boolean | null
           profile_image_url?: string | null
           rejection_reason?: string | null
+          settlement_day?: number | null
+          settlement_ratio?: number | null
           specialties?: string[] | null
           studio_location?: string | null
+          tax_rate?: number | null
           updated_at?: string | null
           website_url?: string | null
           years_experience?: number | null
           youtube_intro_url?: string | null
         }
         Update: {
+          account_holder?: string | null
           age_range?: string | null
           application_status?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bank_account?: string | null
+          bank_name?: string | null
           bio?: string | null
           birth_year?: number | null
           created_at?: string | null
@@ -809,8 +1005,11 @@ export type Database = {
           profile_completed?: boolean | null
           profile_image_url?: string | null
           rejection_reason?: string | null
+          settlement_day?: number | null
+          settlement_ratio?: number | null
           specialties?: string[] | null
           studio_location?: string | null
+          tax_rate?: number | null
           updated_at?: string | null
           website_url?: string | null
           years_experience?: number | null
@@ -883,6 +1082,121 @@ export type Database = {
           {
             foreignKeyName: "photos_uploaded_by_fkey"
             columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          category: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          display_order: number | null
+          holiday_surcharge: number | null
+          id: string
+          includes_makeup: boolean | null
+          includes_props: boolean | null
+          includes_styling: boolean | null
+          is_featured: boolean | null
+          location_type: string | null
+          max_participants: number | null
+          name: string
+          photo_count_max: number | null
+          photo_count_min: number
+          photographer_id: string
+          price: number
+          product_code: string
+          retouched_count: number | null
+          shooting_duration: number
+          status: string | null
+          tags: string[] | null
+          updated_at: string | null
+          weekend_surcharge: number | null
+        }
+        Insert: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          display_order?: number | null
+          holiday_surcharge?: number | null
+          id?: string
+          includes_makeup?: boolean | null
+          includes_props?: boolean | null
+          includes_styling?: boolean | null
+          is_featured?: boolean | null
+          location_type?: string | null
+          max_participants?: number | null
+          name: string
+          photo_count_max?: number | null
+          photo_count_min: number
+          photographer_id: string
+          price: number
+          product_code: string
+          retouched_count?: number | null
+          shooting_duration: number
+          status?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          weekend_surcharge?: number | null
+        }
+        Update: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          display_order?: number | null
+          holiday_surcharge?: number | null
+          id?: string
+          includes_makeup?: boolean | null
+          includes_props?: boolean | null
+          includes_styling?: boolean | null
+          is_featured?: boolean | null
+          location_type?: string | null
+          max_participants?: number | null
+          name?: string
+          photo_count_max?: number | null
+          photo_count_min?: number
+          photographer_id?: string
+          price?: number
+          product_code?: string
+          retouched_count?: number | null
+          shooting_duration?: number
+          status?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          weekend_surcharge?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_photographer_id_fkey"
+            columns: ["photographer_id"]
             isOneToOne: false
             referencedRelation: "photographers"
             referencedColumns: ["id"]
@@ -1056,6 +1370,122 @@ export type Database = {
           },
         ]
       }
+      refund_reasons: {
+        Row: {
+          category_code: string
+          category_name: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_code: string
+          category_name: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_code?: string
+          category_name?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      refunds: {
+        Row: {
+          admin_note: string | null
+          created_at: string | null
+          id: string
+          original_amount: number
+          payment_id: string
+          processed_at: string | null
+          processed_by: string | null
+          provider: string
+          provider_refund_id: string | null
+          refund_account: string | null
+          refund_amount: number
+          refund_bank_code: string | null
+          refund_category: string
+          refund_holder: string | null
+          refund_reason: string
+          refund_response: Json | null
+          refund_type: string
+          remaining_amount: number
+          requested_at: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string | null
+          id?: string
+          original_amount: number
+          payment_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          provider?: string
+          provider_refund_id?: string | null
+          refund_account?: string | null
+          refund_amount: number
+          refund_bank_code?: string | null
+          refund_category: string
+          refund_holder?: string | null
+          refund_reason: string
+          refund_response?: Json | null
+          refund_type: string
+          remaining_amount: number
+          requested_at?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string | null
+          id?: string
+          original_amount?: number
+          payment_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          provider?: string
+          provider_refund_id?: string | null
+          refund_account?: string | null
+          refund_amount?: number
+          refund_bank_code?: string | null
+          refund_category?: string
+          refund_holder?: string | null
+          refund_reason?: string
+          refund_response?: Json | null
+          refund_type?: string
+          remaining_amount?: number
+          requested_at?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -1112,6 +1542,167 @@ export type Database = {
           },
         ]
       }
+      settlement_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          payment_amount: number
+          payment_gateway_fee: number
+          payment_id: string
+          photographer_id: string
+          platform_fee: number
+          platform_fee_rate: number
+          settled_at: string | null
+          settlement_amount: number
+          settlement_date: string | null
+          status: string
+          tax_amount: number
+          tax_rate: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payment_amount: number
+          payment_gateway_fee: number
+          payment_id: string
+          photographer_id: string
+          platform_fee: number
+          platform_fee_rate: number
+          settled_at?: string | null
+          settlement_amount: number
+          settlement_date?: string | null
+          status?: string
+          tax_amount: number
+          tax_rate: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payment_amount?: number
+          payment_gateway_fee?: number
+          payment_id?: string
+          photographer_id?: string
+          platform_fee?: number
+          platform_fee_rate?: number
+          settled_at?: string | null
+          settlement_amount?: number
+          settlement_date?: string | null
+          status?: string
+          tax_amount?: number
+          tax_rate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_items_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlement_items_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlements: {
+        Row: {
+          admin_note: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          final_settlement_amount: number
+          id: string
+          payment_count: number
+          photographer_id: string
+          refund_count: number | null
+          settlement_data: Json | null
+          settlement_date: string
+          settlement_item_count: number
+          settlement_period: string
+          status: string
+          total_gateway_fee: number
+          total_payment_amount: number
+          total_platform_fee: number
+          total_refund_amount: number | null
+          total_tax_amount: number
+          transfer_account: string | null
+          transfer_bank_name: string | null
+          transfer_holder: string | null
+          transfer_receipt_url: string | null
+          transferred_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          final_settlement_amount: number
+          id?: string
+          payment_count: number
+          photographer_id: string
+          refund_count?: number | null
+          settlement_data?: Json | null
+          settlement_date: string
+          settlement_item_count: number
+          settlement_period: string
+          status?: string
+          total_gateway_fee: number
+          total_payment_amount: number
+          total_platform_fee: number
+          total_refund_amount?: number | null
+          total_tax_amount: number
+          transfer_account?: string | null
+          transfer_bank_name?: string | null
+          transfer_holder?: string | null
+          transfer_receipt_url?: string | null
+          transferred_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          final_settlement_amount?: number
+          id?: string
+          payment_count?: number
+          photographer_id?: string
+          refund_count?: number | null
+          settlement_data?: Json | null
+          settlement_date?: string
+          settlement_item_count?: number
+          settlement_period?: string
+          status?: string
+          total_gateway_fee?: number
+          total_payment_amount?: number
+          total_platform_fee?: number
+          total_refund_amount?: number | null
+          total_tax_amount?: number
+          transfer_account?: string | null
+          transfer_bank_name?: string | null
+          transfer_holder?: string | null
+          transfer_receipt_url?: string | null
+          transferred_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlements_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1134,6 +1725,19 @@ export type Database = {
           slot_date: string
           slot_id: string
           start_time: string
+        }[]
+      }
+      get_payment_summary: {
+        Args: { photographer_uuid?: string }
+        Returns: {
+          cancelled_count: number
+          failed_count: number
+          paid_amount: number
+          paid_count: number
+          pending_count: number
+          refunded_count: number
+          total_amount: number
+          total_count: number
         }[]
       }
       get_reserved_slots: {
@@ -1289,6 +1893,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

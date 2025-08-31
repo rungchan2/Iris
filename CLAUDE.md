@@ -26,6 +26,9 @@ npm start
 
 # Lint and fix code
 npm run lint
+
+# Sync Types with Supabase
+npm run gen-types
 ```
 
 ### Database Management
