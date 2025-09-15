@@ -31,6 +31,18 @@ function DynamicBreadcrumbContent() {
         return "내 계정"
       case "schedule":
         return "일정 관리"
+      case "settlements":
+        return "정산 관리"
+      case "reviews":
+        return "리뷰 관리"
+      case "analytics":
+        return "통계 및 분석"
+      case "users":
+        return "사용자 관리"
+      case "personality-mapping":
+        return "성격유형 매칭"
+      case "personality-management":
+        return "성향 진단 관리"
       default:
         return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)
     }

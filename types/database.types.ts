@@ -378,6 +378,7 @@ export type Database = {
           special_request: string | null
           status: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           admin_note?: string | null
@@ -418,6 +419,7 @@ export type Database = {
           special_request?: string | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           admin_note?: string | null
@@ -458,6 +460,7 @@ export type Database = {
           special_request?: string | null
           status?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -521,6 +524,13 @@ export type Database = {
             columns: ["selected_slot_id"]
             isOneToOne: false
             referencedRelation: "available_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -719,6 +729,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1702,6 +1719,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          birth_year: number | null
+          created_at: string | null
+          email: string
+          gender: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          last_booking_at: string | null
+          last_login_at: string | null
+          marketing_consent: boolean | null
+          name: string
+          notification_consent: boolean | null
+          phone: string | null
+          preferred_language: string | null
+          profile_image_url: string | null
+          total_bookings: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          birth_year?: number | null
+          created_at?: string | null
+          email: string
+          gender?: string | null
+          id: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_booking_at?: string | null
+          last_login_at?: string | null
+          marketing_consent?: boolean | null
+          name: string
+          notification_consent?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          profile_image_url?: string | null
+          total_bookings?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          birth_year?: number | null
+          created_at?: string | null
+          email?: string
+          gender?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          last_booking_at?: string | null
+          last_login_at?: string | null
+          marketing_consent?: boolean | null
+          name?: string
+          notification_consent?: boolean | null
+          phone?: string | null
+          preferred_language?: string | null
+          profile_image_url?: string | null
+          total_bookings?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -48,8 +48,6 @@ export async function getPublicReviews() {
       .order('rating', { ascending: false })
       .limit(10)
 
-    console.log("reviews", reviews)
-
     if (error) {
       console.error('Error fetching public reviews:', error.message)
       return { error: error.message }

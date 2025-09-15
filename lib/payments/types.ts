@@ -2,7 +2,7 @@
  * 멀티 PG 결제 시스템을 위한 TypeScript 타입 정의
  * 
  * 이 파일은 Iris 프로젝트의 PG 중립적 결제 시스템에서 사용되는
- * 모든 타입을 정의합니다. (1차: NicePay, 확장: Eximbay, Adyen 등)
+ * 모든 타입을 정의합니다. (지원: Toss, Eximbay, Adyen, Stripe)
  */
 
 // ================================
@@ -13,7 +13,6 @@
  * 지원 PG 공급자 타입
  */
 export type PaymentProvider = 
-  | 'nicepay'    // 나이스페이먼츠 (국내)
   | 'eximbay'    // 엑심베이 (해외)
   | 'adyen'      // Adyen (해외)
   | 'stripe'     // Stripe (해외)
@@ -52,23 +51,16 @@ export type StandardPaymentMethod =
   | 'bnpl:afterpay'     // Afterpay
 
 /**
- * PG별 결제 수단 매핑 (하위호환성 유지)
+ * 결제 수단 타입
  */
-export type NicePayMethod = 
-  | 'card' | 'bank' | 'cellphone' 
-  | 'naverpayCard' | 'kakaopay' | 'kakaopayCard' | 'kakaopayMoney'
-  | 'samsungpayCard' | 'payco' | 'ssgpay' | 'cardAndEasyPay'
-
-/**
- * 결제 수단 타입 (하위 호환성을 위해 유지)
- */
-export type PaymentMethod = StandardPaymentMethod | NicePayMethod
+export type PaymentMethod = StandardPaymentMethod
 
 /**
  * 결제 상태 타입
  */
 export type PaymentStatus = 
   | 'pending'           // 대기중
+  | 'ready'             // 준비완료 (가상계좌 발급)
   | 'paid'              // 결제완료
   | 'failed'            // 결제실패
   | 'cancelled'         // 취소됨
@@ -185,27 +177,6 @@ export interface BasePaymentAdapter extends PaymentAdapter {
   verifyWebhookSignature(rawData: any, signature: string): boolean
 }
 
-/**
- * 나이스페이 어댑터 특화 인터페이스
- */
-export interface NicePayAdapter extends BasePaymentAdapter {
-  provider: 'nicepay'
-  
-  /**
-   * 나이스페이 전용 승인 요청
-   */
-  approveNicePayment(params: NicePayApprovalRequest & { tid: string }): Promise<PaymentApprovalResult>
-  
-  /**
-   * 나이스페이 전용 취소 요청
-   */
-  cancelNicePayment(params: NicePayCancelRequest & { tid: string }): Promise<PaymentCancelResult>
-  
-  /**
-   * 나이스페이 전용 거래 조회
-   */
-  getNicePaymentStatus(tid: string): Promise<PaymentStatusResult>
-}
 
 /**
  * Eximbay 어댑터 인터페이스 (해외 결제용)
@@ -257,7 +228,6 @@ export interface TossPaymentsAdapter extends BasePaymentAdapter {
  * PG별 어댑터 타입 유니온
  */
 export type ProviderSpecificAdapter = 
-  | NicePayAdapter 
   | EximbayAdapter 
   | AdyenAdapter 
   | TossPaymentsAdapter
@@ -462,188 +432,6 @@ export interface RefundResponse {
   error?: string
 }
 
-// ================================
-// 나이스페이 API 관련 타입
-// ================================
-
-/**
- * 나이스페이 결제창 요청 파라미터
- */
-export interface NicePayRequestParams {
-  clientId: string
-  method: PaymentMethod
-  orderId: string
-  amount: number
-  goodsName: string
-  returnUrl: string
-  
-  // 선택적 파라미터
-  mallReserved?: string
-  mallUserId?: string
-  buyerName?: string
-  buyerTel?: string
-  buyerEmail?: string
-  useEscrow?: boolean
-  currency?: string
-  logoImgUrl?: string
-  language?: 'KO' | 'EN' | 'CN'
-  returnCharSet?: 'utf-8' | 'euc-kr'
-  skinType?: 'red' | 'green' | 'purple' | 'gray' | 'dark'
-  
-  // 부가세
-  taxFreeAmt?: number
-  
-  // 카드 관련
-  cardQuota?: string
-  cardCode?: string
-  cardShowOpt?: string
-  
-  
-  // 휴대폰
-  isDigital?: boolean
-  
-  // 현금영수증
-  directReceiptType?: 'unPublished' | 'individual' | 'company'
-  directReceiptNo?: string
-  
-  // PC 옵션
-  disableScroll?: boolean
-  disableEdgeChk?: boolean
-  zIdxHigher?: boolean
-  
-  // 모바일 옵션
-  appScheme?: string
-}
-
-/**
- * 나이스페이 인증 결과 타입
- */
-export interface NicePayAuthResult {
-  authResultCode: string    // '0000'이면 성공
-  authResultMsg: string     // 인증 결과 메시지
-  tid: string               // 결제 인증 키
-  clientId: string          // 가맹점 식별코드
-  orderId: string           // 상점 거래 고유번호
-  amount: string            // 결제 금액
-  mallReserved: string      // 상점 예약필드
-  authToken: string         // 인증 TOKEN
-  signature: string         // 위변조 검증 데이터
-}
-
-/**
- * 나이스페이 승인 요청 타입
- */
-export interface NicePayApprovalRequest {
-  amount: number
-  ediDate?: string
-  signData?: string
-  returnCharSet?: string
-}
-
-/**
- * 나이스페이 카드 정보 타입
- */
-export interface NicePayCardInfo {
-  cardCode: string          // 신용카드사별 코드
-  cardName: string          // 결제 카드사 이름
-  cardNum: string           // 마스킹된 카드번호
-  cardQuota: string         // 할부개월
-  isInterestFree: boolean   // 상점분담무이자 여부
-  cardType?: string         // 카드 구분 (credit/check)
-  canPartCancel: string     // 부분취소 가능 여부
-  acquCardCode: string      // 매입카드사코드
-  acquCardName: string      // 매입카드사명
-}
-
-/**
- * 나이스페이 은행 정보 타입
- */
-export interface NicePayBankInfo {
-  bankCode: string          // 결제은행코드
-  bankName: string          // 결제은행명
-}
-
-
-/**
- * 나이스페이 현금영수증 정보 타입
- */
-export interface NicePayCashReceiptInfo {
-  receiptTid: string        // 현금영수증 TID
-  orgTid: string            // 연관된 원 승인/취소 거래 TID
-  status: string            // 발급진행 상태
-  amount: number            // 현금영수증 발행 총금액
-  taxFreeAmt: number        // 현금영수증 전체 금액중에서 면세금액
-  receiptType: string       // 현금영수증 타입
-  issueNo: string           // 현금영수증 국세청 발행번호
-  receiptUrl: string        // 현금영수증 매출전표 확인 URL
-}
-
-/**
- * 나이스페이 승인 응답 타입
- */
-export interface NicePayApprovalResponse {
-  resultCode: string        // '0000'이면 성공
-  resultMsg: string         // 결제결과메시지
-  tid: string               // 결제 승인 키
-  cancelledTid?: string     // 취소 거래 키
-  orderId: string           // 상점 거래 고유번호
-  ediDate: string           // 응답전문생성일시
-  signature?: string        // 위변조 검증 데이터
-  status: PaymentStatus     // 결제 처리상태
-  paidAt: string            // 결제완료시점 ISO 8601
-  failedAt: string          // 결제실패시점 ISO 8601
-  cancelledAt: string       // 결제취소시점 ISO 8601
-  payMethod: PaymentMethod  // 결제수단
-  amount: number            // 결제 금액
-  balanceAmt: number        // 취소 가능 잔액
-  goodsName: string         // 상품명
-  mallReserved?: string     // 상점 정보 전달용 예비필드
-  useEscrow: boolean        // 에스크로 거래 여부
-  currency: string          // 결제승인화폐단위
-  channel?: string          // pc/mobile
-  approveNo?: string        // 제휴사 승인 번호
-  buyerName?: string        // 구매자 명
-  buyerTel?: string         // 구매자 전화번호
-  buyerEmail?: string       // 구매자 이메일
-  issuedCashReceipt?: boolean // 현금영수증 발급여부
-  receiptUrl?: string       // 매출전표 확인 URL
-  mallUserId?: string       // 상점에서 관리하는 사용자 아이디
-  
-  // 할인 정보
-  coupon?: {
-    couponAmt: number       // 즉시할인 적용된 금액
-  }
-  
-  // 결제수단별 상세 정보
-  card?: NicePayCardInfo
-  bank?: NicePayBankInfo
-  cashReceipts?: NicePayCashReceiptInfo[]
-}
-
-/**
- * 나이스페이 취소 요청 타입
- */
-export interface NicePayCancelRequest {
-  reason: string            // 취소사유
-  orderId: string           // 상점 거래 고유번호
-  cancelAmt?: number        // 부분취소 요청금액
-  mallReserved?: string     // 상점 예약필드
-  ediDate?: string          // 전문생성일시
-  signData?: string         // 위변조 검증 Data
-  returnCharSet?: string    // 응답파라메터 인코딩 방식
-  taxFreeAmt?: number       // 취소금액중 면세공급가액
-  
-  // 환불 계좌 정보 (가상계좌 환불시)
-  refundAccount?: string    // 환불계좌번호
-  refundBankCode?: string   // 환불계좌코드
-  refundHolder?: string     // 환불계좌 예금주명
-}
-
-/**
- * 나이스페이 거래 조회 응답 타입
- * (승인 응답과 동일한 구조)
- */
-export type NicePayTransactionResponse = NicePayApprovalResponse
 
 // ================================
 // 데이터베이스 모델 타입
@@ -672,13 +460,11 @@ export interface PaymentModel {
   tid?: string
   /** @deprecated Use raw_response instead */
   auth_token?: string
-  /** @deprecated Use raw_response instead */
-  nicepay_response?: NicePayApprovalResponse
   
   // 공통 결제 정보
   payment_method: PaymentMethod
-  card_info?: NicePayCardInfo | Record<string, any>
-  bank_info?: NicePayBankInfo | Record<string, any>
+  card_info?: Record<string, any>
+  bank_info?: Record<string, any>
   easy_pay_info?: Record<string, any>
   buyer_name?: string
   buyer_email?: string
@@ -712,8 +498,6 @@ export interface RefundModel {
   // 하위 호환성을 위한 필드들 (deprecated, 추후 제거 예정)
   /** @deprecated Use provider_refund_id instead */
   cancelled_tid?: string
-  /** @deprecated Use refund_response instead */
-  nicepay_response?: Record<string, any>
   
   // 환불 계좌 정보
   refund_account?: string
@@ -892,16 +676,6 @@ export interface RefundFilterOptions {
 // 글로벌 타입 확장
 // ================================
 
-/**
- * Window 객체에 NicePay SDK 추가
- */
-declare global {
-  interface Window {
-    AUTHNICE: {
-      requestPay: (params: NicePayRequestParams) => void
-    }
-  }
-}
 
 // ================================
 // 타입 가드 함수들을 위한 타입

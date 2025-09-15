@@ -9,14 +9,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { 
-  generateOrderId, 
-  approvePayment, 
-  cancelPayment as nicepayCancelPayment,
-  getTransactionStatus,
-  formatErrorMessage,
-  validateEnvironment 
-} from '@/lib/payments'
+// Payment utilities
+function generateOrderId(): string {
+  const timestamp = Date.now().toString()
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase()
+  return `ORDER_${timestamp}_${random}`
+}
+
+function formatErrorMessage(error: any): string {
+  if (typeof error === 'string') return error
+  if (error?.message) return error.message
+  return '알 수 없는 오류가 발생했습니다'
+}
 import {
   PaymentCreateRequest,
   PaymentCreateResponse,
@@ -43,15 +47,6 @@ export async function createPayment(
   const supabase = await createClient()
   
   try {
-    // 환경 변수 검증
-    const envValidation = validateEnvironment()
-    if (!envValidation.isValid) {
-      return {
-        success: false,
-        error: '결제 시스템 설정 오류: ' + envValidation.errors.join(', ')
-      }
-    }
-
     // 주문번호 생성
     const orderId = generateOrderId()
     
@@ -210,12 +205,10 @@ export async function getPayments(
       .from('payments')
       .select(`
         *,
-        inquiry:inquiries(
+        inquiry:inquiries!payments_inquiry_id_fkey(
           id,
-          customer_name,
-          customer_email,
-          customer_phone,
-          shooting_date,
+          name,
+          phone,
           status
         ),
         photographer:photographers(
@@ -223,6 +216,15 @@ export async function getPayments(
           name,
           email,
           phone
+        ),
+        users(
+          id,
+          name,
+          email
+        ),
+        products(
+          id,
+          name
         )
       `)
       .order('created_at', { ascending: false })
@@ -287,23 +289,30 @@ export async function getPayment(paymentId: string): Promise<ApiResponse<Payment
       .from('payments')
       .select(`
         *,
-        inquiry:inquiries(
+        inquiry:inquiries!payments_inquiry_id_fkey(
           id,
-          customer_name,
-          customer_email,
-          customer_phone,
-          shooting_date,
+          name,
+          phone,
           status,
-          special_requests
+          special_request
         ),
         photographer:photographers(
           id,
           name,
           email,
-          phone,
-          bank_name,
-          bank_account,
-          account_holder
+          phone
+        ),
+        users(
+          id,
+          name,
+          email,
+          phone
+        ),
+        products(
+          id,
+          name,
+          description,
+          price
         )
       `)
       .eq('id', paymentId)
@@ -513,32 +522,8 @@ export async function requestRefund(request: RefundRequest): Promise<RefundRespo
       }
     }
 
-    // 나이스페이 취소 요청
-    if (!payment.tid) {
-      return {
-        success: false,
-        error: '거래 정보가 누락되었습니다'
-      }
-    }
-
-    const cancelResult = await nicepayCancelPayment(
-      payment.tid,
-      request.reason,
-      payment.order_id,
-      {
-        cancelAmt: refundAmount,
-        refundAccount: request.refundAccount,
-        refundBankCode: request.refundBankCode,
-        refundHolder: request.refundHolder
-      }
-    )
-
-    if (!cancelResult.success) {
-      return {
-        success: false,
-        error: cancelResult.error || '환불 처리 중 오류가 발생했습니다'
-      }
-    }
+    // 환불 처리 (PG사 API 호출 없이 데이터베이스에서만 처리)
+    // 실제 환경에서는 각 PG사의 API를 호출해야 함
 
     // 환불 정보 저장
     const { data: user } = await supabase.auth.getUser()
@@ -550,14 +535,12 @@ export async function requestRefund(request: RefundRequest): Promise<RefundRespo
         refund_reason: request.reason,
         refund_type: refundAmount === payment.amount ? 'full' : 'partial',
         status: 'completed',
-        cancelled_tid: cancelResult.data?.cancelledTid,
         refund_account: request.refundAccount,
         refund_bank_code: request.refundBankCode,
         refund_holder: request.refundHolder,
         requested_by: user.data.user?.id,
         processed_by: user.data.user?.id,
-        processed_at: new Date().toISOString(),
-        nicepay_response: cancelResult.data
+        processed_at: new Date().toISOString()
       })
       .select('id')
       .single()
@@ -585,7 +568,6 @@ export async function requestRefund(request: RefundRequest): Promise<RefundRespo
     return {
       success: true,
       refundId: refund.id,
-      cancelledTid: cancelResult.data?.cancelledTid,
       refundAmount
     }
 
@@ -700,68 +682,8 @@ async function logPaymentEvent(
   }
 }
 
-/**
- * 나이스페이 거래 상태 동기화
- */
-export async function syncPaymentStatus(paymentId: string): Promise<ApiResponse<void>> {
-  const supabase = await createClient()
-  
-  try {
-    // 결제 정보 조회
-    const paymentResult = await getPayment(paymentId)
-    if (!paymentResult.success || !paymentResult.data) {
-      return {
-        success: false,
-        error: '결제 정보를 찾을 수 없습니다'
-      }
-    }
-
-    const payment = paymentResult.data
-    
-    if (!payment.tid) {
-      return {
-        success: false,
-        error: '거래 ID가 없습니다'
-      }
-    }
-
-    // 나이스페이에서 거래 상태 조회
-    const statusResult = await getTransactionStatus(payment.tid)
-    if (!statusResult.success || !statusResult.data) {
-      return {
-        success: false,
-        error: statusResult.error || '거래 상태 조회에 실패했습니다'
-      }
-    }
-
-    const nicePayStatus = statusResult.data.status as PaymentStatus
-    
-    // 상태가 다른 경우 동기화
-    if (payment.status !== nicePayStatus) {
-      await updatePaymentStatus(paymentId, nicePayStatus, {
-        nicepay_response: statusResult.data,
-        paid_at: statusResult.data.paidAt || null,
-        failed_at: statusResult.data.failedAt || null,
-        cancelled_at: statusResult.data.cancelledAt || null
-      })
-
-      await logPaymentEvent(paymentId, 'status_synced', {
-        oldStatus: payment.status,
-        newStatus: nicePayStatus,
-        nicePayData: statusResult.data
-      })
-    }
-
-    return { success: true, data: undefined }
-
-  } catch (error) {
-    console.error('Sync payment status error:', error)
-    return {
-      success: false,
-      error: formatErrorMessage(error)
-    }
-  }
-}
+// syncPaymentStatus 함수가 제거되었습니다.
+// 필요시 각 PG사별 상태 동기화 함수를 별도로 구현해야 합니다.
 
 /**
  * 만료된 결제들 정리

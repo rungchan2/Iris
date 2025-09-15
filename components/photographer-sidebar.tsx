@@ -2,7 +2,7 @@
 
 import type * as React from "react"
 import { useEffect, useState } from "react"
-import { Camera, User, LogOut, Calendar, MessageSquare, BarChart3, Inbox, Image, Star } from "lucide-react"
+import { Camera, User, LogOut, Calendar, MessageSquare, BarChart3, Inbox, Image, Star, CreditCard } from "lucide-react"
 import NextImage from "next/image"
 
 import {
@@ -48,6 +48,11 @@ const items: MenuItem[] = [
     title: "일정",
     url: "/photographer-admin/schedule",
     icon: Calendar,
+  },
+  {
+    title: "결제 내역",
+    url: "/photographer-admin/payments",
+    icon: CreditCard,
   },
   {
     title: "리뷰 관리",

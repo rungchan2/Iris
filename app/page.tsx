@@ -6,6 +6,7 @@ import { PhotographersSection } from "@/components/landing/photographers-section
 import { GalleryShowcase } from "@/components/landing/gallery-showcase"
 import { FinalCTASection } from "@/components/landing/final-cta-section"
 import { FAQWidget } from "@/components/ui/faq-widget"
+import { Footer } from "@/components/footer"
 
 export default function LandingPage() {
   return (
@@ -18,6 +19,7 @@ export default function LandingPage() {
       {/* <GalleryShowcase /> */}
       <FinalCTASection />
       <FAQWidget />
+      <Footer />
     </div>
   )
 }

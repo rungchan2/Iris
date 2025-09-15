@@ -1,5 +1,5 @@
 /**
- * 나이스페이먼츠 결제 시스템 상수 정의
+ * 결제 시스템 상수 정의
  * 
  * 이 파일은 결제 시스템에서 사용되는 모든 상수값을 정의합니다.
  */
@@ -7,52 +7,8 @@
 import { PaymentMethod, PaymentStatus, RefundStatus, RefundType } from './types'
 
 // ================================
-// 나이스페이 API 설정
+// 일반 결제 시스템 설정
 // ================================
-
-/**
- * 나이스페이 API URL
- */
-export const NICEPAY_API = {
-  // Production URLs
-  PRODUCTION: {
-    API_BASE: 'https://api.nicepay.co.kr/v1',
-    JS_SDK: 'https://pay.nicepay.co.kr/v1/js/',
-    PAYMENTS: 'https://api.nicepay.co.kr/v1/payments',
-    ACCESS_TOKEN: 'https://api.nicepay.co.kr/v1/access-token'
-  },
-  
-  // Sandbox URLs
-  SANDBOX: {
-    API_BASE: 'https://sandbox-api.nicepay.co.kr/v1',
-    JS_SDK: 'https://sandbox-pay.nicepay.co.kr/v1/js/',
-    PAYMENTS: 'https://sandbox-api.nicepay.co.kr/v1/payments',
-    ACCESS_TOKEN: 'https://sandbox-api.nicepay.co.kr/v1/access-token'
-  }
-} as const
-
-/**
- * 환경별 설정 가져오기
- */
-export const getNicePayConfig = () => {
-  const isProduction = process.env.NEXT_PUBLIC_IS_PRODUCTION === 'true'
-  
-  return {
-    clientId: isProduction 
-      ? process.env.NICEPAY_CLIENT_ID!
-      : process.env.NICEPAY_TEST_CLIENT_ID!,
-    secretKey: isProduction
-      ? process.env.NICEPAY_SECRET_KEY!
-      : process.env.NICEPAY_TEST_SECRET_KEY!,
-    apiUrl: isProduction
-      ? NICEPAY_API.PRODUCTION.API_BASE
-      : NICEPAY_API.SANDBOX.API_BASE,
-    jsSDKUrl: isProduction
-      ? NICEPAY_API.PRODUCTION.JS_SDK
-      : NICEPAY_API.SANDBOX.JS_SDK,
-    environment: isProduction ? 'production' : 'sandbox'
-  }
-}
 
 // ================================
 // 결제 수단 관련 상수
@@ -61,8 +17,8 @@ export const getNicePayConfig = () => {
 /**
  * 결제 수단 목록
  */
-export const PAYMENT_METHODS: Record<PaymentMethod, {
-  code: PaymentMethod
+export const PAYMENT_METHODS: Record<StandardPaymentMethod, {
+  code: StandardPaymentMethod
   name: string
   description: string
   icon: string
@@ -73,8 +29,8 @@ export const PAYMENT_METHODS: Record<PaymentMethod, {
     description: '국내외 모든 카드 결제 가능',
     icon: '💳'
   },
-  bank: {
-    code: 'bank',
+  bank_transfer: {
+    code: 'bank_transfer',
     name: '실시간 계좌이체',
     description: '은행 계좌에서 바로 결제',
     icon: '🏦'
@@ -85,64 +41,46 @@ export const PAYMENT_METHODS: Record<PaymentMethod, {
     description: '휴대폰 소액결제',
     icon: '📱'
   },
-  naverpayCard: {
-    code: 'naverpayCard',
+  'wallet:naverpay': {
+    code: 'wallet:naverpay',
     name: '네이버페이',
-    description: '네이버페이 카드결제만',
+    description: '네이버페이 간편결제',
     icon: '🟢'
   },
-  kakaopay: {
-    code: 'kakaopay',
+  'wallet:kakaopay': {
+    code: 'wallet:kakaopay',
     name: '카카오페이',
     description: '카카오페이 간편결제',
     icon: '🟡'
   },
-  kakaopayCard: {
-    code: 'kakaopayCard',
-    name: '카카오페이 카드',
-    description: '카카오페이 카드 전액결제',
-    icon: '🟡'
-  },
-  kakaopayMoney: {
-    code: 'kakaopayMoney',
-    name: '카카오페이 머니',
-    description: '카카오페이 머니 전액결제',
-    icon: '🟡'
-  },
-  samsungpayCard: {
-    code: 'samsungpayCard',
+  'wallet:samsungpay': {
+    code: 'wallet:samsungpay',
     name: '삼성페이',
-    description: '삼성페이 카드결제',
+    description: '삼성페이 간편결제',
     icon: '📱'
   },
-  payco: {
-    code: 'payco',
+  'wallet:payco': {
+    code: 'wallet:payco',
     name: '페이코',
     description: '페이코 간편결제',
     icon: '🔴'
   },
-  ssgpay: {
-    code: 'ssgpay',
+  'wallet:ssgpay': {
+    code: 'wallet:ssgpay',
     name: 'SSGPAY',
     description: 'SSGPAY 간편결제',
     icon: '🛍️'
-  },
-  cardAndEasyPay: {
-    code: 'cardAndEasyPay',
-    name: '카드 및 간편결제',
-    description: '신용카드와 간편결제 통합',
-    icon: '💳'
   }
 } as const
 
 /**
  * 인기 결제 수단 순서
  */
-export const POPULAR_PAYMENT_METHODS: PaymentMethod[] = [
+export const POPULAR_PAYMENT_METHODS: StandardPaymentMethod[] = [
   'card',
-  'kakaopay', 
-  'naverpayCard',
-  'bank'
+  'wallet:kakaopay', 
+  'wallet:naverpay',
+  'bank_transfer'
 ]
 
 // ================================
@@ -388,9 +326,9 @@ export const FEE_RATES = {
 // ================================
 
 /**
- * 나이스페이 응답 코드 매핑
+ * 일반적인 응답 코드
  */
-export const NICEPAY_RESPONSE_CODES = {
+export const RESPONSE_CODES = {
   SUCCESS: '0000',              // 성공
   INVALID_PARAMETER: '1000',    // 파라미터 오류
   DUPLICATE_ORDER: '2001',      // 중복 주문
@@ -405,14 +343,14 @@ export const NICEPAY_RESPONSE_CODES = {
  * 응답 코드별 메시지
  */
 export const RESPONSE_MESSAGES: Record<string, string> = {
-  [NICEPAY_RESPONSE_CODES.SUCCESS]: '처리가 완료되었습니다',
-  [NICEPAY_RESPONSE_CODES.INVALID_PARAMETER]: '요청 정보를 확인해주세요',
-  [NICEPAY_RESPONSE_CODES.DUPLICATE_ORDER]: '이미 처리된 주문입니다',
-  [NICEPAY_RESPONSE_CODES.CARD_DECLINED]: '카드사에서 거절했습니다',
-  [NICEPAY_RESPONSE_CODES.INSUFFICIENT_FUNDS]: '잔액이 부족합니다',
-  [NICEPAY_RESPONSE_CODES.SYSTEM_ERROR]: '일시적인 오류가 발생했습니다',
-  [NICEPAY_RESPONSE_CODES.NETWORK_ERROR]: '네트워크 연결을 확인해주세요',
-  [NICEPAY_RESPONSE_CODES.TIMEOUT]: '요청 시간이 초과되었습니다'
+  [RESPONSE_CODES.SUCCESS]: '처리가 완료되었습니다',
+  [RESPONSE_CODES.INVALID_PARAMETER]: '요청 정보를 확인해주세요',
+  [RESPONSE_CODES.DUPLICATE_ORDER]: '이미 처리된 주문입니다',
+  [RESPONSE_CODES.CARD_DECLINED]: '카드사에서 거절했습니다',
+  [RESPONSE_CODES.INSUFFICIENT_FUNDS]: '잔액이 부족합니다',
+  [RESPONSE_CODES.SYSTEM_ERROR]: '일시적인 오류가 발생했습니다',
+  [RESPONSE_CODES.NETWORK_ERROR]: '네트워크 연결을 확인해주세요',
+  [RESPONSE_CODES.TIMEOUT]: '요청 시간이 초과되었습니다'
 } as const
 
 // ================================
@@ -497,11 +435,11 @@ export const PAYMENT_ROUTES = {
   PAYMENT_STATUS: '/payment/[id]',
   
   // API 경로
-  API_CONFIG: '/api/nicepay/config',
-  API_PROCESS: '/api/nicepay/process', 
-  API_CANCEL: '/api/nicepay/cancel',
-  API_STATUS: '/api/nicepay/status',
-  API_WEBHOOK: '/api/nicepay/webhook',
+  API_CONFIG: '/api/payment/config',
+  API_PROCESS: '/api/payment/process', 
+  API_CANCEL: '/api/payment/cancel',
+  API_STATUS: '/api/payment/status',
+  API_WEBHOOK: '/api/payment/webhook',
   
   // 관리자 경로
   ADMIN_PAYMENTS: '/admin/payments',

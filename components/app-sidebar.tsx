@@ -2,7 +2,7 @@
 
 import type * as React from "react"
 import { useEffect, useState } from "react"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3, UserPlus, MessageSquare } from "lucide-react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3, UserPlus, MessageSquare, CreditCard } from "lucide-react"
 
 import {
   Sidebar,
@@ -86,6 +86,18 @@ const items: MenuItem[] = [
     requiredPermission: "canAccessReviews",
   },
   {
+    title: "정산 관리",
+    url: "/admin/settlements",
+    icon: CreditCard,
+    requiredPermission: "canAccessAnalytics",
+  },
+  {
+    title: "결제 관리",
+    url: "/admin/payments",
+    icon: CreditCard,
+    requiredPermission: "canAccessAnalytics",
+  },
+  {
     title: "내 계정",
     url: "/admin/my-page",
     icon: User,
@@ -128,7 +140,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
                   <ImageIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">사진 관리자</span>
+                  <span className="truncate font-semibold">어드민 관리자</span>
                   <span className="truncate text-xs">대시보드</span>
                 </div>
               </div>

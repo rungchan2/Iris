@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Menu, X, Users, Calendar, Shield, BarChart3, MessageSquare } from "lucide-react"
+import { Inbox, FolderTree, ImageIcon, User, LogOut, Menu, X, Users, Calendar, Shield, BarChart3, MessageSquare, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -49,6 +49,12 @@ const navigationItems = [
     icon: Shield,
     permissions: ['users.create', 'users.update'],
     roles: ['admin', 'super_admin']
+  },
+  { 
+    name: "결제 관리", 
+    href: "/admin/payments", 
+    icon: CreditCard,
+    permissions: ['inquiries.read'] // 예약을 관리할 수 있는 사람은 결제도 관리 가능
   },
   { 
     name: "리뷰 관리", 
