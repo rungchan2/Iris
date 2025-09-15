@@ -36,6 +36,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   const [newInquiry, setNewInquiry] = useState<Inquiry | null>(null)
   const [moodKeywords, setMoodKeywords] = useState<MoodKeyword[]>([])
   const [availableDates, setAvailableDates] = useState<string[]>([])
+  const [paymentData, setPaymentData] = useState<any>(null)
 
   const supabase = createClient()
 
@@ -92,7 +93,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
     setIsSubmitting(true)
 
     try {
-      // Submit inquiry directly, skipping category selection
+      // Submit inquiry directly (payment is handled in the form)
       let retryCount = 0
       let insertResult = null
       let insertError = null
@@ -131,7 +132,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
               },
               matched_admin_id: photographer.id, // Add photographer ID for proper linking
               photographer_id: photographer.id, // Set photographer_id FK for direct filtering
-              status: 'new',
+              status: data.paymentKey ? 'reserved' : 'new', // If payment was completed, set as reserved
             } as any)
             .select()
             .single()
@@ -274,6 +275,10 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
             } as any,
             desired_date: newInquiry.desired_date,
           } as Inquiry
+
+          // Move directly to success since payment is handled in the form
+          setNewInquiry(insertResult)
+          setStep('success')
           break
         } catch (error) {
           insertError = error
@@ -289,9 +294,11 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
         throw insertError
       }
 
-      setNewInquiry(insertResult)
-      setStep('success')
-      toast.success('문의가 성공적으로 접수되었습니다!')
+      // Success message - payment is handled in the form
+      const successMessage = data.paymentKey 
+        ? '결제가 완료되었습니다! 예약이 확정되었습니다.'
+        : '예약 정보가 저장되었습니다.';
+      toast.success(successMessage)
     } catch (error: any) {
       console.error('Error submitting inquiry:', error)
       
@@ -317,10 +324,12 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
     }
   }
 
+
   const handleStartOver = () => {
     setStep('personal-info')
     setFormData(null)
     setNewInquiry(null)
+    setPaymentData(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -411,10 +420,15 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
                 moodKeywords={moodKeywords}
                 availableDates={availableDates}
                 photographerId={photographer.id}
+                photographer={{
+                  id: photographer.id,
+                  name: photographer.name
+                }}
               />
             </div>
           </div>
         )}
+
 
         {step === 'success' && formData && newInquiry && (
           <div className="min-h-[100vh] flex items-center justify-center">

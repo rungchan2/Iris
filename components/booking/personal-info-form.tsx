@@ -30,6 +30,9 @@ import {
   type MoodKeyword,
 } from "@/types/inquiry.types";
 import { TimeSlotSelector } from "@/components/booking/time-slot-selector";
+import { TossPaymentForm } from "@/components/payment/toss-payment-form";
+import { createPaymentRequest } from "@/lib/actions/toss-payments";
+import { toast } from "sonner";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -37,6 +40,10 @@ interface PersonalInfoFormProps {
   availableDates: string[];
   onFormChange?: () => void; // Add this prop
   photographerId?: string; // Add photographer ID prop
+  photographer?: {
+    id: string;
+    name: string;
+  }; // Add photographer info
 }
 
 export function PersonalInfoForm({
@@ -45,9 +52,10 @@ export function PersonalInfoForm({
   availableDates,
   onFormChange,
   photographerId,
+  photographer,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
-    "personal" | "mood" | "additional" | "final_questions"
+    "personal" | "mood" | "additional" | "final_questions" | "payment"
   >("personal");
   const [dateSlotCounts, setDateSlotCounts] = useState<
     Record<string, { total: number; available: number }>
@@ -186,6 +194,17 @@ export function PersonalInfoForm({
     onSubmit(data);
   };
 
+  const handlePaymentSuccess = (paymentKey: string, orderId: string) => {
+    // Add payment info to form data and submit
+    const formDataWithPayment = {
+      ...form.getValues(),
+      paymentKey,
+      orderId
+    };
+    onSubmit(formDataWithPayment);
+    toast.success('결제가 완료되었습니다!');
+  };
+
   const nextSection = async () => {
     if (activeSection === "personal") {
       // Validate personal section fields
@@ -213,6 +232,9 @@ export function PersonalInfoForm({
     } else if (activeSection === "additional") {
       // Additional section is optional, no validation needed
       setActiveSection("final_questions");
+    } else if (activeSection === "final_questions") {
+      // Final questions section is optional, no validation needed
+      setActiveSection("payment");
     }
   };
 
@@ -223,6 +245,8 @@ export function PersonalInfoForm({
       setActiveSection("mood");
     } else if (activeSection === "final_questions") {
       setActiveSection("additional");
+    } else if (activeSection === "payment") {
+      setActiveSection("final_questions");
     }
   };
 
@@ -263,8 +287,14 @@ export function PersonalInfoForm({
             />
             <div
               className={cn(
-                "flex-1 h-1 rounded-r-full transition-colors ml-1",
+                "flex-1 h-1 transition-colors mx-1",
                 activeSection === "final_questions" ? "bg-primary" : "bg-primary/30"
+              )}
+            />
+            <div
+              className={cn(
+                "flex-1 h-1 rounded-r-full transition-colors ml-1",
+                activeSection === "payment" ? "bg-primary" : "bg-primary/30"
               )}
             />
           </div>
@@ -841,14 +871,86 @@ export function PersonalInfoForm({
                   <Button type="button" variant="outline" onClick={prevSection}>
                     뒤로가기
                   </Button>
-                  {!form.formState.isValid && (
-                    <span className="text-sm text-red-500">
-                      모든 필수 필드를 입력해주세요.
-                    </span>
-                  )}
-                  <Button type="submit" disabled={!form.formState.isValid}>
-                    예약 문의 완료
+                  <Button type="button" onClick={nextSection}>
+                    다음 <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
+                </div>
+              </motion.div>
+
+              {/* Payment Section */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: activeSection === "payment" ? 1 : 0,
+                  x: activeSection === "payment" ? 0 : 20,
+                }}
+                transition={{ duration: 0.3 }}
+                className={cn(
+                  "space-y-4",
+                  activeSection !== "payment" && "hidden"
+                )}
+              >
+                <h3 className="text-xl font-semibold">결제</h3>
+                <p className="text-sm text-muted-foreground">
+                  예약을 확정하기 위해 결제를 진행해주세요.
+                </p>
+
+                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <h4 className="font-semibold">예약 정보 확인</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>예약자:</span>
+                      <span>{form.watch("name")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>연락처:</span>
+                      <span>{form.watch("phone")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>예약 날짜:</span>
+                      <span>
+                        {form.watch("desired_date")
+                          ? format(form.watch("desired_date"), "yyyy년 M월 d일")
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>인원:</span>
+                      <span>{form.watch("people_count")}명</span>
+                    </div>
+                  </div>
+                </div>
+
+                <TossPaymentForm
+                  inquiry={{
+                    id: "temp-inquiry", // This will be generated after form submission
+                    name: form.watch("name") || "",
+                    phone: form.watch("phone") || "",
+                    email: undefined
+                  }}
+                  product={{
+                    id: "photography-session",
+                    name: `${photographer?.name || "작가"} 사진 촬영 세션`,
+                    price: 150000, // 15만원 기본 가격
+                    photographer_id: photographerId || ""
+                  }}
+                  photographer={{
+                    id: photographerId || "",
+                    name: photographer?.name || "작가"
+                  }}
+                  onPaymentComplete={handlePaymentSuccess}
+                  onPaymentError={(error: string) => {
+                    toast.error(`결제 중 오류가 발생했습니다: ${error}`);
+                  }}
+                />
+
+                <div className="flex justify-between pt-4 items-center">
+                  <Button type="button" variant="outline" onClick={prevSection}>
+                    뒤로가기
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    위의 결제 위젯에서 결제를 완료해주세요.
+                  </div>
                 </div>
               </motion.div>
             </form>

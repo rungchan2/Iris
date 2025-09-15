@@ -5,7 +5,7 @@ import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 let tossPaymentsPromise: Promise<any> | null = null;
 
 /**
- * TossPayments SDK 싱글톤 인스턴스 반환
+ * TossPayments SDK 싱글톤 인스턴스 반환 (결제창용)
  */
 export const getTossPayments = () => {
   if (!tossPaymentsPromise) {
@@ -13,6 +13,7 @@ export const getTossPayments = () => {
     if (!clientKey) {
       throw new Error('TossPayments 클라이언트 키가 설정되지 않았습니다.');
     }
+    // API 개별 연동 키를 사용하여 결제창 초기화
     tossPaymentsPromise = loadTossPayments(clientKey);
   }
   return tossPaymentsPromise;

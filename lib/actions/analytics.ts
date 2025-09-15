@@ -9,24 +9,7 @@ export interface AnalyticsData {
   topPerformingTypes: string[]
 }
 
-export interface QuizAnalytics {
-  totalSessions: number
-  completedSessions: number
-  completionRate: number
-  averageCompletionTime: number
-  personalityDistribution: {
-    type: string
-    name: string
-    count: number
-    percentage: number
-  }[]
-  dailyStats: {
-    date: string
-    started: number
-    completed: number
-    completionRate: number
-  }[]
-}
+// Quiz Analytics interface removed as quiz tables have been deleted
 
 export interface BookingAnalytics {
   totalBookings: number
@@ -101,20 +84,9 @@ export async function getAnalyticsData(timeRange: TimeRange = '30d'): Promise<{
         break
     }
 
-    // 성향 진단 세션 수
-    const { count: totalQuizSessions } = await supabase
-      .from('quiz_sessions')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-
-    // 완료된 진단 수
-    const { count: completedQuizSessions } = await supabase
-      .from('quiz_sessions')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .not('calculated_personality_code', 'is', null)
+    // Quiz sessions have been removed from the database
+    const totalQuizSessions = 0
+    const completedQuizSessions = 0
 
     // 예약 문의 수
     const { count: totalBookings } = await supabase
@@ -149,119 +121,7 @@ export async function getAnalyticsData(timeRange: TimeRange = '30d'): Promise<{
   }
 }
 
-// 성향 진단 분석 데이터
-export async function getQuizAnalytics(timeRange: TimeRange = '30d'): Promise<{
-  success: boolean
-  data?: QuizAnalytics
-  error?: string
-}> {
-  try {
-    const supabase = await createClient()
-    
-    const endDate = new Date()
-    const startDate = new Date()
-    
-    switch (timeRange) {
-      case '7d':
-        startDate.setDate(startDate.getDate() - 7)
-        break
-      case '30d':
-        startDate.setDate(startDate.getDate() - 30)
-        break
-      case '90d':
-        startDate.setDate(startDate.getDate() - 90)
-        break
-      case '1y':
-        startDate.setFullYear(startDate.getFullYear() - 1)
-        break
-    }
-
-    // 전체 세션 조회
-    const { data: sessions, count: totalSessions } = await supabase
-      .from('quiz_sessions')
-      .select('*', { count: 'exact' })
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-
-    // 완료된 세션 수 (임시로 전체의 60%로 가정)
-    const completedSessions = Math.round((totalSessions || 0) * 0.6)
-    const completionRate = totalSessions && totalSessions > 0 
-      ? Math.round(completedSessions / totalSessions * 1000) / 10
-      : 0
-
-    // 평균 완료 시간 (임시 값)
-    const averageCompletionTime = 8.5 // 분
-
-    // 성격유형별 분포 (임시 데이터, 추후 스키마 확장 시 구현)
-    const personalityNames: Record<string, string> = {
-      'A1': '고요한 관찰자',
-      'A2': '따뜻한 동행자',
-      'B1': '감성 기록자',
-      'C1': '시네마틱 몽상가',
-      'D1': '활력 가득 리더',
-      'E1': '도시의 드리머',
-      'E2': '무심한 예술가',
-      'F1': '자유로운 탐험가',
-      'F2': '감각적 실험가'
-    }
-
-    // Mock data for personality distribution
-    const personalityDistribution = Object.entries(personalityNames).map(([type, name], index) => ({
-      type,
-      name,
-      count: Math.round(completedSessions * (0.05 + Math.random() * 0.15)),
-      percentage: 5 + Math.random() * 15
-    }))
-
-    // 일별 통계 (최근 7일)
-    const dailyStats = []
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
-      
-      const dayStart = new Date(date.setHours(0, 0, 0, 0))
-      const dayEnd = new Date(date.setHours(23, 59, 59, 999))
-      
-      const daySessions = sessions?.filter(s => {
-        if (!s.created_at) return false
-        const sessionDate = new Date(s.created_at)
-        return sessionDate >= dayStart && sessionDate <= dayEnd
-      }) || []
-      
-      // Mock completion rate since we don't have result_personality_type field yet
-      const dayCompleted = Math.round(daySessions.length * 0.6)
-      const dayCompletionRate = daySessions.length > 0 
-        ? Math.round(dayCompleted / daySessions.length * 100)
-        : 0
-      
-      dailyStats.push({
-        date: date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
-        started: daySessions.length,
-        completed: dayCompleted,
-        completionRate: dayCompletionRate
-      })
-    }
-
-    return {
-      success: true,
-      data: {
-        totalSessions: totalSessions || 0,
-        completedSessions,
-        completionRate,
-        averageCompletionTime,
-        personalityDistribution,
-        dailyStats
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching quiz analytics:', error)
-    return {
-      success: false,
-      error: 'Failed to fetch quiz analytics'
-    }
-  }
-}
+// Quiz analytics function removed as quiz tables have been deleted
 
 // 예약 분석 데이터
 export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise<{

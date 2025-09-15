@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { signUpNewUser, login } from "@/lib/login"
 import { validateInvitationCode } from "@/lib/actions/code"
-import { signupWithInviteCode } from "@/lib/actions/admin-auth"
 import { useForm, Controller } from "react-hook-form"
 import { createPhotographerProfile, uploadPortfolioImages } from "@/lib/actions/photographer-client"
 
@@ -93,32 +92,13 @@ const KOREAN_CITIES = [
   '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
 ];
 
-interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
-  isAdmin?: boolean;
-}
-
-// Admin 회원가입을 위한 간단한 타입
-type AdminSignupFormData = {
-  email: string;
-  password: string;
-  passwordConfirm: string;
-  name: string;
-  inviteCode: string;
-}
+interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {}
 
 export function SignupForm({
   className,
-  isAdmin = false,
   ...props
 }: SignupFormProps) {
   const router = useRouter();
-  
-  // Admin인 경우 간단한 양식 렌더링
-  if (isAdmin) {
-    return <AdminSignupFormComponent className={className} {...props} />;
-  }
-  
-  // Photographer인 경우 기존 복잡한 양식
   const { register, handleSubmit, formState: { errors }, setError, watch, control, setValue } = useForm<PhotographerSignupFormData>({
     defaultValues: {
       step3_specialties: [],
@@ -1049,164 +1029,3 @@ export function SignupForm({
   )
 }
 
-// Admin 회원가입을 위한 간단한 컴포넌트
-function AdminSignupFormComponent({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
-  const router = useRouter();
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<AdminSignupFormData>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-
-  const password = watch("password");
-
-  const onSubmit = async (data: AdminSignupFormData) => {
-    setIsLoading(true);
-
-    try {
-      const result = await signupWithInviteCode({
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        inviteCode: data.inviteCode
-      });
-
-      if (result.error) {
-        toast.error(result.error);
-        setIsLoading(false);
-        return;
-      }
-
-      if (result.success) {
-        toast.success(result.message);
-        router.push("/login/admin?message=signup-success");
-      }
-    } catch (error) {
-      console.error("Admin signup error:", error);
-      toast.error("회원가입 중 예상치 못한 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <div className={cn("flex flex-col gap-6", className)} {...props}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">관리자 회원가입</CardTitle>
-            <CardDescription>
-              초대 코드를 사용하여 관리자 계정을 생성합니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="admin-email">이메일 *</Label>
-                <Input
-                  id="admin-email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  {...register("email", {
-                    required: "이메일을 입력해주세요.",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "유효한 이메일 주소를 입력해주세요."
-                    }
-                  })}
-                />
-                {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="admin-name">이름 *</Label>
-                <Input
-                  id="admin-name"
-                  type="text"
-                  placeholder="관리자"
-                  {...register("name", {
-                    required: "이름을 입력해주세요.",
-                    minLength: {
-                      value: 2,
-                      message: "이름은 최소 2글자 이상이어야 합니다."
-                    }
-                  })}
-                />
-                {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="admin-password">비밀번호 *</Label>
-                <div className="relative">
-                  <Input
-                    id="admin-password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="최소 6자 이상"
-                    {...register("password", {
-                      required: "비밀번호를 입력해주세요.",
-                      minLength: {
-                        value: 6,
-                        message: "비밀번호는 최소 6글자 이상이어야 합니다."
-                      }
-                    })}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="admin-passwordConfirm">비밀번호 확인 *</Label>
-                <div className="relative">
-                  <Input
-                    id="admin-passwordConfirm"
-                    type={showPasswordConfirm ? "text" : "password"}
-                    placeholder="비밀번호를 다시 입력해주세요"
-                    {...register("passwordConfirm", {
-                      required: "비밀번호 확인을 입력해주세요.",
-                      validate: (value) => value === password || "비밀번호가 일치하지 않습니다."
-                    })}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                  >
-                    {showPasswordConfirm ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
-                  </button>
-                </div>
-                {errors.passwordConfirm && <p className="text-sm text-red-600">{errors.passwordConfirm.message}</p>}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="admin-inviteCode">초대 코드 *</Label>
-                <Input
-                  id="admin-inviteCode"
-                  type="text"
-                  placeholder="초대 코드를 입력해주세요"
-                  {...register("inviteCode", {
-                    required: "초대 코드를 입력해주세요."
-                  })}
-                />
-                {errors.inviteCode && <p className="text-sm text-red-600">{errors.inviteCode.message}</p>}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "회원가입 중..." : "회원가입"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-      <Toaster richColors position="top-right" />
-    </>
-  );
-}

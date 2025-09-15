@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Iris (Iris)** is a personality-based photo styling and photographer matching platform built on Next.js. It transforms from the existing `sunset-cinema` project into a comprehensive system that:
+**Iris (Iris)** is a photographer matching and booking platform built on Next.js. The system combines AI-powered photographer matching with streamlined booking and payment processing:
 
-1. **Personality Diagnosis**: 21-question psychological assessment determining one of 9 personality types
-2. **AI Image Generation**: Creates style previews based on user photos and personality
-3. **Photographer Matching**: Connects users with compatible photographers
-4. **Booking System**: Handles appointment scheduling and management
+1. **10-Question Matching System**: Advanced embedding-based photographer matching using pgvector
+2. **Direct Booking System**: Simplified appointment scheduling and management
+3. **Photographer Management**: Admin-managed photographer accounts with 4-dimensional profile system
+4. **Payment Processing**: Multi-PG payment system (Toss, Eximbay, Adyen, Stripe)
+5. **Admin Dashboard**: Comprehensive management interface for matching settings, bookings, and analytics
 
 ## Development Commands
 
@@ -33,14 +34,8 @@ npm run gen-types
 
 ### Database Management
 ```bash
-# Start local Supabase (if using locally)
-npx supabase start
-
 # Generate TypeScript types from Supabase
-npx supabase gen types typescript --local > types/database.types.ts
-
-# Apply database migrations
-npx supabase db push
+npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/database.types.ts
 ```
 
 ## Architecture Overview
@@ -48,319 +43,248 @@ npx supabase db push
 ### Tech Stack
 - **Framework**: Next.js 15+ with App Router
 - **Language**: TypeScript with strict mode
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Supabase (PostgreSQL) with pgvector extension
+- **AI/ML**: OpenAI embeddings (text-embedding-3-small), pgvector for similarity search
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **State Management**: React Query for server state, React hooks for client state
 - **Image Handling**: browser-image-compression, html2canvas-pro
-- **AI Integration**: OpenAI DALL-E, Runway API
 
 ### Key Directories
 
 - `app/` - Next.js App Router pages and layouts
-  - `admin/` - Admin dashboard and management
+  - `admin/` - Admin dashboard and matching system management
+  - `matching/` - 10-question matching flow and results
   - `gallery/` - Public photo gallery
   - `login/` - Authentication pages
 - `components/` - Reusable UI components
-  - `admin/` - Admin-specific components
-  - `inquiry/` - Personality quiz and booking forms
+  - `admin/` - Admin-specific components (including matching system controls)
+  - `matching/` - Matching flow components (questionnaire, results)
+  - `booking/` - Booking and inquiry forms
   - `ui/` - shadcn/ui base components
 - `lib/` - Utility functions and configurations
-  - `actions/` - Server actions
+  - `actions/` - Server actions (including matching algorithms)
   - `supabase/` - Database client configurations
   - `hooks/` - Custom React hooks
+  - `matching/` - Matching algorithms and embedding utilities
 - `types/` - TypeScript type definitions
 - `specs/` - Detailed project documentation
 
 ## Database Schema
 
-### Core Tables
-
-**Personality System:**
-- `personality_types` - 9 personality type definitions (A1, A2, B1, C1, D1, E1, E2, F1, F2)
-- `quiz_questions` - 21 assessment questions
-- `quiz_choices` - Multiple choice options for each question
-- `choice_weights` - Scoring weights for personality calculation
-- `quiz_sessions` - User session tracking
-- `quiz_responses` - Individual user answers
+### Core Tables (Legacy)
 
 **User Management:**
 - `users` - General users (customers) for payment/booking system
-- `admins` - System administrators with full access
-- `photographers` - Photographer accounts (separated from admins)
-- `products` - Unified photo packages (replaces photographer_pricing + pricing_options)
-
-**Matching System:**
-- `personality_admin_mapping` - Photographer-personality compatibility scores
-- `personality_photos` - Curated gallery photos per personality type
+- `photographers` - Photographer accounts with approval workflow
+- `products` - Unified photo packages with admin approval system
 
 **Payment System (2025.08.31):**
-- `payments` - PG-neutral payment processing (NicePay, Eximbay, Adyen, Stripe, Toss)
-- `refunds` - Comprehensive refund management (full/partial, bank transfer)
+- `payments` - PG-neutral payment processing
+- `refunds` - Comprehensive refund management
 - `settlements` - Automated photographer settlement system
 - `payment_logs` - Detailed audit trail
-- `refund_reasons` - Standardized refund categorization
 
-**AI & Booking:**
-- `ai_image_generations` - AI preview generation tracking
-- `inquiries` - Booking requests and customer information (now with user_id)
-- `available_slots` - Photographer availability
+**Booking System:**
+- `inquiries` - Booking requests and customer information
+- `available_slots` - Photographer availability management
+- `reviews` - Anonymous review system
 
-**Review System:**
-- `reviews` - Anonymous review system with token-based access
+### New Matching System Tables (2025.09.16)
+
+**Matching Core:**
+- `survey_questions` - 10-question master template (admin configurable)
+- `survey_choices` - Choice options with embeddings (Q1-Q6, Q8-Q9)
+- `survey_images` - Image choices with embeddings (Q7)
+- `matching_sessions` - User questionnaire sessions with aggregated embeddings
+- `matching_results` - 4-dimensional matching scores and rankings
+
+**4-Dimensional Photographer Profiles:**
+- `photographer_profiles` - Extended profiles with 4 description dimensions:
+  - `style_emotion_description` + `style_emotion_embedding` (40% weight)
+  - `communication_psychology_description` + `communication_psychology_embedding` (30% weight)
+  - `purpose_story_description` + `purpose_story_embedding` (20% weight)
+  - `companion_description` + `companion_embedding` (10% weight)
+- `photographer_keywords` - Specialty keywords with proficiency levels
+
+**Analytics & Optimization (V2/V3):**
+- `weight_experiments` - A/B testing for matching weights
+- `experiment_sessions` - Session assignment to experiments
+- `user_feedback` - Matching quality feedback collection
+- `matching_performance_logs` - System performance tracking
+- `embedding_jobs` - Async embedding regeneration queue
+
+**System Management:**
+- `system_settings` - Global matching configuration
+- Enhanced `photos` table with `image_embedding` for portfolio matching
+
+## Matching System Architecture
+
+### 4-Dimensional Matching Algorithm
+
+**Question Weight Distribution:**
+- **Style/Emotion (40%)**: Q6 (keyword), Q7 (image), Q8 (lighting), Q9 (location)
+- **Communication/Psychology (30%)**: Q3 (comfort), Q4 (atmosphere), Q5 (immersion)
+- **Purpose/Story (20%)**: Q1 (purpose), Q10 (subjective text)
+- **Companion (10%)**: Q2 (companion type) - also serves as hard filter
+
+**Matching Pipeline:**
+1. **Hard Filtering**: Region, budget, companion type, keyword compatibility
+2. **4D Similarity**: Each user response mapped to corresponding photographer dimension
+3. **Keyword Bonus**: Graduated scoring (1-3+ matches = 50%-100% bonus weight)
+4. **Final Ranking**: Weighted combination of similarity scores
+
+### Embedding Strategy
+- **Pre-computed**: All choice options and photographer profiles
+- **Real-time**: Only Q10 subjective responses
+- **Admin-triggered**: Regeneration via `embedding_jobs` queue when content changes
+- **Model**: OpenAI text-embedding-3-small (1536 dimensions)
 
 ## Key Implementation Patterns
 
-### State Management
-- Use React Query (`@tanstack/react-query`) for server state
-- Supabase client configurations in `lib/supabase/`
-- Server-side rendering with `lib/supabase/server.ts`
-- Client-side operations with `lib/supabase/client.ts`
+### Matching Flow Components
+- `QuestionFlow` - Progressive 10-question interface
+- `MatchingResults` - Ranked photographer display with explanation
+- `PhotographerMatchCard` - Individual result with 4D score breakdown
 
-### Component Architecture
-- Leverages shadcn/ui as base design system
-- Admin components separate from public-facing components
-- Responsive-first design with Tailwind CSS
-- Form handling with `react-hook-form` and `zod` validation
+### Admin Matching Controls
+- Question/choice text editing with auto-embedding regeneration
+- Weight experiment setup and A/B testing
+- Performance analytics and matching quality metrics
+- Photographer profile completeness monitoring
+
+### State Management
+- React Query for matching results and photographer data
+- Session token-based anonymous matching (no login required)
+- Supabase real-time subscriptions for admin dashboards
 
 ## Important Implementation Notes
 
 ### Supabase Configuration
 - Project ID: `kypwcsgwjtnkiiwjedcn`
-- Uses Row Level Security (RLS) policies for all tables
-- Edge functions in `supabase/functions/resend/` for email notifications
-- Image storage configured for `belqqpwnajsccgrqbzfd.supabase.co` domain
-- Multi-PG payment system with provider-neutral architecture
-- Automated settlement processing with fee calculation
-
-### AI Image Generation
-- Integrates with OpenAI DALL-E and Runway APIs
-- Personality-specific prompts stored in `personality_types.ai_preview_prompt`
-- User uploads processed through `browser-image-compression`
-- Generation status tracked in `ai_image_generations` table
+- **pgvector extension enabled** for similarity search
+- IVFFLAT indexes on all embedding columns for performance
+- RLS policies support anonymous matching via session tokens
 
 ### Authentication & Authorization
-- Supabase Auth for admin users
-- Public access for personality assessments (anonymous users)
-- Admin dashboard requires authentication
-- RLS policies enforce data access controls
+- **Anonymous Matching**: Full questionnaire and results without login
+- **Session Tokens**: Secure access to anonymous matching results
+- **Admin Controls**: Full matching system configuration access
+- **Photographer Profiles**: 4-dimensional description management
 
 ### Performance Considerations
-- Next.js Image component with remote patterns configured
-- Turbopack for fast development builds
-- Database indexes on critical query paths
-- React Query for efficient data caching
+- pgvector indexes optimized for embedding similarity search
+- Batch embedding generation via background jobs
+- Caching of frequent matching queries
+- Efficient hard filtering before expensive similarity calculations
 
-## Testing & Development
+## Matching System Development
 
-### File Structure Understanding
-- Legacy components from `sunset-cinema` are being extended
-- New personality-related features integrate with existing booking system
-- Admin system expanded to handle photographer-personality mappings
-- Gallery system adapted for personality-based photo curation
+### Adding New Questions
+1. Insert into `survey_questions` with proper weights
+2. Add choices to `survey_choices` or images to `survey_images`
+3. Update matching algorithm to handle new question type
+4. Regenerate embeddings via `embedding_jobs`
 
-### Environment Variables Required
+### Modifying Matching Weights
+1. Create new `weight_experiments` entry
+2. A/B test with `experiment_sessions` assignment
+3. Monitor performance via `matching_performance_logs`
+4. Update `system_settings` with successful configurations
+
+### Extending Photographer Profiles
+1. Add new description fields to `photographer_profiles`
+2. Create corresponding embedding columns
+3. Update matching algorithm dimensions
+4. Modify admin interface for profile management
+
+## Environment Variables Required
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-OPENAI_API_KEY=
+OPENAI_API_KEY= # Required for embedding generation
 RUNWAY_API_KEY=
 NEXT_PUBLIC_APP_URL=
 ```
 
-### Common Development Tasks
+## Recent Updates
 
-**Adding New Personality Features:**
-1. Update database schema via Supabase dashboard
-2. Regenerate types: `npx supabase gen types typescript --local > types/database.types.ts`
-3. Implement server actions in `lib/actions/`
-4. Create UI components following existing patterns
-5. Add React Query hooks for data fetching
+### 2025.09.16 - Matching System Implementation
+**MAJOR FEATURE**: Complete 10-question photographer matching system
 
-**Extending Admin Functionality:**
-1. Components go in `components/admin/`
-2. Pages go in `app/admin/`
-3. Follow existing authentication patterns
-4. Ensure RLS policies are updated
+#### Database Architecture
+- ✅ **pgvector Integration**: Semantic similarity search with 1536-dimension embeddings
+- ✅ **4-Dimensional Profiles**: Photographer descriptions split by matching categories
+- ✅ **Admin-Configurable Questions**: Dynamic question/choice management with auto-embedding
+- ✅ **Anonymous Matching**: Token-based system for non-logged users
+- ✅ **V2/V3 Analytics Framework**: A/B testing and performance tracking infrastructure
 
-**Working with AI Integration:**
-1. API calls handled in server actions
-2. Status tracking in database
-3. Error handling for API failures
-4. User feedback during processing
+#### Matching Algorithm
+- ✅ **Weighted Similarity**: 40/30/20/10 distribution across style/communication/purpose/companion
+- ✅ **Hard Filtering**: Budget, region, companion compatibility pre-filtering
+- ✅ **Keyword Bonuses**: Graduated scoring for specialty matching
+- ✅ **Real-time Optimization**: Only Q10 subjective responses generate embeddings live
 
-## Migration Context
+#### User Experience
+- ✅ **Progressive Questionnaire**: 10-question flow with image selection
+- ✅ **Explained Results**: 4D score breakdown with matching highlights
+- ✅ **Anonymous Access**: Full matching without account creation
+- ✅ **Photographer Profiles**: Rich 4-dimensional profile system
 
-This project evolved from `sunset-cinema` (film photography booking) to Iris (personality-based matching). Key migration points:
-
-- **Preserved**: Booking system, admin dashboard, photo management
-- **Extended**: Database schema for personality features
-- **Added**: Quiz system, AI generation, personality matching
-- **Maintained**: TypeScript strict mode, Tailwind styling, Supabase infrastructure
-
-Refer to detailed specifications in `specs/` directory for comprehensive feature requirements and implementation guidance.
-
-## Debugging and Development Notes
-
-- **Tools for Debugging and Schema Modification**:
-  - Use Supabase MCP (Managed Control Panel) to inspect and modify database schema
-  - Utilize Playwright MCP tools for comprehensive testing and debugging across different scenarios
+### Previous Major Updates
+- **2025.08.31**: Multi-PG payment system and product consolidation
+- **2025.08.24**: Admin-photographer system separation
+- **2025.01.18**: RBAC simplification to 2-tier structure
 
 ## Development Guidelines
 
-- **New Development Note**: Saved development guide at @specs/development-guide.md
+### Matching System Development
+- Use `lib/actions/matching.ts` for core matching logic
+- Embedding generation in `lib/embedding/` utilities
+- Admin matching controls in `components/admin/matching/`
+- Anonymous user flow in `app/matching/` routes
 
-## Authentication System Update (2025.01.18)
-
-**MAJOR CHANGE**: The complex RBAC system has been completely removed and replaced with a simplified 2-system approach:
-
-### Current Authentication Architecture
-- **Admin System**: 
-  - Users stored only in `auth.users` table
-  - Identified by `user_metadata.user_type === 'admin'`
-  - Signup via invite codes at `/admin/signup`
-  - All authenticated users can access admin dashboard (no role guards)
-- **Photographer System**:
-  - Users stored in `auth.users` + `photographers` table 
-  - Created by admin via `/admin/users`
-  - Original flow maintained
-
-### Key Changes Made
-- ✅ Removed `role` column from `photographers` table
-- ✅ Removed all AdminGuard and role-based access controls
-- ✅ Simplified admin layout to only check authentication (not roles)
-- ✅ Updated all user management functions for new system
-- ✅ Maintained invite code system for admin signup
-
-### Important Files Updated
-- `app/admin/layout.tsx` - Removed role checking
-- `lib/actions/user-management.ts` - Complete rewrite for new system
-- `lib/actions/admin-auth.ts` - Removed role validations
-- `components/admin/user-management.tsx` - Removed role field
-
-## Recent Updates (2025.08.31)
-
-### Database Schema Consolidation
-**MAJOR ARCHITECTURAL CHANGE**: Payment system integration and product management consolidation.
-
-#### Payment System Implementation
-- ✅ **Multi-PG Payment Architecture**: Provider-neutral system supporting NicePay, Eximbay, Adyen, Stripe, Toss
-- ✅ **Comprehensive Refund System**: Full/partial refunds with bank transfer support
-- ✅ **Automated Settlement Processing**: Photographer payments with fee and tax calculation
-- ✅ **Payment Audit Trail**: Detailed logging system for all payment events
-- ✅ **User Integration**: General users table for customer payment/booking management
-
-#### Product Management Consolidation
-- ✅ **Products Table**: Unified photo package management (replaced photographer_pricing + pricing_options)
-- ✅ **Approval Workflow**: Photographer creates → Admin approves structure
-- ✅ **Enhanced Features**: Categories, tags, featured products, pricing options
-- ✅ **RLS Security**: Comprehensive access control for all new tables
-
-### Database Migration Status
-- All payment-related tables created and configured
-- RLS policies applied for secure data access
-- TypeScript types updated for new schema
-- Foreign key relationships established
-
-## Previous Updates (2025.08.24)
-
-### Admin-Photographer System Separation Completed
-**MAJOR ARCHITECTURAL CHANGE**: Complete separation of Admin and Photographer systems with dedicated tables and routes.
-
-#### Database Schema Changes
-- ✅ **New `admins` table created**: Separate table for admin user profiles
-  - Fields: `id`, `email`, `name`, `role`, `department`, `phone`, `created_at`, `updated_at`, `last_login_at`
-  - Linked to Supabase `auth.users` via `id` field
-- ✅ **Updated `photographers` table**: Removed admin-related fields, cleaned up structure
-- ✅ **RLS Policies Fixed**: Resolved infinite recursion issues in `admins` table policies
-  - Removed complex role-based policies causing recursion
-  - Implemented simple authenticated user access: `auth.role() = 'authenticated'`
-
-#### Route Structure Reorganization
-- ✅ **Admin Routes** (`/admin/*`): System-wide management interface
-  - `/admin/my-page` - Admin profile management using `admins` table
-  - `/admin/schedule` - All photographers' schedules overview
-  - `/admin/reviews` - All reviews from all photographers with filtering
-  - `/admin/users` - User management (create admins/photographers)
-- ✅ **Photographer Routes** (`/photographer-admin/*`): Individual photographer management
-  - `/photographer-admin/dashboard` - Individual photographer dashboard
-  - `/photographer-admin/schedule` - Own schedule management
-  - `/photographer-admin/reviews` - Own reviews only
-- ✅ **Public Routes** (`/photographers/*`): Public photographer listings maintained
-
-#### Components Architecture
-- ✅ **AdminProfileSettings**: New component for admin profile management
-- ✅ **AdminScheduleOverview**: System-wide schedule calendar view
-- ✅ **AdminAllReviewsManagement**: All reviews management with photographer filtering
-- ✅ **Photographer Sidebar**: Dedicated navigation for photographer admin area
-
-#### Server Actions Updates
-- ✅ **`lib/actions/admin.ts`**: Complete admin CRUD operations
-  - `getCurrentAdmin()` - Get/create admin records
-  - `updateAdminProfile()` - Admin profile updates
-  - `createAdmin()` - Create new admin users (super admin only)
-  - `getAllAdmins()` - List all admins
-- ✅ **Authentication Flow**: Automatic user type detection and redirection
-- ✅ **Permission System**: Simplified from complex RBAC to authentication-based
-
-#### Bug Fixes Applied
-- ✅ **TypeScript Errors**: Fixed all null value handling in interfaces
-- ✅ **Database Query Issues**: Corrected field references (`matched_admin_id` vs `photographer_id`)
-- ✅ **RLS Policy Recursion**: Eliminated infinite recursion in admin table policies
-- ✅ **Component Type Mismatches**: Updated all interfaces to handle nullable database fields
-
-#### Security Improvements
-- ✅ **Row Level Security**: Proper policies without recursion issues
-- ✅ **Data Isolation**: Admins see system-wide data, Photographers see only their own
-- ✅ **Authentication Guards**: Proper checks for admin vs photographer access
-
-### Current System Status
-- **Admin System**: Fully operational with dedicated table and routes
-- **Photographer System**: Individual management interface at `/photographer-admin/*`
-- **Public Interface**: Maintained at `/photographers/*` for user browsing
-- **Authentication**: Simplified and secure with proper user type separation
+### Database Schema Changes
+- Always regenerate TypeScript types after schema changes
+- Use migrations for pgvector index updates
+- Test RLS policies with anonymous session tokens
+- Monitor embedding job queue for async operations
 
 ## Tools and Workflow Notes
 
-- If needed, use Supabase MCP to:
-  - Change database schema
-  - Modify table policies
-  - Utilize supabase-heechan tool for project with ID `kypwcsgwjtnkiiwjedcn`
-- **Documentation**: 
-  - Database schema: @specs/database-schema.md (updated 2025.08.31)
-  - Auth system: @specs/authentication-update-2025.md
-  - Payment system: Multi-PG architecture with automated settlements
-- **Daily Tasks**: Track ongoing work at @todos/20250824.md
-- **Progress Tracking**: Mark completed work in @specs/feature.md
+- **Database Management**: Use Supabase MCP tools for schema modifications
+- **Embedding Operations**: OpenAI API integration for text-embedding-3-small
+- **Performance Monitoring**: pgvector query performance and matching analytics
+- **A/B Testing**: Weight experiment framework for matching optimization
 
-## Key Database Changes (2025.08.31)
+## Key Database Changes (2025.09.16)
 
-### New Tables Added
+### Matching System Tables
 ```sql
--- General users (customers)
-users (id, name, email, phone, profile_info, booking_stats)
+-- Core matching infrastructure
+survey_questions (id, question_key, weight_category, base_weight)
+survey_choices (id, question_id, choice_key, choice_embedding)
+survey_images (id, question_id, image_key, image_embedding)
+matching_sessions (id, session_token, responses, final_user_embedding)
 
--- Unified product management  
-products (id, name, price, shooting_options, approval_workflow)
+-- 4D photographer profiles
+photographer_profiles (
+  photographer_id,
+  style_emotion_embedding,
+  communication_psychology_embedding, 
+  purpose_story_embedding,
+  companion_embedding
+)
 
--- Multi-PG payment system
-payments (id, order_id, amount, provider, status, payment_info)
-refunds (id, payment_id, refund_amount, refund_type, status)
-settlements (id, photographer_id, settlement_amount, fees, taxes)
-payment_logs (id, event_type, provider, response_data)
-refund_reasons (id, category, description)
+-- Results and analytics
+matching_results (id, session_id, photographer_id, 4d_scores, total_score)
+weight_experiments (id, weight_config, performance_metrics)
 ```
 
-### Removed Tables
+### Performance Indexes
 ```sql
--- Consolidated into products table
-DROP TABLE photographer_pricing;
-DROP TABLE pricing_options;
-```
-
-### Updated Tables
-```sql
--- Added user and product references
-ALTER TABLE inquiries ADD COLUMN user_id UUID, product_id UUID;
-ALTER TABLE payments ADD COLUMN product_id UUID, product_options JSONB;
+-- pgvector similarity search optimization
+CREATE INDEX USING ivfflat ON survey_choices (choice_embedding vector_cosine_ops);
+CREATE INDEX USING ivfflat ON photographer_profiles (style_emotion_embedding vector_cosine_ops);
+-- Additional indexes for all embedding dimensions
 ```

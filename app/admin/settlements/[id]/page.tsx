@@ -6,13 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getSettlementById } from '@/lib/actions/settlements';
 
 interface SettlementDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function SettlementDetailPage({ params }: SettlementDetailPageProps) {
-  const result = await getSettlementById(params.id);
+  const resolvedParams = await params;
+  const result = await getSettlementById(resolvedParams.id);
   
   if (!result.success || !result.data) {
     notFound();

@@ -131,120 +131,25 @@ type UserRole = 'admin' | 'photographer'
 | system.* | ✅ | ❌ |
 | analytics.read | ✅ | 제한적 |
 
-### 3. 성향 진단 시스템
+### 3. ~~성향 진단 시스템~~ (2025.09.15 삭제)
 
-#### `personality_types` - 성격유형 정의
-```sql
-CREATE TABLE personality_types (
-  code VARCHAR(10) PRIMARY KEY, -- 'A1', 'A2', 'B1', 'C1', 'D1', 'E1', 'E2', 'F1', 'F2'
-  name TEXT NOT NULL, -- '고요한 관찰자', '따뜻한 동행자' 등
-  description TEXT NOT NULL,
-  example_person TEXT,
-  style_keywords TEXT[],
-  recommended_locations TEXT[],
-  recommended_props TEXT[],
-  ai_preview_prompt TEXT NOT NULL,
-  representative_image_url TEXT,
-  display_order INT,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+**삭제된 테이블들:**
+- ~~`personality_types`~~ - 성격유형 정의 (삭제됨)
+- ~~`quiz_questions`~~ - 설문 질문 (삭제됨)
+- ~~`quiz_choices`~~ - 질문별 선택지 (삭제됨)
+- ~~`choice_weights`~~ - 선택지별 성격유형 가중치 (삭제됨)
+- ~~`quiz_sessions`~~ - 진단 세션 추적 (삭제됨)
+- ~~`quiz_responses`~~ - 사용자 응답 저장 (삭제됨)
 
-#### `quiz_questions` - 설문 질문 (21개)
-```sql
-CREATE TABLE quiz_questions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  part TEXT NOT NULL CHECK (part IN ('감정', '사진')),
-  question_text TEXT NOT NULL,
-  question_image_url TEXT,
-  type TEXT CHECK (type IN ('text', 'image', 'image_text')),
-  display_order INT NOT NULL UNIQUE, -- 1-21
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+**Note**: 2025년 9월 15일 가중치 관련 테이블들이 모두 삭제되었습니다. Quiz 페이지 UI는 유지되지만 기능은 제거되었습니다.
 
-#### `quiz_choices` - 질문별 선택지 (65개)
-```sql
-CREATE TABLE quiz_choices (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  question_id UUID REFERENCES quiz_questions(id) ON DELETE CASCADE,
-  choice_text TEXT NOT NULL,
-  choice_image_url TEXT,
-  display_order INT NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+### 4. ~~매칭 시스템~~ (2025.09.15 삭제)
 
-#### `choice_weights` - 선택지별 성격유형 가중치 (585개)
-```sql
-CREATE TABLE choice_weights (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  choice_id UUID REFERENCES quiz_choices(id) ON DELETE CASCADE,
-  personality_code VARCHAR(10) REFERENCES personality_types(code),
-  weight INT NOT NULL CHECK (weight >= 0 AND weight <= 3),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+**삭제된 테이블들:**
+- ~~`personality_admin_mapping`~~ - 성격유형별 작가 매칭 (삭제됨)
+- ~~`personality_photos`~~ - 성격유형별 추천 사진 갤러리 (삭제됨)
 
-#### `quiz_sessions` - 진단 세션 추적
-```sql
-CREATE TABLE quiz_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_ip INET,
-  user_agent TEXT,
-  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-  calculated_personality_code VARCHAR(10) REFERENCES personality_types(code),
-  total_score_data JSONB,
-  is_completed BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-#### `quiz_responses` - 사용자 응답 저장
-```sql
-CREATE TABLE quiz_responses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id UUID REFERENCES quiz_sessions(id) ON DELETE CASCADE,
-  question_id UUID REFERENCES quiz_questions(id),
-  choice_id UUID REFERENCES quiz_choices(id),
-  response_time_ms INT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-### 4. 매칭 시스템
-
-#### `personality_admin_mapping` - 성격유형별 작가 매칭
-```sql
-CREATE TABLE personality_admin_mapping (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  personality_code VARCHAR(10) REFERENCES personality_types(code),
-  admin_id UUID REFERENCES photographers(id) ON DELETE CASCADE,
-  compatibility_score INT CHECK (compatibility_score >= 1 AND compatibility_score <= 10),
-  notes TEXT,
-  is_primary BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-#### `personality_photos` - 성격유형별 추천 사진 갤러리
-```sql
-CREATE TABLE personality_photos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  personality_code VARCHAR(10) REFERENCES personality_types(code),
-  photo_id UUID REFERENCES photos(id) ON DELETE CASCADE,
-  is_representative BOOLEAN DEFAULT false,
-  display_order INT CHECK (display_order >= 1 AND display_order <= 9),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+**Note**: 성향 진단 시스템 삭제와 함께 관련 매칭 테이블들도 제거되었습니다.
 
 ### 5. AI 이미지 생성
 
@@ -252,8 +157,8 @@ CREATE TABLE personality_photos (
 ```sql
 CREATE TABLE ai_image_generations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  quiz_session_id UUID REFERENCES quiz_sessions(id),
-  personality_code VARCHAR(10) REFERENCES personality_types(code),
+  quiz_session_id UUID, -- quiz_sessions 테이블 삭제로 참조 제거
+  personality_code VARCHAR(10), -- personality_types 테이블 삭제로 참조 제거
   user_uploaded_image_url TEXT NOT NULL,
   generated_prompt TEXT NOT NULL,
   api_provider TEXT CHECK (api_provider IN ('openai_dalle', 'runway', 'midjourney')),
@@ -269,6 +174,8 @@ CREATE TABLE ai_image_generations (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+**Note**: quiz_session_id와 personality_code의 외래키 참조가 제거되었으나 컬럼은 유지됩니다.
 
 ### 6. 예약 시스템 (기존 유지)
 
@@ -287,21 +194,21 @@ CREATE TABLE available_slots (
 );
 ```
 
-#### `inquiries` - 문의/예약 정보 (확장됨)
+#### `inquiries` - 문의/예약 정보
 ```sql
 CREATE TABLE inquiries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   phone TEXT NOT NULL,
 
-  -- 새로운 성향 진단 관련 컬럼들
-  quiz_session_id UUID REFERENCES quiz_sessions(id),
-  selected_personality_code VARCHAR(10) REFERENCES personality_types(code),
+  -- 성향 진단 관련 컬럼들 (참조 제거됨)
+  quiz_session_id UUID, -- quiz_sessions 테이블 삭제로 참조 제거
+  selected_personality_code VARCHAR(10), -- personality_types 테이블 삭제로 참조 제거
   matched_admin_id UUID REFERENCES photographers(id),
   selected_slot_id UUID REFERENCES available_slots(id),
   ai_generation_id UUID REFERENCES ai_image_generations(id),
 
-  -- 기존 레거시 컬럼들 (하위 호환)
+  -- 기존 컬럼들
   instagram_id TEXT,
   gender TEXT CHECK (gender IN ('male', 'female', 'other')),
   desired_date DATE,
@@ -314,6 +221,15 @@ CREATE TABLE inquiries (
   selected_category_id UUID REFERENCES categories(id),
   selection_path TEXT[],
   selection_history JSONB,
+  
+  -- 추가 필드 (2025.08.24)
+  conversation_preference VARCHAR,
+  conversation_topics VARCHAR,
+  favorite_music VARCHAR,
+  shooting_meaning VARCHAR,
+  photographer_id UUID REFERENCES photographers(id),
+  product_id UUID REFERENCES products(id),
+  user_id UUID REFERENCES users(id),
 
   status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'reserved', 'completed')),
   admin_note TEXT,
@@ -647,71 +563,23 @@ JOIN user_permissions up ON np.required_role = up.role
 JOIN menu_items mi ON np.menu_id = mi.id;
 ```
 
-### 성향 진단 점수 계산
-```sql
-WITH user_responses AS (
-  SELECT 
-    qr.session_id,
-    cw.personality_code,
-    SUM(cw.weight) as total_score
-  FROM quiz_responses qr
-  JOIN choice_weights cw ON qr.choice_id = cw.choice_id
-  WHERE qr.session_id = $1
-  GROUP BY qr.session_id, cw.personality_code
-)
-SELECT personality_code 
-FROM user_responses 
-ORDER BY total_score DESC 
-LIMIT 1;
-```
+### ~~성향 진단 점수 계산~~ (삭제됨)
+관련 테이블들이 삭제되어 더 이상 사용되지 않습니다.
 
-### 작가 매칭 로직 (권한 고려)
-```sql
-SELECT 
-  p.id,
-  p.name,
-  p.email,
-  p.phone,
-  p.bio,
-  p.years_experience,
-  p.specialties,
-  p.studio_location,
-  p.price_range_min,
-  p.price_range_max,
-  pam.compatibility_score,
-  pam.is_primary
-FROM personality_admin_mapping pam
-JOIN photographers p ON pam.admin_id = p.id
-WHERE pam.personality_code = $1
-  AND p.approval_status = 'approved'
-  AND p.application_status = 'approved'
-ORDER BY pam.is_primary DESC, pam.compatibility_score DESC
-LIMIT 3;
-```
+### ~~작가 매칭 로직~~ (삭제됨)
+personality_admin_mapping 테이블이 삭제되어 더 이상 사용되지 않습니다.
 
 ## 🔐 RLS (Row Level Security) 정책
 
 ### 공개 접근 허용 (익명 사용자)
 ```sql
--- 성격유형 시스템 (읽기 전용)
-ALTER TABLE personality_types ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can read personality types" ON personality_types FOR SELECT USING (is_active = true);
-
--- 퀴즈 시스템 (읽기 및 생성)
-ALTER TABLE quiz_sessions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can create and read their own sessions" ON quiz_sessions
-  FOR ALL USING (user_ip = inet_client_addr());
-
 -- AI 이미지 생성 (생성 및 읽기)
 ALTER TABLE ai_image_generations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own generations" ON ai_image_generations
-  FOR ALL USING (
-    quiz_session_id IN (
-      SELECT id FROM quiz_sessions 
-      WHERE user_ip = inet_client_addr()
-    )
-  );
+  FOR ALL USING (true); -- quiz_sessions 테이블 삭제로 인해 정책 단순화
 ```
+
+**Note**: 성향 진단 관련 테이블들이 삭제되어 해당 RLS 정책들도 제거되었습니다.
 
 ### 관리자 권한 (RBAC 기반)
 ```sql
@@ -773,15 +641,8 @@ CREATE INDEX idx_admins_email ON admins(email);
 CREATE INDEX idx_photographers_approval ON photographers(approval_status);
 CREATE INDEX idx_photographers_application ON photographers(application_status);
 
--- 성향 진단 관련
-CREATE INDEX idx_quiz_responses_session_id ON quiz_responses(session_id);
-CREATE INDEX idx_choice_weights_choice_id ON choice_weights(choice_id);
-CREATE INDEX idx_quiz_sessions_completed ON quiz_sessions(is_completed, completed_at);
-
--- 매칭 시스템 관련
-CREATE INDEX idx_personality_admin_mapping_personality ON personality_admin_mapping(personality_code);
-CREATE INDEX idx_personality_admin_mapping_admin ON personality_admin_mapping(admin_id);
-CREATE INDEX idx_personality_photos_personality ON personality_photos(personality_code);
+-- 성향 진단 관련 인덱스 (삭제됨)
+-- 관련 테이블들이 모두 삭제되어 인덱스도 제거되었습니다.
 
 -- AI 이미지 생성 관련
 CREATE INDEX idx_ai_generations_session_id ON ai_image_generations(quiz_session_id);
@@ -794,6 +655,43 @@ CREATE INDEX idx_inquiries_personality ON inquiries(selected_personality_code);
 ```
 
 ## 🔄 마이그레이션 이력
+
+### 2025년 9월 15일 - 초대 코드 시스템 제거
+1. **테이블 삭제**:
+   - `admin_invite_codes` 테이블 완전 제거
+   - 초대 코드 기반 가입 시스템 폐기
+
+2. **코드 정리**:
+   - `lib/actions/admin-auth.ts` 파일 완전 삭제
+   - `components/admin/invite-code-manager.tsx` 컴포넌트 제거
+   - `components/admin/admin-signup-form.tsx` 컴포넌트 제거
+   - `app/admin/signup/` 및 `app/admin/invites/` 페이지 제거
+
+3. **간소화된 인증 시스템**:
+   - Admin 사용자는 `auth.users`에만 저장
+   - 초대 코드 없이 직접 생성 방식으로 변경
+   - 기존 signup-form.tsx에서 Admin 관련 기능 모두 제거
+
+### 2025년 9월 15일 (이전) - 성향 진단 시스템 제거
+1. **가중치 관련 테이블 삭제**:
+   - `personality_types` - 성격유형 정의 테이블 삭제
+   - `quiz_questions` - 설문 질문 테이블 삭제
+   - `quiz_choices` - 질문별 선택지 테이블 삭제
+   - `choice_weights` - 가중치 테이블 삭제
+   - `quiz_sessions` - 진단 세션 테이블 삭제
+   - `quiz_responses` - 응답 저장 테이블 삭제
+   - `personality_admin_mapping` - 작가 매칭 테이블 삭제
+   - `personality_photos` - 추천 사진 테이블 삭제
+
+2. **관련 기능 정리**:
+   - Quiz 페이지 UI는 유지되나 기능은 제거
+   - Admin 패널의 성향 관리 페이지 삭제
+   - 서버 액션 파일 삭제 (quiz.ts, personality.ts, personality-mapping.ts)
+   - 외래키 참조 제거 (ai_image_generations, inquiries 테이블의 참조 컬럼은 유지)
+
+3. **영향받는 테이블**:
+   - `ai_image_generations`: quiz_session_id, personality_code 컬럼 유지 (참조 제거)
+   - `inquiries`: quiz_session_id, selected_personality_code 컬럼 유지 (참조 제거)
 
 ### 2025년 8월 31일 - Multi-PG 결제 시스템 및 상품 관리 통합
 1. **상품 관리 통합**:

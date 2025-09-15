@@ -12,84 +12,8 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-      admin_invite_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          created_by: string | null
-          expires_at: string
-          id: string
-          notes: string | null
-          role: string | null
-          used_at: string | null
-          used_by: string | null
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          created_by?: string | null
-          expires_at: string
-          id?: string
-          notes?: string | null
-          role?: string | null
-          used_at?: string | null
-          used_by?: string | null
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          created_by?: string | null
-          expires_at?: string
-          id?: string
-          notes?: string | null
-          role?: string | null
-          used_at?: string | null
-          used_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_invite_codes_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_invite_codes_used_by_fkey"
-            columns: ["used_by"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       admins: {
         Row: {
           created_at: string | null
@@ -181,22 +105,7 @@ export type Database = {
           user_rating?: number | null
           user_uploaded_image_url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "ai_image_generations_personality_code_fkey"
-            columns: ["personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "ai_image_generations_quiz_session_id_fkey"
-            columns: ["quiz_session_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       available_slots: {
         Row: {
@@ -296,45 +205,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "photos"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      choice_weights: {
-        Row: {
-          choice_id: string | null
-          created_at: string | null
-          id: string
-          personality_code: string | null
-          weight: number
-        }
-        Insert: {
-          choice_id?: string | null
-          created_at?: string | null
-          id?: string
-          personality_code?: string | null
-          weight: number
-        }
-        Update: {
-          choice_id?: string | null
-          created_at?: string | null
-          id?: string
-          personality_code?: string | null
-          weight?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "choice_weights_choice_id_fkey"
-            columns: ["choice_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_choices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "choice_weights_personality_code_fkey"
-            columns: ["personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
           },
         ]
       }
@@ -499,25 +369,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inquiries_quiz_session_id_fkey"
-            columns: ["quiz_session_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_sessions"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "inquiries_selected_category_id_fkey"
             columns: ["selected_category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_selected_personality_code_fkey"
-            columns: ["selected_personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "inquiries_selected_slot_id_fkey"
@@ -739,144 +595,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      personality_admin_mapping: {
-        Row: {
-          admin_id: string | null
-          compatibility_score: number | null
-          created_at: string | null
-          id: string
-          is_primary: boolean | null
-          notes: string | null
-          personality_code: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          admin_id?: string | null
-          compatibility_score?: number | null
-          created_at?: string | null
-          id?: string
-          is_primary?: boolean | null
-          notes?: string | null
-          personality_code?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          admin_id?: string | null
-          compatibility_score?: number | null
-          created_at?: string | null
-          id?: string
-          is_primary?: boolean | null
-          notes?: string | null
-          personality_code?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "personality_admin_mapping_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "personality_admin_mapping_personality_code_fkey"
-            columns: ["personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
-      personality_photos: {
-        Row: {
-          created_at: string | null
-          display_order: number | null
-          id: string
-          is_representative: boolean | null
-          personality_code: string | null
-          photo_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_order?: number | null
-          id?: string
-          is_representative?: boolean | null
-          personality_code?: string | null
-          photo_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_order?: number | null
-          id?: string
-          is_representative?: boolean | null
-          personality_code?: string | null
-          photo_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "personality_photos_personality_code_fkey"
-            columns: ["personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "personality_photos_photo_id_fkey"
-            columns: ["photo_id"]
-            isOneToOne: false
-            referencedRelation: "photos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      personality_types: {
-        Row: {
-          ai_preview_prompt: string
-          code: string
-          created_at: string | null
-          description: string
-          display_order: number | null
-          example_person: string | null
-          is_active: boolean | null
-          name: string
-          recommended_locations: string[] | null
-          recommended_props: string[] | null
-          representative_image_url: string | null
-          style_keywords: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          ai_preview_prompt: string
-          code: string
-          created_at?: string | null
-          description: string
-          display_order?: number | null
-          example_person?: string | null
-          is_active?: boolean | null
-          name: string
-          recommended_locations?: string[] | null
-          recommended_props?: string[] | null
-          representative_image_url?: string | null
-          style_keywords?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          ai_preview_prompt?: string
-          code?: string
-          created_at?: string | null
-          description?: string
-          display_order?: number | null
-          example_person?: string | null
-          is_active?: boolean | null
-          name?: string
-          recommended_locations?: string[] | null
-          recommended_props?: string[] | null
-          representative_image_url?: string | null
-          style_keywords?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       photo_categories: {
         Row: {
@@ -1217,173 +935,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "photographers"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_choices: {
-        Row: {
-          choice_image_url: string | null
-          choice_text: string
-          created_at: string | null
-          display_order: number
-          id: string
-          is_active: boolean | null
-          question_id: string | null
-        }
-        Insert: {
-          choice_image_url?: string | null
-          choice_text: string
-          created_at?: string | null
-          display_order: number
-          id?: string
-          is_active?: boolean | null
-          question_id?: string | null
-        }
-        Update: {
-          choice_image_url?: string | null
-          choice_text?: string
-          created_at?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean | null
-          question_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_choices_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_questions: {
-        Row: {
-          created_at: string | null
-          display_order: number
-          id: string
-          is_active: boolean | null
-          part: string
-          question_image_url: string | null
-          question_text: string
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_order: number
-          id?: string
-          is_active?: boolean | null
-          part: string
-          question_image_url?: string | null
-          question_text: string
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_order?: number
-          id?: string
-          is_active?: boolean | null
-          part?: string
-          question_image_url?: string | null
-          question_text?: string
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      quiz_responses: {
-        Row: {
-          choice_id: string | null
-          created_at: string | null
-          id: string
-          question_id: string | null
-          response_time_ms: number | null
-          session_id: string | null
-        }
-        Insert: {
-          choice_id?: string | null
-          created_at?: string | null
-          id?: string
-          question_id?: string | null
-          response_time_ms?: number | null
-          session_id?: string | null
-        }
-        Update: {
-          choice_id?: string | null
-          created_at?: string | null
-          id?: string
-          question_id?: string | null
-          response_time_ms?: number | null
-          session_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_responses_choice_id_fkey"
-            columns: ["choice_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_choices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_responses_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_responses_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_sessions: {
-        Row: {
-          calculated_personality_code: string | null
-          completed_at: string | null
-          created_at: string | null
-          id: string
-          is_completed: boolean | null
-          started_at: string
-          total_score_data: Json | null
-          user_agent: string | null
-          user_ip: unknown | null
-        }
-        Insert: {
-          calculated_personality_code?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          is_completed?: boolean | null
-          started_at?: string
-          total_score_data?: Json | null
-          user_agent?: string | null
-          user_ip?: unknown | null
-        }
-        Update: {
-          calculated_personality_code?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          id?: string
-          is_completed?: boolean | null
-          started_at?: string
-          total_score_data?: Json | null
-          user_agent?: string | null
-          user_ip?: unknown | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_sessions_calculated_personality_code_fkey"
-            columns: ["calculated_personality_code"]
-            isOneToOne: false
-            referencedRelation: "personality_types"
-            referencedColumns: ["code"]
           },
         ]
       }
@@ -1788,6 +1339,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       cancel_reservation: {
         Args: { p_inquiry_id: string }
         Returns: boolean
@@ -1837,13 +1392,101 @@ export type Database = {
           start_time: string
         }[]
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       is_slot_available: {
         Args: { p_slot_id: string }
         Returns: boolean
       }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
       reserve_slot: {
         Args: { p_inquiry_id: string; p_slot_id: string }
         Returns: boolean
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
@@ -1973,9 +1616,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

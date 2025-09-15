@@ -27,14 +27,32 @@ import {
 } from "lucide-react";
 import { 
   getAnalyticsData,
-  getQuizAnalytics,
   getBookingAnalytics,
   getAIGenerationAnalytics,
   type AnalyticsData,
-  type QuizAnalytics,
   type BookingAnalytics,
   type AIGenerationAnalytics
 } from "@/lib/actions/analytics";
+
+// Quiz Analytics type definition (removed from server)
+type QuizAnalytics = {
+  totalSessions: number;
+  completedSessions: number;
+  completionRate: number;
+  averageCompletionTime: number;
+  personalityDistribution: {
+    type: string;
+    name: string;
+    count: number;
+    percentage: number;
+  }[];
+  dailyStats: {
+    date: string;
+    started: number;
+    completed: number;
+    completionRate: number;
+  }[];
+};
 
 type TimeRange = '7d' | '30d' | '90d' | '1y';
 
@@ -55,9 +73,8 @@ export function AnalyticsDashboard() {
     setError(null);
     
     try {
-      const [analyticsResult, quizResult, bookingResult, aiResult] = await Promise.all([
+      const [analyticsResult, bookingResult, aiResult] = await Promise.all([
         getAnalyticsData(timeRange),
-        getQuizAnalytics(timeRange),
         getBookingAnalytics(timeRange),
         getAIGenerationAnalytics(timeRange)
       ]);
@@ -68,9 +85,15 @@ export function AnalyticsDashboard() {
         setError(analyticsResult.error || '전체 분석 데이터 로드 실패');
       }
 
-      if (quizResult.success) {
-        setQuizAnalytics(quizResult.data || null);
-      }
+      // Mock quiz analytics data (tables removed)
+      setQuizAnalytics({
+        totalSessions: 0,
+        completedSessions: 0,
+        completionRate: 0,
+        averageCompletionTime: 0,
+        personalityDistribution: [],
+        dailyStats: []
+      });
 
       if (bookingResult.success) {
         setBookingAnalytics(bookingResult.data || null);

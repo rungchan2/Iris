@@ -26,6 +26,10 @@ export const inquiryFormSchema = z.object({
   conversation_topics: z.string().optional(),
   favorite_music: z.string().optional(),
   shooting_meaning: z.string().optional(),
+
+  // Payment Info (Step 5)
+  paymentKey: z.string().optional(),
+  orderId: z.string().optional(),
 })
 
 export type InquiryFormValues = z.infer<typeof inquiryFormSchema>
