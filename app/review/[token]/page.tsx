@@ -1,7 +1,7 @@
 import { getReviewByToken } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review/review-form";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { Clock, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
 interface ReviewPageProps {
   params: Promise<{
@@ -42,12 +42,12 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
               )}
             </div>
             <div className="mt-6">
-              <a 
+              <Link 
                 href="/"
                 className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
               >
                 홈페이지로 돌아가기
-              </a>
+              </Link>
             </div>
           </div>
         </div>

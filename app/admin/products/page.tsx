@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Select,
   SelectContent,
@@ -20,7 +19,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   DropdownMenu,
@@ -42,9 +40,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb'
 import { 
-  Package, Search, Filter, Plus, Edit, Trash2, 
+  Package, Search, Plus, Edit, Trash2, 
   CheckCircle, XCircle, Clock, Eye, Star,
-  Users, Camera, MapPin, Calendar, DollarSign,
+  Users, Camera, MapPin, Calendar,
   Check, X, MoreVertical
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -117,11 +115,7 @@ export default function ProductsManagement() {
 
   const supabase = createClient()
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       await Promise.all([
@@ -133,7 +127,11 @@ export default function ProductsManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const loadProducts = async () => {
     try {

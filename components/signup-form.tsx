@@ -92,7 +92,10 @@ const KOREAN_CITIES = [
   '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
 ];
 
-interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {}
+interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  className?: string;
+  props?: React.ComponentPropsWithoutRef<"div">;
+}
 
 export function SignupForm({
   className,

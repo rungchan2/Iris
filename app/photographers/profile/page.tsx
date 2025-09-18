@@ -126,7 +126,7 @@ export default function PhotographerProfilePage() {
     if (!profile) return 0
 
     let completed = 0
-    let total = 8
+    const total = 8
 
     // Basic info (4 items)
     if (profile.service_regions && profile.service_regions.length > 0) completed++

@@ -81,7 +81,7 @@ export default async function AdminReviewsPage() {
   // Calculate overall statistics
   const totalReviews = reviews?.length || 0;
   const overallAverage = totalReviews > 0
-    ? reviews?.reduce((sum, review) => sum + (review.rating || 0), 0)! / totalReviews
+    ? reviews?.reduce((sum, review) => sum + (review.rating || 0), 0) || 0 / totalReviews
     : 0;
   const publicReviewsCount = reviews?.filter(review => review.is_public === true).length || 0;
   const anonymousReviewsCount = reviews?.filter(review => review.is_anonymous === true).length || 0;
