@@ -243,12 +243,12 @@ export async function approvePhotographerApplication(
 
     // 포트폴리오 사진들을 공개로 변경
     const { error: portfolioError } = await supabase
-      .from('admin_portfolio_photos')
+      .from('photos')
       .update({
         is_public: true,
         updated_at: new Date().toISOString()
       })
-      .eq('admin_id', applicationId)
+      .eq('photographer_id', applicationId)
 
     if (portfolioError) {
       console.warn('Portfolio public status update failed:', portfolioError)
@@ -450,20 +450,6 @@ export async function getPhotographerById(id: string) {
           display_order,
           is_representative,
           view_count
-        ),
-        personality_admin_mapping(
-          personality_code,
-          compatibility_score,
-          is_primary,
-          notes,
-          personality_types(
-            code,
-            name,
-            description,
-            style_keywords,
-            recommended_locations,
-            recommended_props
-          )
         )
       `)
       .eq('id', id)
@@ -487,20 +473,9 @@ export async function getPhotographerById(id: string) {
 
 export async function getPersonalityTypes() {
   try {
-    const supabase = await createClient()
-    
-    const { data: personalityTypes, error } = await supabase
-      .from('personality_types')
-      .select('code, name, display_order')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-    
-    if (error) {
-      console.error('Error fetching personality types:', error.message)
-      return { error: error.message }
-    }
-    
-    return { data: personalityTypes || [] }
+    // personality_types 테이블이 삭제되었으므로 빈 배열 반환
+    // TODO: 새로운 매칭 시스템으로 교체 필요
+    return { data: [] }
   } catch (error) {
     console.error('Error in getPersonalityTypes:', error)
     return { error: 'Failed to fetch personality types' }

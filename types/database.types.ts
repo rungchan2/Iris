@@ -208,6 +208,47 @@ export type Database = {
           },
         ]
       }
+      embedding_jobs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          job_status: string | null
+          job_type: string
+          processed_at: string | null
+          requested_by: string | null
+          target_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_status?: string | null
+          job_type: string
+          processed_at?: string | null
+          requested_by?: string | null
+          target_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          job_status?: string | null
+          job_type?: string
+          processed_at?: string | null
+          requested_by?: string | null
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embedding_jobs_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inquiries: {
         Row: {
           admin_note: string | null
@@ -417,6 +458,169 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      matching_performance_logs: {
+        Row: {
+          algorithm_version: string | null
+          created_at: string | null
+          embedding_calculation_ms: number | null
+          id: string
+          session_id: string
+          total_candidates: number | null
+          total_processing_ms: number | null
+          weight_config_used: Json | null
+        }
+        Insert: {
+          algorithm_version?: string | null
+          created_at?: string | null
+          embedding_calculation_ms?: number | null
+          id?: string
+          session_id: string
+          total_candidates?: number | null
+          total_processing_ms?: number | null
+          weight_config_used?: Json | null
+        }
+        Update: {
+          algorithm_version?: string | null
+          created_at?: string | null
+          embedding_calculation_ms?: number | null
+          id?: string
+          session_id?: string
+          total_candidates?: number | null
+          total_processing_ms?: number | null
+          weight_config_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matching_performance_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "matching_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matching_results: {
+        Row: {
+          clicked_at: string | null
+          communication_psychology_score: number
+          companion_score: number
+          contacted_at: string | null
+          created_at: string | null
+          id: string
+          keyword_bonus: number | null
+          photographer_id: string
+          purpose_story_score: number
+          rank_position: number
+          session_id: string
+          style_emotion_score: number
+          total_score: number
+          updated_at: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          communication_psychology_score: number
+          companion_score: number
+          contacted_at?: string | null
+          created_at?: string | null
+          id?: string
+          keyword_bonus?: number | null
+          photographer_id: string
+          purpose_story_score: number
+          rank_position: number
+          session_id: string
+          style_emotion_score: number
+          total_score: number
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          communication_psychology_score?: number
+          companion_score?: number
+          contacted_at?: string | null
+          created_at?: string | null
+          id?: string
+          keyword_bonus?: number | null
+          photographer_id?: string
+          purpose_story_score?: number
+          rank_position?: number
+          session_id?: string
+          style_emotion_score?: number
+          total_score?: number
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matching_results_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "matching_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matching_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          final_user_embedding: string | null
+          id: string
+          ip_address: unknown | null
+          responses: Json
+          session_token: string
+          subjective_embedding: string | null
+          subjective_text: string | null
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          final_user_embedding?: string | null
+          id?: string
+          ip_address?: unknown | null
+          responses: Json
+          session_token: string
+          subjective_embedding?: string | null
+          subjective_text?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          final_user_embedding?: string | null
+          id?: string
+          ip_address?: unknown | null
+          responses?: Json
+          session_token?: string
+          subjective_embedding?: string | null
+          subjective_text?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matching_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_logs: {
         Row: {
@@ -632,6 +836,106 @@ export type Database = {
           },
         ]
       }
+      photographer_keywords: {
+        Row: {
+          created_at: string | null
+          keyword: string
+          photographer_id: string
+          portfolio_count: number | null
+          proficiency_level: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          keyword: string
+          photographer_id: string
+          portfolio_count?: number | null
+          proficiency_level?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          keyword?: string
+          photographer_id?: string
+          portfolio_count?: number | null
+          proficiency_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_keywords_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photographer_profiles: {
+        Row: {
+          communication_psychology_description: string | null
+          communication_psychology_embedding: string | null
+          companion_description: string | null
+          companion_embedding: string | null
+          companion_types: string[]
+          created_at: string | null
+          embeddings_generated_at: string | null
+          photographer_id: string
+          price_max: number
+          price_min: number
+          profile_completed: boolean | null
+          purpose_story_description: string | null
+          purpose_story_embedding: string | null
+          service_regions: string[]
+          style_emotion_description: string | null
+          style_emotion_embedding: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          communication_psychology_description?: string | null
+          communication_psychology_embedding?: string | null
+          companion_description?: string | null
+          companion_embedding?: string | null
+          companion_types?: string[]
+          created_at?: string | null
+          embeddings_generated_at?: string | null
+          photographer_id: string
+          price_max?: number
+          price_min?: number
+          profile_completed?: boolean | null
+          purpose_story_description?: string | null
+          purpose_story_embedding?: string | null
+          service_regions?: string[]
+          style_emotion_description?: string | null
+          style_emotion_embedding?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          communication_psychology_description?: string | null
+          communication_psychology_embedding?: string | null
+          companion_description?: string | null
+          companion_embedding?: string | null
+          companion_types?: string[]
+          created_at?: string | null
+          embeddings_generated_at?: string | null
+          photographer_id?: string
+          price_max?: number
+          price_min?: number
+          profile_completed?: boolean | null
+          purpose_story_description?: string | null
+          purpose_story_embedding?: string | null
+          service_regions?: string[]
+          style_emotion_description?: string | null
+          style_emotion_embedding?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photographer_profiles_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: true
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photographers: {
         Row: {
           account_holder: string | null
@@ -757,9 +1061,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           display_order: number | null
+          embedding_generated_at: string | null
           filename: string
           height: number | null
           id: string
+          image_embedding: string | null
           is_active: boolean | null
           is_public: boolean | null
           is_representative: boolean | null
@@ -777,9 +1083,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          embedding_generated_at?: string | null
           filename: string
           height?: number | null
           id?: string
+          image_embedding?: string | null
           is_active?: boolean | null
           is_public?: boolean | null
           is_representative?: boolean | null
@@ -797,9 +1105,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          embedding_generated_at?: string | null
           filename?: string
           height?: number | null
           id?: string
+          image_embedding?: string | null
           is_active?: boolean | null
           is_public?: boolean | null
           is_representative?: boolean | null
@@ -1267,6 +1577,240 @@ export type Database = {
             columns: ["photographer_id"]
             isOneToOne: false
             referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_choices: {
+        Row: {
+          choice_description: string | null
+          choice_embedding: string | null
+          choice_key: string
+          choice_label: string
+          choice_order: number
+          created_at: string | null
+          embedding_generated_at: string | null
+          id: string
+          is_active: boolean | null
+          question_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          choice_description?: string | null
+          choice_embedding?: string | null
+          choice_key: string
+          choice_label: string
+          choice_order: number
+          created_at?: string | null
+          embedding_generated_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          choice_description?: string | null
+          choice_embedding?: string | null
+          choice_key?: string
+          choice_label?: string
+          choice_order?: number
+          created_at?: string | null
+          embedding_generated_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_choices_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_images: {
+        Row: {
+          created_at: string | null
+          embedding_generated_at: string | null
+          id: string
+          image_description: string | null
+          image_embedding: string | null
+          image_key: string
+          image_label: string
+          image_order: number
+          image_url: string
+          is_active: boolean | null
+          question_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          embedding_generated_at?: string | null
+          id?: string
+          image_description?: string | null
+          image_embedding?: string | null
+          image_key: string
+          image_label: string
+          image_order: number
+          image_url: string
+          is_active?: boolean | null
+          question_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          embedding_generated_at?: string | null
+          id?: string
+          image_description?: string | null
+          image_embedding?: string | null
+          image_key?: string
+          image_label?: string
+          image_order?: number
+          image_url?: string
+          is_active?: boolean | null
+          question_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_images_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "survey_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_questions: {
+        Row: {
+          base_weight: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_hard_filter: boolean | null
+          question_description: string | null
+          question_key: string
+          question_order: number
+          question_title: string
+          question_type: string
+          updated_at: string | null
+          weight_category: string | null
+        }
+        Insert: {
+          base_weight: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hard_filter?: boolean | null
+          question_description?: string | null
+          question_key: string
+          question_order: number
+          question_title: string
+          question_type: string
+          updated_at?: string | null
+          weight_category?: string | null
+        }
+        Update: {
+          base_weight?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hard_filter?: boolean | null
+          question_description?: string | null
+          question_key?: string
+          question_order?: number
+          question_title?: string
+          question_type?: string
+          updated_at?: string | null
+          weight_category?: string | null
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          setting_description: string | null
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          setting_description?: string | null
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          setting_description?: string | null
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          feedback_type: string
+          id: string
+          photographer_id: string | null
+          rating: number | null
+          session_id: string
+          was_booked: boolean | null
+          was_contacted: boolean | null
+          would_recommend: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          feedback_type: string
+          id?: string
+          photographer_id?: string | null
+          rating?: number | null
+          session_id: string
+          was_booked?: boolean | null
+          was_contacted?: boolean | null
+          would_recommend?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          feedback_type?: string
+          id?: string
+          photographer_id?: string | null
+          rating?: number | null
+          session_id?: string
+          was_booked?: boolean | null
+          was_contacted?: boolean | null
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_photographer_id_fkey"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "matching_sessions"
             referencedColumns: ["id"]
           },
         ]

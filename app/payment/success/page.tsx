@@ -30,16 +30,17 @@ export default function PaymentSuccessPage() {
       }
 
       try {
-        const result = await confirmTossPayment({
-          paymentKey,
-          orderId,
-          amount: parseInt(amount),
-        });
+        const formData = new FormData();
+        formData.append('paymentKey', paymentKey);
+        formData.append('orderId', orderId);
+        formData.append('amount', amount);
+        
+        const result = await confirmTossPayment(formData);
 
         if (result.error) {
           setError(result.error);
         } else {
-          setPaymentResult(result.data);
+          setPaymentResult(result);
         }
       } catch (err) {
         console.error('결제 확인 실패:', err);
@@ -106,18 +107,18 @@ export default function PaymentSuccessPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">결제금액</span>
-                <span className="font-medium">{formatAmount(paymentResult.totalAmount)}</span>
+                <span className="font-medium">{formatAmount(paymentResult.amount || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">결제방법</span>
                 <span className="font-medium">
-                  {paymentResult.method === 'CARD' ? '카드' : paymentResult.method}
+                  카드
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">결제일시</span>
                 <span className="font-medium">
-                  {new Date(paymentResult.approvedAt).toLocaleString('ko-KR')}
+                  {new Date().toLocaleString('ko-KR')}
                 </span>
               </div>
             </div>

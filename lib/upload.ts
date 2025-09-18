@@ -97,6 +97,81 @@ export async function uploadPhoto(file: File, userId: string, options?: UploadOp
   }
 }
 
+// Survey 이미지 업로드 함수
+export async function uploadSurveyImage(
+  file: File, 
+  questionId: string,
+  imageLabel: string,
+  options?: UploadOptions
+): Promise<{ url: string; imageRecord: any }> {
+  const supabase = createClient()
+
+  // Compress image
+  const compressedFile = await imageCompression(file, {
+    maxSizeMB: 1.5,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+    onProgress: options?.onProgress,
+  })
+
+  // Generate unique filename
+  const timestamp = Date.now()
+  const ext = file.name.split(".").pop()
+  const filename = `survey-${questionId}-${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`
+  
+  // Survey images path
+  const path = `survey-images/${questionId}/${filename}`
+
+  // Upload to Supabase Storage
+  const { error } = await supabase.storage.from("photos").upload(path, compressedFile, {
+    cacheControl: "3600",
+    upsert: false,
+  })
+
+  if (error) throw error
+
+  // Get public URL
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("photos").getPublicUrl(path)
+
+  // Generate image key
+  const imageKey = `${questionId}-${timestamp}`
+
+  // Get next order
+  const { data: existingImages } = await supabase
+    .from('survey_images')
+    .select('image_order')
+    .eq('question_id', questionId)
+    .order('image_order', { ascending: false })
+    .limit(1)
+
+  const nextOrder = existingImages && existingImages.length > 0 
+    ? existingImages[0].image_order + 1 
+    : 1
+
+  // Save to survey_images table
+  const { data: imageRecord, error: dbError } = await supabase
+    .from("survey_images")
+    .insert({
+      question_id: questionId,
+      image_key: imageKey,
+      image_label: imageLabel,
+      image_url: publicUrl,
+      image_order: nextOrder,
+      is_active: true
+    })
+    .select()
+    .single()
+
+  if (dbError) throw dbError
+
+  return {
+    url: publicUrl,
+    imageRecord
+  }
+}
+
 export async function uploadMultiplePhotos(
   files: File[],
   userId: string,
@@ -110,6 +185,29 @@ export async function uploadMultiplePhotos(
         onProgress: (progress) => onProgress?.(i, progress),
       })
       results.push({ success: true, ...result })
+    } catch (error) {
+      results.push({ success: false, error, file: files[i] })
+    }
+  }
+
+  return results
+}
+
+// 범용 업로드 함수
+export async function uploadMultipleSurveyImages(
+  files: File[],
+  questionId: string,
+  onProgress?: (fileIndex: number, progress: number) => void,
+): Promise<Array<{ success: boolean; imageRecord?: any; error?: any; file?: File }>> {
+  const results: Array<{ success: boolean; imageRecord?: any; error?: any; file?: File }> = []
+
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const imageLabel = files[i].name.split('.')[0] // Use filename without extension as label
+      const result = await uploadSurveyImage(files[i], questionId, imageLabel, {
+        onProgress: (progress) => onProgress?.(i, progress),
+      })
+      results.push({ success: true, imageRecord: result.imageRecord })
     } catch (error) {
       results.push({ success: false, error, file: files[i] })
     }

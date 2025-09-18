@@ -141,20 +141,6 @@ export async function getPhotographerById(id: string) {
           is_representative,
           view_count,
           is_public
-        ),
-        personality_admin_mapping(
-          personality_code,
-          compatibility_score,
-          is_primary,
-          notes,
-          personality_types(
-            code,
-            name,
-            description,
-            style_keywords,
-            recommended_locations,
-            recommended_props
-          )
         )
       `)
       .eq('id', id)
@@ -178,20 +164,9 @@ export async function getPhotographerById(id: string) {
 
 export async function getPersonalityTypes() {
   try {
-    const supabase = await createClient()
-    
-    const { data: personalityTypes, error } = await supabase
-      .from('personality_types')
-      .select('code, name, display_order')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-    
-    if (error) {
-      console.error('Error fetching personality types:', error.message)
-      return { error: error.message }
-    }
-    
-    return { data: personalityTypes || [] }
+    // personality_types 테이블이 삭제되었으므로 빈 배열 반환
+    // TODO: 새로운 매칭 시스템으로 교체 필요
+    return { data: [] }
   } catch (error) {
     console.error('Error in getPersonalityTypes:', error)
     return { error: 'Failed to fetch personality types' }

@@ -31,41 +31,13 @@ export function PermissionGuard({
           return
         }
 
-        // Check if user is admin
-        const isAdmin = session.user.user_metadata?.user_type === 'admin'
-        
-        // Check if user is photographer
-        const { data: photographer } = await supabase
-          .from('photographers')
-          .select('id')
-          .eq('id', session.user.id)
-          .single()
-
-        const isPhotographer = !!photographer
+        // Check user type from raw_user_meta_data
+        const userType = session.user.user_metadata?.user_type
+        const isAdmin = userType === 'admin'
+        const isPhotographer = userType === 'photographer'
 
         // Admin has access to everything
         if (isAdmin) {
-          // Admin인데 photographers 테이블에 프로필이 없으면 기본 프로필 생성
-          if (!photographer) {
-            const { error: createError } = await supabase
-              .from('photographers')
-              .insert({
-                id: session.user.id,
-                email: session.user.email || '',
-                name: session.user.user_metadata?.name || 'Admin User',
-                phone: '',
-                bio: 'Iris 관리자',
-                personality_type: '',
-                directing_style: '',
-                photography_approach: '',
-                youtube_intro_url: '',
-                profile_image_url: '',
-              })
-            
-            if (createError) {
-              console.error('Failed to create admin profile:', createError)
-            }
-          }
           setHasPermission(true)
           setLoading(false)
           return

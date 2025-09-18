@@ -4,7 +4,7 @@
  * 이 파일은 결제 시스템에서 사용되는 모든 상수값을 정의합니다.
  */
 
-import { PaymentMethod, PaymentStatus, RefundStatus, RefundType } from './types'
+import { PaymentMethod, PaymentStatus, RefundStatus, RefundType, StandardPaymentMethod } from './types'
 
 // ================================
 // 일반 결제 시스템 설정
@@ -69,6 +69,54 @@ export const PAYMENT_METHODS: Record<StandardPaymentMethod, {
     code: 'wallet:ssgpay',
     name: 'SSGPAY',
     description: 'SSGPAY 간편결제',
+    icon: '🛍️'
+  },
+  virtual_account: {
+    code: 'virtual_account',
+    name: '가상계좌',
+    description: '가상계좌 이체',
+    icon: '🏧'
+  },
+  'wallet:paypal': {
+    code: 'wallet:paypal',
+    name: 'PayPal',
+    description: 'PayPal 결제',
+    icon: '💙'
+  },
+  'wallet:alipay': {
+    code: 'wallet:alipay',
+    name: 'Alipay',
+    description: 'Alipay 결제',
+    icon: '🟦'
+  },
+  'wallet:wechatpay': {
+    code: 'wallet:wechatpay',
+    name: 'WeChat Pay',
+    description: 'WeChat Pay 결제',
+    icon: '🟢'
+  },
+  'wallet:googlepay': {
+    code: 'wallet:googlepay',
+    name: 'Google Pay',
+    description: 'Google Pay 결제',
+    icon: '🌈'
+  },
+  'wallet:applepay': {
+    code: 'wallet:applepay',
+    name: 'Apple Pay',
+    description: 'Apple Pay 결제',
+    icon: '🍎'
+  },
+  'bnpl:klarna': {
+    code: 'bnpl:klarna',
+    name: 'Klarna',
+    description: 'Klarna 후불결제',
+    icon: '🛒'
+  },
+  'bnpl:afterpay': {
+    code: 'bnpl:afterpay',
+    name: 'Afterpay',
+    description: 'Afterpay 후불결제',
     icon: '🛍️'
   }
 } as const

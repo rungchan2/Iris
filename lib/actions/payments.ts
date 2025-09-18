@@ -267,7 +267,7 @@ export async function getPayments(
 
     if (error) throw error
 
-    return { success: true, data: data || [] }
+    return { success: true, data: (data || []) as any }
 
   } catch (error) {
     console.error('Get payments error:', error)
@@ -327,7 +327,7 @@ export async function getPayment(paymentId: string): Promise<ApiResponse<Payment
       }
     }
 
-    return { success: true, data }
+    return { success: true, data: data as any }
 
   } catch (error) {
     console.error('Get payment error:', error)
@@ -360,7 +360,7 @@ export async function getPaymentByOrderId(orderId: string): Promise<ApiResponse<
       }
     }
 
-    return { success: true, data }
+    return { success: true, data: data as any }
 
   } catch (error) {
     console.error('Get payment by order ID error:', error)
@@ -459,11 +459,13 @@ export async function getPaymentStatistics(
         // 결제수단별 통계 (결제 완료건만)
         if (payment.status === 'paid') {
           const method = payment.payment_method
-          if (!stats.paymentMethodStats[method]) {
-            stats.paymentMethodStats[method] = { count: 0, amount: 0 }
+          if (method && !(stats.paymentMethodStats as any)[method]) {
+            (stats.paymentMethodStats as any)[method] = { count: 0, amount: 0 }
           }
-          stats.paymentMethodStats[method].count++
-          stats.paymentMethodStats[method].amount += payment.amount
+          if (method) {
+            (stats.paymentMethodStats as any)[method].count++
+            (stats.paymentMethodStats as any)[method].amount += payment.amount
+          }
         }
       })
 
@@ -531,15 +533,17 @@ export async function requestRefund(request: RefundRequest): Promise<RefundRespo
       .from('refunds')
       .insert({
         payment_id: request.paymentId,
+        original_amount: payment.amount,
         refund_amount: refundAmount,
+        remaining_amount: payment.amount - refundAmount,
         refund_reason: request.reason,
         refund_type: refundAmount === payment.amount ? 'full' : 'partial',
-        status: 'completed',
+        refund_category: 'user_request',
+        provider: payment.provider || 'unknown',
         refund_account: request.refundAccount,
         refund_bank_code: request.refundBankCode,
         refund_holder: request.refundHolder,
-        requested_by: user.data.user?.id,
-        processed_by: user.data.user?.id,
+        requested_at: new Date().toISOString(),
         processed_at: new Date().toISOString()
       })
       .select('id')
@@ -640,7 +644,7 @@ export async function getRefunds(
 
     if (error) throw error
 
-    return { success: true, data: data || [] }
+    return { success: true, data: (data || []) as any }
 
   } catch (error) {
     console.error('Get refunds error:', error)

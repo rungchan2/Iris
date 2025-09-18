@@ -60,8 +60,8 @@ export async function confirmTossPayment(formData: FormData) {
         payment_method: tossPayment.method,
         status: mapTossStatusToInternal(tossPayment.status),
         paid_at: tossPayment.approvedAt ? new Date(tossPayment.approvedAt).toISOString() : new Date().toISOString(),
-        raw_response: tossPayment,
-        card_info: tossPayment.card || null,
+        raw_response: tossPayment as any,
+        card_info: tossPayment.card as any || null,
         receipt_url: tossPayment.receipt?.url || null,
         updated_at: new Date().toISOString()
       })
@@ -153,7 +153,6 @@ export async function createPaymentRequest(formData: FormData) {
         id, 
         name, 
         phone, 
-        email,
         photographer_id,
         user_id
       `)
@@ -198,7 +197,7 @@ export async function createPaymentRequest(formData: FormData) {
         product_id: productId || null,
         provider: 'toss',
         buyer_name: buyerName || inquiry.name,
-        buyer_email: buyerEmail || inquiry.email,
+        buyer_email: buyerEmail || null,
         buyer_tel: buyerTel || inquiry.phone,
         status: 'pending',
         created_at: new Date().toISOString()
@@ -266,7 +265,7 @@ export async function cancelTossPayment(formData: FormData) {
 
     // 2. TossPayments API로 결제 취소
     const cancelResponse = await cancelPayment(
-      payment.provider_transaction_id,
+      payment.provider_transaction_id!,
       {
         cancelReason,
         cancelAmount: cancelAmount || payment.amount
@@ -286,7 +285,7 @@ export async function cancelTossPayment(formData: FormData) {
         remaining_amount: Math.max(0, payment.amount - (cancelAmount || payment.amount)),
         provider: 'toss',
         provider_refund_id: cancelResponse.paymentKey,
-        refund_response: cancelResponse,
+        refund_response: cancelResponse as any,
         status: 'completed',
         processed_at: new Date().toISOString(),
         created_at: new Date().toISOString()

@@ -15,13 +15,14 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { getPayments, getPayment, getPaymentStatistics } from '@/lib/actions/payments'
 import { createClient } from '@/lib/supabase/client'
+import { PaymentModel, PaymentStatus } from '@/lib/payments/types'
 
 interface Payment {
   id: string
   order_id: string
   amount: number
   currency: string
-  status: 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded'
+  status: PaymentStatus
   provider: string
   payment_method: string
   buyer_name: string
@@ -113,9 +114,9 @@ export default function PhotographerPaymentManagement() {
       })
 
       if (result.success && result.data) {
-        setPayments(result.data)
+        setPayments(result.data as any)
       } else {
-        console.error('Failed to load payments:', result.error)
+        console.error('Failed to load payments:', (result as any).error || 'Unknown error')
       }
     } catch (error) {
       console.error('Error loading payments:', error)
@@ -170,18 +171,24 @@ export default function PhotographerPaymentManagement() {
   const getStatusBadge = (status: Payment['status']) => {
     const variants = {
       pending: 'secondary',
+      ready: 'secondary',
       paid: 'default',
       failed: 'destructive',
       cancelled: 'outline',
-      refunded: 'secondary'
+      partialCancelled: 'outline',
+      refunded: 'secondary',
+      expired: 'destructive'
     } as const
 
     const labels = {
       pending: '대기중',
+      ready: '준비완료',
       paid: '결제완료',
       failed: '실패',
       cancelled: '취소',
-      refunded: '환불'
+      partialCancelled: '부분취소',
+      refunded: '환불',
+      expired: '만료됨'
     }
 
     return (
@@ -202,7 +209,7 @@ export default function PhotographerPaymentManagement() {
     try {
       const result = await getPayment(paymentId)
       if (result.success && result.data) {
-        setSelectedPayment(result.data)
+        setSelectedPayment(result.data as any)
       }
     } catch (error) {
       console.error('Error loading payment details:', error)
@@ -300,10 +307,13 @@ export default function PhotographerPaymentManagement() {
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="pending">대기중</SelectItem>
+                  <SelectItem value="ready">준비완료</SelectItem>
                   <SelectItem value="paid">결제완료</SelectItem>
                   <SelectItem value="failed">실패</SelectItem>
                   <SelectItem value="cancelled">취소</SelectItem>
+                  <SelectItem value="partialCancelled">부분취소</SelectItem>
                   <SelectItem value="refunded">환불</SelectItem>
+                  <SelectItem value="expired">만료됨</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -470,18 +480,24 @@ function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
   const getStatusBadge = (status: Payment['status']) => {
     const variants = {
       pending: 'secondary',
+      ready: 'secondary',
       paid: 'default',
       failed: 'destructive',
       cancelled: 'outline',
-      refunded: 'secondary'
+      partialCancelled: 'outline',
+      refunded: 'secondary',
+      expired: 'destructive'
     } as const
 
     const labels = {
       pending: '대기중',
+      ready: '준비완료',
       paid: '결제완료',
       failed: '실패',
       cancelled: '취소',
-      refunded: '환불'
+      partialCancelled: '부분취소',
+      refunded: '환불',
+      expired: '만료됨'
     }
 
     return (

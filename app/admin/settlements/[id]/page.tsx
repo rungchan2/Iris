@@ -27,7 +27,7 @@ export default async function SettlementDetailPage({ params }: SettlementDetailP
       
       <div className="space-y-4">
         <Suspense fallback={<SettlementDetailSkeleton />}>
-          <SettlementDetail settlement={result.data} />
+          <SettlementDetail settlement={result.data as any} />
         </Suspense>
       </div>
     </div>

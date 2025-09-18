@@ -2,35 +2,55 @@
 
 import type * as React from "react"
 import { useEffect, useState } from "react"
-import { Inbox, FolderTree, ImageIcon, User, LogOut, Calendar, Brain, Users, Target, BarChart3, UserPlus, MessageSquare, CreditCard } from "lucide-react"
+import { 
+  Inbox, 
+  FolderTree, 
+  ImageIcon, 
+  User, 
+  LogOut, 
+  Calendar, 
+  Users, 
+  BarChart3, 
+  UserPlus, 
+  MessageSquare, 
+  CreditCard, 
+  Zap,
+  HelpCircle,
+  Camera,
+  Settings,
+  TrendingUp,
+  Package
+} from "lucide-react"
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { NavMain } from "@/components/nav-main"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { type UserPermissions } from "@/lib/auth/permissions"
 import { usePermissions } from "@/lib/hooks/use-permissions"
 
-interface MenuItem {
+interface NavItem {
   title: string
   url: string
   icon: any
   requiredPermission: keyof UserPermissions
+  items?: {
+    title: string
+    url: string
+  }[]
 }
 
-// Menu items with required permissions
-const items: MenuItem[] = [
+// Menu items with required permissions and hierarchical structure
+const navItems: NavItem[] = [
   {
     title: "문의",
     url: "/admin",
@@ -62,22 +82,46 @@ const items: MenuItem[] = [
     requiredPermission: "canAccessUsers",
   },
   {
-    title: "성격유형 매칭",
-    url: "/admin/personality-mapping",
-    icon: Target,
-    requiredPermission: "canAccessPersonalityMapping",
+    title: "관리자 계정",
+    url: "/admin/admin-users",
+    icon: UserPlus,
+    requiredPermission: "canAccessUsers",
+  },
+  {
+    title: "AI 매칭 시스템",
+    url: "/admin/matching",
+    icon: Zap,
+    requiredPermission: "canAccessUsers",
+    items: [
+      {
+        title: "질문 관리",
+        url: "/admin/matching/questions",
+      },
+      {
+        title: "작가 프로필 관리",
+        url: "/admin/matching/photographers",
+      },
+      {
+        title: "성능 분석",
+        url: "/admin/matching/analytics",
+      },
+      {
+        title: "시스템 설정",
+        url: "/admin/matching/settings",
+      },
+    ],
+  },
+  {
+    title: "상품 관리",
+    url: "/admin/products",
+    icon: Package,
+    requiredPermission: "canAccessPhotos",
   },
   {
     title: "통계 및 분석",
     url: "/admin/analytics",
     icon: BarChart3,
     requiredPermission: "canAccessAnalytics",
-  },
-  {
-    title: "성향 진단 관리",
-    url: "/admin/personality-management",
-    icon: Brain,
-    requiredPermission: "canAccessUsers",
   },
   {
     title: "리뷰 관리",
@@ -115,7 +159,6 @@ interface AdminUser {
 
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: AdminUser }) {
   const router = useRouter()
-  const pathname = usePathname()
   const supabase = createClient()
   const [mounted, setMounted] = useState(false)
   const { permissions } = usePermissions()
@@ -128,6 +171,9 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
     await supabase.auth.signOut()
     router.push("/login")
   }
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = navItems.filter(item => permissions?.[item.requiredPermission])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -149,26 +195,7 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>관리자 페이지</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.filter(item => permissions?.[item.requiredPermission]).map((item) => {
-                const isActive = mounted ? (pathname === item.url || (item.url !== "/admin" && pathname.startsWith(item.url))) : false
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <NavMain items={filteredNavItems} />
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

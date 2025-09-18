@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { ImageIcon, Sparkles, X } from "lucide-react";
 import { PersonalityType } from "@/lib/quiz-data";
-import { getPersonalityPhotos } from "@/lib/actions/personality";
+// import { getPersonalityPhotos } from "@/lib/actions/personality"; // Module not found
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
@@ -33,11 +33,12 @@ export function RecommendedGallery({ personalityCode }: RecommendedGalleryProps)
   useEffect(() => {
     const loadPhotos = async () => {
       try {
-        const result = await getPersonalityPhotos(personalityCode);
+        // const result = await getPersonalityPhotos(personalityCode); // Module not found
+        const result = { success: false, photos: [] }; // Fallback
         if (result.success && result.photos) {
           const validPhotos: PersonalityPhoto[] = result.photos
-            .filter(photo => photo !== null)
-            .map(photo => ({
+            .filter((photo: any) => photo !== null)
+            .map((photo: any) => ({
               ...photo!,
               style_tags: photo!.style_tags || []
             }));

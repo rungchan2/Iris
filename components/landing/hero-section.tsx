@@ -113,7 +113,7 @@ export function LandingHeroSection() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <Link href="/quiz">
+          <Link href="/matching">
             <Button
               size="lg"
               className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
@@ -122,7 +122,7 @@ export function LandingHeroSection() {
               성향 진단 시작하기
             </Button>
           </Link>
-          <Link href="/style-match">
+          {/* <Link href="/style-match">
             <Button
               variant="outline"
               size="lg"
@@ -130,7 +130,7 @@ export function LandingHeroSection() {
             >
               바로 예약하기
             </Button>
-          </Link>
+          </Link> */}
         </motion.div>
 
         {/* Stats */}

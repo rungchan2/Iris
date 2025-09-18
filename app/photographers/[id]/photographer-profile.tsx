@@ -89,9 +89,9 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
     .toUpperCase()
 
   const portfolioPhotos = photographer.photos || []
-  const personalityMappings = photographer.personality_admin_mapping || []
-  const primaryPersonality = personalityMappings.find((m: any) => m.is_primary)
-  const compatiblePersonalities = personalityMappings.filter((m: any) => !m.is_primary)
+  // Personality mapping 기능 제거됨
+  const primaryPersonality = null
+  const compatiblePersonalities: any[] = []
 
   // Mock data for display
   const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
@@ -199,17 +199,8 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                   )}
                 </div>
 
-                {primaryPersonality && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium mb-2">전문 분야</h3>
-                    <Badge variant="default" className="mr-2">
-                      {primaryPersonality.personality_types?.code}: {primaryPersonality.personality_types?.name}
-                    </Badge>
-                  </div>
-                )}
-
                 <p className="text-muted-foreground mb-6">
-                  {primaryPersonality?.personality_types?.name || '다양한'} 스타일 전문 작가입니다. 
+                  다양한 스타일 전문 작가입니다. 
                   고객의 개성과 매력을 최대한 끌어내는 촬영을 지향합니다.
                 </p>
 
@@ -221,7 +212,7 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
                     </Link>
                   </Button>
                   <Button variant="outline" size="lg" asChild>
-                    <Link href={`mailto:${photographer.email}`}>
+                    <Link href={`/photographers/${photographer.id}/booking`}>
                       <Mail className="w-4 h-4 mr-2" />
                       문의하기
                     </Link>
