@@ -94,8 +94,8 @@ export function InviteCodeManager() {
         loadInviteCodes()
         
         // 생성된 코드를 클립보드에 복사
-        await navigator.clipboard.writeText(result.data.code)
-        setCopiedCode(result.data.code)
+        await navigator.clipboard.writeText((result.data as any)?.code || '')
+        setCopiedCode((result.data as any)?.code || '')
         setTimeout(() => setCopiedCode(null), 3000)
       } else if (result.error) {
         toast.error(result.error)

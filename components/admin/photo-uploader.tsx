@@ -3,14 +3,16 @@
 import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react"
-import { uploadMultiplePhotos } from "@/lib/upload"
+import { uploadMultiplePhotos, uploadMultipleSurveyImages } from "@/lib/upload"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface PhotoUploaderProps {
-  userId: string
+  userId?: string
+  questionId?: string
+  uploadType?: 'photos' | 'survey'
   onUploadComplete: () => void
 }
 
@@ -21,7 +23,12 @@ interface UploadResult {
   metadata?: any
 }
 
-export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) {
+export function PhotoUploader({ 
+  userId, 
+  questionId, 
+  uploadType = 'photos', 
+  onUploadComplete 
+}: PhotoUploaderProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({})
   const [uploadResults, setUploadResults] = useState<UploadResult[]>([])
@@ -32,18 +39,38 @@ export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) 
       setUploadProgress({})
       setUploadResults([])
 
-      const results = await uploadMultiplePhotos(acceptedFiles, userId, (fileIndex, progress) => {
-        setUploadProgress((prev) => ({
-          ...prev,
-          [fileIndex]: progress,
+      let results: any
+      if (uploadType === 'survey' && questionId) {
+        const surveyResults = await uploadMultipleSurveyImages(acceptedFiles, questionId, (fileIndex, progress) => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            [fileIndex]: progress,
+          }))
+        })
+        // Convert survey results to match UploadResult interface
+        results = surveyResults.map(result => ({
+          success: result.success,
+          file: result.file,
+          error: result.error,
+          metadata: result.imageRecord
         }))
-      })
+      } else if (uploadType === 'photos' && userId) {
+        results = await uploadMultiplePhotos(acceptedFiles, userId, (fileIndex, progress) => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            [fileIndex]: progress,
+          }))
+        })
+      } else {
+        console.error('Invalid upload configuration')
+        results = []
+      }
 
       setUploadResults(results)
       setUploading(false)
       onUploadComplete()
     },
-    [userId, onUploadComplete],
+    [userId, questionId, uploadType, onUploadComplete],
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -112,7 +139,7 @@ export function PhotoUploader({ userId, onUploadComplete }: PhotoUploaderProps) 
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
               )}
               <AlertDescription>
-                {successCount} 개의 사진을 성공적으로 업로드했습니다.
+                {successCount} 개의 {uploadType === 'survey' ? '이미지를' : '사진을'} 성공적으로 업로드했습니다.
                 {errorCount > 0 && ` (${errorCount} failed)`}
               </AlertDescription>
             </div>

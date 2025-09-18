@@ -93,7 +93,7 @@ export default function PaymentManagement() {
     try {
       const result = await getPayments({
         status: filters.status as any,
-        paymentMethod: filters.provider,
+        paymentMethod: filters.provider as any,
         startDate: filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
         endDate: filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined,
         photographerId: filters.photographerId,
@@ -102,11 +102,11 @@ export default function PaymentManagement() {
       })
 
       if (result.success && result.data) {
-        setPayments(result.data)
+        setPayments(result.data as any)
         // 페이지네이션 계산 (임시로 20개씩으로 계산)
         setTotalPages(Math.ceil(result.data.length / 20) || 1)
       } else {
-        console.error('Failed to load payments:', result.error)
+        console.error('Failed to load payments:', (result as any).error)
       }
     } catch (error) {
       console.error('Error loading payments:', error)
@@ -195,7 +195,7 @@ export default function PaymentManagement() {
     try {
       const result = await getPayment(paymentId)
       if (result.success && result.data) {
-        setSelectedPayment(result.data)
+        setSelectedPayment(result.data as any)
       }
     } catch (error) {
       console.error('Error loading payment details:', error)

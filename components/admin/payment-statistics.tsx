@@ -35,7 +35,12 @@ export default function PaymentStatistics() {
             cancelled: data.cancelledPayments || 0,
             refunded: data.refundedPayments || 0
           },
-          providerStats: data.paymentMethodStats || {},
+          providerStats: Object.fromEntries(
+            Object.entries(data.paymentMethodStats || {}).map(([key, value]: [string, any]) => [
+              key, 
+              { count: value.count, total: value.amount }
+            ])
+          ),
           monthlyRevenue: [] // 월별 수익 데이터는 별도 처리 필요
         })
       }

@@ -114,7 +114,7 @@ export function SettlementManagement() {
       });
 
       if (settlementsResult.success && settlementsResult.data) {
-        setSettlements(settlementsResult.data);
+        setSettlements(settlementsResult.data as any);
         setTotalPages(settlementsResult.pagination?.totalPages || 0);
         setTotalCount(settlementsResult.pagination?.total || 0);
       } else {
