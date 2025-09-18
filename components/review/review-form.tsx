@@ -267,7 +267,7 @@ export function ReviewForm({
                     <div className="space-y-1 leading-none">
                       <FormLabel>익명으로 게시하기</FormLabel>
                       <p className="text-xs text-gray-600">
-                        이름 대신 "익명"으로 표시됩니다
+                        이름 대신 &quot;익명&quot;으로 표시됩니다
                       </p>
                     </div>
                   </FormItem>

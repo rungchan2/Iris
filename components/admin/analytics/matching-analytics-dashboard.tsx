@@ -101,8 +101,8 @@ export function MatchingAnalyticsDashboard() {
         const questionKey = `Q${q.question_order}`
         
         // Calculate average response time from session logs
-        let totalTime = 0
-        let timeCount = 0
+        const totalTime = 0
+        const timeCount = 0
         let skippedCount = 0
         let totalSessions = 0
 
@@ -181,7 +181,7 @@ export function MatchingAnalyticsDashboard() {
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
 
-      let dimensionAccuracy = {
+      const dimensionAccuracy = {
         style_emotion: 0,
         communication_psychology: 0,
         purpose_story: 0,

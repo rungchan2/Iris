@@ -2,15 +2,12 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ReviewManagement } from "@/components/admin/review-management";
 import { getReviewStats, getPhotographerInquiries } from "@/lib/actions/reviews";
 import { StarDisplay } from "@/components/review/star-rating";
 import { 
   MessageSquare, 
   Star, 
-  TrendingUp, 
-  Users,
   Clock,
   CheckCircle
 } from "lucide-react";
@@ -68,7 +65,7 @@ async function ReviewStats() {
     );
   }
 
-  const { total_reviews, average_rating, rating_distribution } = statsResult.data;
+  const { total_reviews, average_rating } = statsResult.data;
   const pendingReviews = 0; // This would need to be calculated from inquiries without reviews
 
   return (

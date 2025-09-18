@@ -54,16 +54,16 @@ export function BrandValuesSection() {
         <div className="mt-16 text-center">
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl mx-auto">
             <blockquote className="text-xl md:text-2xl text-gray-800 font-medium italic leading-relaxed">
-            "왜 어떤 사진은 마음에 들고 어떤 건 아닐까?<br />
-            그 답을 찾아드려요"
+            &quot;왜 어떤 사진은 마음에 들고 어떤 건 아닐까?<br />
+            그 답을 찾아드려요&quot;
             </blockquote>
           </div>
         </div>
         <div className="mt-16 text-center">
           <div className="bg-yellow-50 rounded-2xl shadow-lg p-8 max-w-4xl mx-auto">
             <blockquote className="text-xl md:text-2xl text-gray-800 font-medium italic leading-relaxed">
-              "모든 사람은 고유한 아름다움을 가지고 있습니다. <br />
-              우리는 그 아름다움을 찾아내어 세상에 전하는 것이 사명입니다."
+              &quot;모든 사람은 고유한 아름다움을 가지고 있습니다. <br />
+              우리는 그 아름다움을 찾아내어 세상에 전하는 것이 사명입니다.&quot;
             </blockquote>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { verifyWebhookSignature, mapTossStatusToInternal } from '@/lib/payments/toss-server';
+import { verifyWebhookSignature } from '@/lib/payments/toss-server';
 import type { TossWebhookEvent } from '@/lib/payments/toss-types';
 
 /**
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
  * 결제 완료 처리 (PAYMENT.DONE)
  */
 async function handlePaymentDone(supabase: any, data: any) {
-  const { paymentKey, orderId, status, totalAmount } = data;
+  const { paymentKey, orderId } = data;
 
   try {
     // 결제 정보 업데이트

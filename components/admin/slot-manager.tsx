@@ -250,8 +250,8 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
         <div className="text-center py-8 text-muted-foreground">
           <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>이 날짜에 설정된 시간 슬롯이 없습니다</p>
-          <p className="text-sm">"시간 슬롯 추가"를 클릭하여 시작하세요</p>
-        </div>
+          <p className="text-sm">&quot;시간 슬롯 추가&quot;를 클릭하여 시작하세요</p>
+        </div>  
       )}
     </div>
   )

@@ -1,8 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import PhotoManager from "@/components/admin/photo-manager"
-import type { Database } from "@/types/database.types"
-
-type Category = Database['public']['Tables']['categories']['Row']
 
 export default async function PhotosPage({
   searchParams,

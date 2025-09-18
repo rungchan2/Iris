@@ -160,7 +160,7 @@ export function NoticeSection() {
               </p>
               <p>
                 * 카카오톡 {" "}
-                <strong className="text-black">"친구추가 허용"</strong>을 하지 않으신 상태라면 연락을
+                <strong className="text-black">&quot;친구추가 허용&quot;</strong>을 하지 않으신 상태라면 연락을
                 드릴 수 없습니다. 기재시 카카오톡 친구추가를 허용해주시면
                 감사드리겠습니다 😊
               </p>

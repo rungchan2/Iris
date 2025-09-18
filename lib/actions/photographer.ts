@@ -378,7 +378,7 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
     }
     
     // Transform data
-    let transformedData: PhotographerData[] = photographers.map(photographer => ({
+    const transformedData: PhotographerData[] = photographers.map(photographer => ({
       id: photographer.id,
       name: photographer.name || '',
       email: photographer.email || '',

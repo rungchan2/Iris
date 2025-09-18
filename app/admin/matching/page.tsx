@@ -19,7 +19,7 @@ import {
 import { useRouter } from 'next/navigation'
 
 export default function MatchingDashboard() {
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalQuestions: 0,
     activeQuestions: 0,

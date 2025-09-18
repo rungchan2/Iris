@@ -10,8 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb'
 import { 
-  Camera, Users, TrendingUp, Settings, Search, Filter, 
-  CheckCircle, AlertCircle, User, MapPin, Crown, Eye, 
+  Camera, Users, TrendingUp, Search, 
+  CheckCircle, AlertCircle, User, MapPin, Crown, 
   Zap, Loader2, RefreshCw
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -66,7 +66,7 @@ export default function PhotographerManagementPage() {
 
   useEffect(() => {
     fetchPhotographers()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPhotographers = async () => {
     try {
@@ -313,6 +313,7 @@ export default function PhotographerManagementPage() {
             onClick={generateAllEmbeddings}
             disabled={embeddingLoading === 'all'}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            type="button"
           >
             {embeddingLoading === 'all' ? (
               <>
@@ -326,7 +327,7 @@ export default function PhotographerManagementPage() {
               </>
             )}
           </Button>
-          <Button onClick={fetchPhotographers} variant="outline">
+          <Button onClick={fetchPhotographers} variant="outline" type="button">
             <RefreshCw className="h-4 w-4 mr-2" />
             새로고침
           </Button>
@@ -404,6 +405,7 @@ export default function PhotographerManagementPage() {
             variant={filterStatus === 'all' ? 'default' : 'outline'}
             onClick={() => setFilterStatus('all')}
             size="sm"
+            type="button"
           >
             전체
           </Button>
@@ -411,6 +413,7 @@ export default function PhotographerManagementPage() {
             variant={filterStatus === 'completed' ? 'default' : 'outline'}
             onClick={() => setFilterStatus('completed')}
             size="sm"
+            type="button"
           >
             완성
           </Button>
@@ -418,6 +421,7 @@ export default function PhotographerManagementPage() {
             variant={filterStatus === 'incomplete' ? 'default' : 'outline'}
             onClick={() => setFilterStatus('incomplete')}
             size="sm"
+            type="button"
           >
             미완성
           </Button>
@@ -593,6 +597,7 @@ export default function PhotographerManagementPage() {
                                       onClick={() => generatePhotographerEmbedding(photographer.id)}
                                       disabled={embeddingLoading === photographer.id}
                                       className="text-xs"
+                                      type="button"
                                     >
                                       {embeddingLoading === photographer.id ? (
                                         <>
@@ -619,6 +624,7 @@ export default function PhotographerManagementPage() {
                                       onClick={() => generatePhotographerEmbedding(photographer.id)}
                                       disabled={embeddingLoading === photographer.id || !profile.profile_completed}
                                       className="text-xs bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                                      type="button"
                                     >
                                       {embeddingLoading === photographer.id ? (
                                         <>

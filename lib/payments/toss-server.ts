@@ -1,6 +1,7 @@
 // TossPayments 서버 측 유틸리티
 
 import { TossPaymentResponse, TossPaymentError } from './toss-types';
+import crypto from 'crypto';
 
 const TOSS_API_BASE = 'https://api.tosspayments.com/v1';
 
@@ -156,10 +157,9 @@ export async function executeBilling(params: {
  */
 export function verifyWebhookSignature(
   rawBody: string,
-  signature: string,
+  signature: string,  
   secret: string
 ): boolean {
-  const crypto = require('crypto');
   const hash = crypto
     .createHmac('sha256', secret)
     .update(rawBody)

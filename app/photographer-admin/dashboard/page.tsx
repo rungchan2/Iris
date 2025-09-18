@@ -29,7 +29,6 @@ export default async function PhotographersDashboard() {
   const currentDate = new Date();
   const currentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-  const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
 
   // Get inquiries stats
   const { data: thisMonthInquiries } = await supabase

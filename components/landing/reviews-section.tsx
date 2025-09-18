@@ -87,7 +87,7 @@ function FloatingReview({ review, delay, duration, startX, startY, onClick }: {
           <StarDisplay rating={review.rating} size="sm" />
         </div>
         <p className="text-sm text-gray-700 mb-2 leading-relaxed">
-          "{review.content}"
+          &quot;{review.content}&quot;
         </p>
         <div className="flex justify-between items-center text-xs text-gray-500">
           <span>{review.author}</span>
@@ -158,7 +158,7 @@ function ReviewModal({ review, isOpen, onClose }: {
                 {/* 리뷰 전문 */}
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-700 leading-relaxed">
-                    "{review.fullContent}"
+                    &quot;{review.fullContent}&quot;
                   </p>
                   <div className="mt-3 text-sm text-gray-500">
                     - {review.author}

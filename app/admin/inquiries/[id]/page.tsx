@@ -38,7 +38,7 @@ export default async function InquiryDetailPage({
   const currentMoodkeywordId = inquiry?.current_mood_keywords;
   const desiredMoodkeywordId = inquiry?.desired_mood_keywords;
 
-  const { data: keywords, error: keywordsError } = await supabase
+  const { data: keywords } = await supabase
     .from("keywords")
     .select("id, name")
     .in("id", [
