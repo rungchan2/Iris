@@ -206,6 +206,7 @@ export function PaymentStep({
                   name: photographer.name
                 }}
                 customerKey={customerKey}
+                orderId={paymentData?.orderId} // createPaymentRequest에서 받은 orderId 전달
                 onPaymentComplete={onPaymentComplete}
                 onPaymentError={onPaymentError}
               />

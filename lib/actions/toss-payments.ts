@@ -28,6 +28,15 @@ export async function confirmTossPayment(formData: FormData) {
     };
   }
 
+  // 개발 환경에서 디버깅 정보 출력
+  if (process.env.NODE_ENV === 'development') {
+    console.log('=== 결제 승인 요청 ===');
+    console.log('PaymentKey:', paymentKey);
+    console.log('OrderId:', orderId);
+    console.log('Amount:', amount);
+    console.log('====================');
+  }
+
   try {
     const supabase = await createClient();
 

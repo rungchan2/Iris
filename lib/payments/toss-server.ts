@@ -70,6 +70,17 @@ export async function confirmPayment(params: {
   orderId: string;
   amount: number;
 }): Promise<TossPaymentResponse> {
+  // 개발 환경에서 API 키 정보 확인
+  if (process.env.NODE_ENV === 'development') {
+    const secretKey = process.env.TOSS_SECRET_KEY;
+    console.log('=== 토스페이먼츠 API 호출 ===');
+    console.log('Endpoint: /payments/confirm');
+    console.log('Secret Key 존재:', !!secretKey);
+    console.log('Secret Key 타입:', secretKey?.startsWith('test_') ? 'TEST' : secretKey?.startsWith('live_') ? 'LIVE' : 'UNKNOWN');
+    console.log('Request Body:', JSON.stringify(params, null, 2));
+    console.log('========================');
+  }
+  
   return tossApiRequest<TossPaymentResponse>('/payments/confirm', {
     method: 'POST',
     body: params,
@@ -220,6 +231,8 @@ export function getUserFriendlyErrorMessage(error: TossApiError): string {
     'NOT_FOUND_PAYMENT': '결제 정보를 찾을 수 없습니다.',
     'NOT_FOUND_PAYMENT_SESSION': '결제 세션이 만료되었습니다. 다시 시도해주세요.',
     'INVALID_AUTHORIZATION': '인증 정보가 올바르지 않습니다.',
+    'UNAUTHORIZED_KEY': 'API 키가 올바르지 않습니다. 키 설정을 확인해주세요.',
+    'FORBIDDEN_REQUEST': '허용되지 않은 요청입니다. API 키 또는 주문 정보를 확인해주세요.',
     'INCORRECT_AMOUNT': '결제 금액이 일치하지 않습니다.',
     'ALREADY_CANCELED_PAYMENT': '이미 취소된 결제입니다.',
     'CARD_COMPANY_ERROR': '카드사 오류가 발생했습니다. 다른 카드로 시도해주세요.',

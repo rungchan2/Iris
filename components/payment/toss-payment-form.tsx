@@ -27,6 +27,10 @@ interface TossPaymentFormProps {
   onPaymentError?: (error: string) => void;
 }
 
+const replaceHyphen = (phone: string) => {
+  return phone.replace(/-/g, '');
+};
+
 export function TossPaymentForm({
   inquiry,
   product,
@@ -89,7 +93,7 @@ export function TossPaymentForm({
         failUrl: getFailUrl(orderId),
         customerEmail: inquiry.email,
         customerName: inquiry.name,
-        customerMobilePhone: inquiry.phone,
+        customerMobilePhone: replaceHyphen(inquiry.phone),
         // 카드 결제에 필요한 정보
         card: {
           useEscrow: false,

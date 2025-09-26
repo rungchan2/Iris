@@ -87,18 +87,18 @@ export const isTestMode = (): boolean => {
 
 /**
  * 결제 성공 URL 생성
+ * 토스페이먼츠가 자동으로 orderId, paymentKey, amount를 쿼리 파라미터로 추가합니다
  */
 export const getSuccessUrl = (orderId?: string): string => {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-  const path = orderId ? `/payment/success?orderId=${orderId}` : '/payment/success';
-  return `${baseUrl}${path}`;
+  return `${baseUrl}/payment/success`;
 };
 
 /**
  * 결제 실패 URL 생성
+ * 토스페이먼츠가 자동으로 code, message, orderId를 쿼리 파라미터로 추가합니다
  */
 export const getFailUrl = (orderId?: string): string => {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-  const path = orderId ? `/payment/fail?orderId=${orderId}` : '/payment/fail';
-  return `${baseUrl}${path}`;
+  return `${baseUrl}/payment/fail`;
 };

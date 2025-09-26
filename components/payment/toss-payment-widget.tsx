@@ -24,6 +24,7 @@ interface TossPaymentWidgetProps {
     name: string;
   };
   customerKey: string;
+  orderId?: string; // orderId를 props로 받을 수 있도록 추가
   onPaymentComplete?: (paymentKey: string, orderId: string) => void;
   onPaymentError?: (error: string) => void;
 }
@@ -33,6 +34,7 @@ export function TossPaymentWidget({
   product,
   photographer,
   customerKey,
+  orderId: propOrderId, // props로 받은 orderId
   onPaymentComplete,
   onPaymentError,
 }: TossPaymentWidgetProps) {
@@ -44,7 +46,8 @@ export function TossPaymentWidget({
   
   const paymentMethodsWidgetRef = useRef<any>(null);
   const agreementWidgetRef = useRef<any>(null);
-  const orderIdRef = useRef<string>(generateOrderId());
+  // props로 받은 orderId가 있으면 사용, 없으면 생성
+  const orderIdRef = useRef<string>(propOrderId || generateOrderId());
 
   // 결제위젯 초기화
   useEffect(() => {
@@ -246,3 +249,6 @@ export function TossPaymentWidget({
     </div>
   );
 }
+
+// Default export 추가
+export default TossPaymentWidget;

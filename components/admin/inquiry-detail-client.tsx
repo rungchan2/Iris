@@ -8,7 +8,7 @@ import { InquiryDetails } from "@/components/admin/inquiry-details"
 import { PhotoGallery } from "@/components/admin/photo-gallery"
 import { InquiryExportPopup } from "@/components/admin/inquiry-export-popup"
 import { Inquiry } from "@/types/inquiry.types"
-import { Photo } from "@/app/gallery/gallery-client"
+import { Photo } from "@/app/_gallery/gallery-client"
 import { useRouter } from "next/navigation"
 
 interface InquiryDetailClientProps {

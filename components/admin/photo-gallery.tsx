@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Download, X } from "lucide-react"
 import { AspectImage } from "../ui/aspect-image"
 import Image from "next/image"
-import { handleDownload, Photo } from "@/app/gallery/gallery-client"
+import { handleDownload, Photo } from "@/app/_gallery/gallery-client"
 
 
 export function PhotoGallery({ photos, isForExport = false }: { photos: Photo[], isForExport?: boolean }) {
