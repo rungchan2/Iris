@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import {
   inquiryFormSchema,
   type InquiryFormValues,
-  type MoodKeyword,
 } from "@/types/inquiry.types";
 import { TimeSlotSelector } from "@/components/booking/time-slot-selector";
 import { TossPaymentForm } from "@/components/payment/toss-payment-form";
@@ -36,7 +35,7 @@ import { toast } from "sonner";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
-  moodKeywords: MoodKeyword[];
+  // Removed moodKeywords prop
   availableDates: string[];
   onFormChange?: () => void; // Add this prop
   photographerId?: string; // Add photographer ID prop
@@ -48,14 +47,14 @@ interface PersonalInfoFormProps {
 
 export function PersonalInfoForm({
   onSubmit,
-  moodKeywords,
+  // Removed moodKeywords
   availableDates,
   onFormChange,
   photographerId,
   photographer,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
-    "personal" | "mood" | "additional" | "final_questions" | "payment"
+    "personal" | "additional" | "final_questions" | "payment"
   >("personal");
   const [dateSlotCounts, setDateSlotCounts] = useState<
     Record<string, { total: number; available: number }>
@@ -72,8 +71,7 @@ export function PersonalInfoForm({
       selected_slot_id: "",
       people_count: 1,
       relationship: "",
-      current_mood_keywords: [],
-      desired_mood_keywords: [],
+      // Removed mood keywords
       special_request: "",
       difficulty_note: "",
       conversation_preference: "",
@@ -159,12 +157,7 @@ export function PersonalInfoForm({
     fetchSlotCounts();
   }, [availableDates, supabase, photographerId]);
 
-  const currentMoodKeywords = moodKeywords.filter(
-    (keyword) => keyword.type === "current_mood"
-  );
-  const desiredMoodKeywords = moodKeywords.filter(
-    (keyword) => keyword.type === "desired_mood"
-  );
+  // Removed mood keywords filtering - no longer using keywords
 
   // 시간대 문제를 방지하기 위해 date-fns format 사용
   const isDateAvailable = (date: Date) => {
@@ -217,16 +210,6 @@ export function PersonalInfoForm({
       ]);
 
       if (isValid) {
-        setActiveSection("mood");
-      }
-    } else if (activeSection === "mood") {
-      // Validate mood section fields
-      const isValid = await form.trigger([
-        "current_mood_keywords",
-        "desired_mood_keywords",
-      ]);
-
-      if (isValid) {
         setActiveSection("additional");
       }
     } else if (activeSection === "additional") {
@@ -239,10 +222,8 @@ export function PersonalInfoForm({
   };
 
   const prevSection = () => {
-    if (activeSection === "mood") {
+    if (activeSection === "additional") {
       setActiveSection("personal");
-    } else if (activeSection === "additional") {
-      setActiveSection("mood");
     } else if (activeSection === "final_questions") {
       setActiveSection("additional");
     } else if (activeSection === "payment") {
@@ -271,12 +252,6 @@ export function PersonalInfoForm({
               className={cn(
                 "flex-1 h-1 rounded-l-full transition-colors mr-1",
                 activeSection === "personal" ? "bg-primary" : "bg-primary/30"
-              )}
-            />
-            <div
-              className={cn(
-                "flex-1 h-1 transition-colors mx-1",
-                activeSection === "mood" ? "bg-primary" : "bg-primary/30"
               )}
             />
             <div
@@ -553,157 +528,7 @@ export function PersonalInfoForm({
                 </div>
               </motion.div>
 
-              {/* Mood Keywords Section */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{
-                  opacity: activeSection === "mood" ? 1 : 0,
-                  x:
-                    activeSection === "mood"
-                      ? 0
-                      : activeSection === "personal"
-                      ? 20
-                      : -20,
-                }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  "space-y-4",
-                  activeSection !== "mood" && "hidden"
-                )}
-              >
-                <h3 className="text-xl font-semibold">감정 & 스타일 선호도</h3>
-
-                <FormField
-                  control={form.control}
-                  name="current_mood_keywords"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        1. 내가 생각하는 나는 어떤 분위기인가요?{" "}
-                        <br className="md:hidden" />
-                        (1~3개 선택)
-                      </FormLabel>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                        {currentMoodKeywords.map((keyword) => (
-                          <FormItem
-                            key={keyword.id}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(keyword.id)}
-                                disabled={
-                                  !field.value?.includes(keyword.id) &&
-                                  field.value?.length >= 3
-                                }
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([
-                                        ...field.value,
-                                        keyword.id,
-                                      ])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== keyword.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel
-                              className={cn(
-                                "font-normal",
-                                !field.value?.includes(keyword.id) &&
-                                  field.value?.length >= 3 &&
-                                  "text-muted-foreground"
-                              )}
-                            >
-                              {keyword.name}
-                            </FormLabel>
-                          </FormItem>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        선택된 항목: {field.value?.length || 0}/3
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="desired_mood_keywords"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        2. 사진에 담겼으면 하는 분위기를 골라주세요.{" "}
-                        <br className="md:hidden" /> (1~3개 선택)
-                      </FormLabel>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                        {desiredMoodKeywords.map((keyword) => (
-                          <FormItem
-                            key={keyword.id}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(keyword.id)}
-                                disabled={
-                                  !field.value?.includes(keyword.id) &&
-                                  field.value?.length >= 3
-                                }
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([
-                                        ...field.value,
-                                        keyword.id,
-                                      ])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== keyword.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel
-                              className={cn(
-                                "font-normal",
-                                !field.value?.includes(keyword.id) &&
-                                  field.value?.length >= 3 &&
-                                  "text-muted-foreground"
-                              )}
-                            >
-                              {keyword.name}
-                            </FormLabel>
-                          </FormItem>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        선택된 항목: {field.value?.length || 0}/3
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-between pt-4">
-                  <Button type="button" variant="outline" onClick={prevSection}>
-                    뒤로가기
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={nextSection}
-                    disabled={
-                      !form.watch("current_mood_keywords")?.length ||
-                      !form.watch("desired_mood_keywords")?.length
-                    }
-                  >
-                    다음 <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </motion.div>
+              {/* Mood Keywords Section Removed - No longer using keywords table */}
 
               {/* Additional Information Section */}
               <motion.div

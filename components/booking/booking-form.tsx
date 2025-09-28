@@ -4,15 +4,12 @@ import React from "react";
 
 import { useState } from "react";
 import { PersonalInfoForm } from "@/components/booking/personal-info-form";
-import { CategoryTournament } from "@/components/booking/category-tournament";
+// CategoryTournament removed - no longer using tournament selection
 import { SuccessScreen } from "@/components/booking/success-screen";
 import { createClient } from "@/lib/supabase/client";
 import { Toaster, toast } from "sonner";
 import type {
   InquiryFormValues,
-  Category,
-  MoodKeyword,
-  SelectionHistoryStep,
   Inquiry,
 } from "@/types/inquiry.types";
 import { sendEmail } from "@/lib/send-email";
@@ -25,61 +22,36 @@ const EMAIL_TO = [
 ]
 
 interface BookingFormProps {
-  rootCategories: Category[];
-  allCategories: Category[];
-  moodKeywords: MoodKeyword[];
+  // Categories removed - no longer using tournament
   availableDates: string[];
 }
 
 export function BookingForm({
-  rootCategories,
-  allCategories,
-  moodKeywords,
+  // Categories removed
   availableDates,
 }: BookingFormProps) {
   const [step, setStep] = useState<
-    "personal-info" | "category-selection" | "success"
+    "personal-info" | "success"
   >("personal-info");
   const [formData, setFormData] = useState<InquiryFormValues | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
-  const [selectionPath, setSelectionPath] = useState<string[]>([]);
-  const [selectionHistory, setSelectionHistory] = useState<
-    SelectionHistoryStep[]
-  >([]);
+  // Category tournament state removed - no longer used
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [newInquiry, setNewInquiry] = useState<Inquiry | null>(null);
 
   const supabase = createClient();
 
-  const handlePersonalInfoSubmit = (data: InquiryFormValues) => {
+  const handlePersonalInfoSubmit = async (data: InquiryFormValues) => {
     setFormData(data);
-    setStep("category-selection");
     setIsDirty(false); // Reset dirty state when moving to next step
-
-    // Scroll to top for category selection
-    // window.scrollTo({ top: 0, behavior: "smooth" })
+    // Submit directly without category selection
+    await handleSubmitInquiry(data);
   };
 
-  const handleCategoryComplete = (
-    category: Category,
-    path: string[],
-    history: SelectionHistoryStep[]
-  ) => {
-    setSelectedCategory(category);
-    setSelectionPath(path);
-    setSelectionHistory(history);
-    handleSubmitInquiry(category, path, history);
-  };
+  // handleCategoryComplete removed - no longer using category tournament
 
-  const handleSubmitInquiry = async (
-    category: Category,
-    path: string[],
-    history: SelectionHistoryStep[]
-  ) => {
-    if (!formData) return;
+  const handleSubmitInquiry = async (data: InquiryFormValues) => {
+    if (!data) return;
 
     setIsSubmitting(true);
 
@@ -92,33 +64,25 @@ export function BookingForm({
       while (retryCount < 3) {
         try {
           // First get slot data to extract photographer_id
-          const { data: getSlotData, error: slotError } = await getSlot(formData.selected_slot_id || "");
+          const { data: getSlotData, error: slotError } = await getSlot(data.selected_slot_id || "");
           
           const { data: newInquiry, error } = await supabase
             .from("inquiries")
             .insert({
-              name: formData.name,
-              instagram_id: formData.instagram_id || null,
-              gender: formData.gender,
-              phone: formData.phone,
-              desired_date: format(formData.desired_date, "yyyy-MM-dd"),
-              selected_slot_id: formData.selected_slot_id || null,
-              people_count: formData.people_count,
-              relationship: formData.relationship || null,
-              current_mood_keywords: formData.current_mood_keywords,
-              desired_mood_keywords: formData.desired_mood_keywords,
-              special_request: formData.special_request || null,
-              difficulty_note: formData.difficulty_note || null,
-              conversation_preference: formData.conversation_preference || null,
-              conversation_topics: formData.conversation_topics || null,
-              favorite_music: formData.favorite_music || null,
-              shooting_meaning: formData.shooting_meaning || null,
-              selected_category_id: category.id,
-              selection_path: path,
-              selection_history: {
-                steps: history,
-                completed_at: new Date().toISOString(),
-              },
+              name: data.name,
+              instagram_id: data.instagram_id || null,
+              gender: data.gender,
+              phone: data.phone,
+              desired_date: format(data.desired_date, "yyyy-MM-dd"),
+              selected_slot_id: data.selected_slot_id || null,
+              people_count: data.people_count,
+              relationship: data.relationship || null,
+              special_request: data.special_request || null,
+              difficulty_note: data.difficulty_note || null,
+              conversation_preference: data.conversation_preference || null,
+              conversation_topics: data.conversation_topics || null,
+              favorite_music: data.favorite_music || null,
+              shooting_meaning: data.shooting_meaning || null,
               photographer_id: getSlotData?.admin_id || null, // Set photographer_id from selected slot
               status: "new",
             } as any)
@@ -283,29 +247,29 @@ export function BookingForm({
                   <div class="info-grid">
                     <div class="info-item">
                       <div class="info-label">이름</div>
-                      <div class="info-value">${formData.name}</div>
+                      <div class="info-value">${data.name}</div>
                     </div>
                     <div class="info-item">
                       <div class="info-label">전화번호</div>
-                      <div class="info-value">${formData.phone}</div>
+                      <div class="info-value">${data.phone}</div>
                     </div>
-                    ${formData.instagram_id ? `
+                    ${data.instagram_id ? `
                     <div class="info-item">
                       <div class="info-label">인스타그램</div>
-                      <div class="info-value">@${formData.instagram_id}</div>
+                      <div class="info-value">@${data.instagram_id}</div>
                     </div>` : ''}
                     <div class="info-item">
                       <div class="info-label">성별</div>
-                      <div class="info-value">${formData.gender === 'male' ? '남성' : formData.gender === 'female' ? '여성' : '기타'}</div>
+                      <div class="info-value">${data.gender === 'male' ? '남성' : data.gender === 'female' ? '여성' : '기타'}</div>
                     </div>
                     <div class="info-item">
                       <div class="info-label">인원수</div>
-                      <div class="info-value">${formData.people_count}명</div>
+                      <div class="info-value">${data.people_count}명</div>
                     </div>
-                    ${formData.relationship ? `
+                    ${data.relationship ? `
                     <div class="info-item">
                       <div class="info-label">관계</div>
-                      <div class="info-value">${formData.relationship}</div>
+                      <div class="info-value">${data.relationship}</div>
                     </div>` : ''}
                   </div>
                 </div>
@@ -315,9 +279,9 @@ export function BookingForm({
                   <div class="info-grid">
                     <div class="info-item">
                       <div class="info-label">희망 날짜</div>
-                      <div class="info-value">${formData.desired_date.toLocaleDateString('ko-KR')}</div>
+                      <div class="info-value">${data.desired_date.toLocaleDateString('ko-KR')}</div>
                     </div>
-                    ${formData.selected_slot_id ? `
+                    ${data.selected_slot_id ? `
                     <div class="info-item">
                       <div class="info-label">선택한 시간대</div>
                       <div class="info-value">${getSlotData?.start_time} - ${getSlotData?.end_time}</div>
@@ -325,25 +289,20 @@ export function BookingForm({
                   </div>
                 </div>
 
-                <div class="section">
-                  <h2>🎨 선택한 카테고리</h2>
-                  <div class="category-path">
-                    ${path.map(item => item).join(' <span class="arrow">▶</span> ')}
-                  </div>
-                </div>
+                <!-- Category section removed - no longer using tournament -->
 
-                ${formData.special_request || formData.difficulty_note ? `
+                ${data.special_request || data.difficulty_note ? `
                 <div class="section">
                   <h2>📝 추가 정보</h2>
-                  ${formData.special_request ? `
+                  ${data.special_request ? `
                   <div class="info-item full-width">
                     <div class="info-label">특별 요청사항</div>
-                    <div class="info-value">${formData.special_request}</div>
+                    <div class="info-value">${data.special_request}</div>
                   </div>` : ''}
-                  ${formData.difficulty_note ? `
+                  ${data.difficulty_note ? `
                   <div class="info-item full-width" style="margin-top: 15px;">
                     <div class="info-label">촬영 시 어려운 점</div>
-                    <div class="info-value">${formData.difficulty_note}</div>
+                    <div class="info-value">${data.difficulty_note}</div>
                   </div>` : ''}
                 </div>` : ''}
 
@@ -370,11 +329,11 @@ export function BookingForm({
 
           // 추가 데이터 조회하여 완전한 Inquiry 객체 구성
           let slotData = null;
-          if (formData.selected_slot_id) {
+          if (data.selected_slot_id) {
             const { data: slot } = await supabase
               .from("available_slots")
               .select("id, date, start_time, end_time")
-              .eq("id", formData.selected_slot_id)
+              .eq("id", data.selected_slot_id)
               .single();
             slotData = slot;
           }
@@ -382,12 +341,7 @@ export function BookingForm({
           insertResult = {
             ...newInquiry,
             selected_slot_id: slotData,
-            current_mood_keywords: [],
-            desired_mood_keywords: [],
-            selection_history: {
-              steps: history,
-              completed_at: new Date().toISOString(),
-            } as any,
+            // Removed mood keywords and selection history
             desired_date: newInquiry.desired_date,
           } as Inquiry;
           break;
@@ -442,9 +396,6 @@ export function BookingForm({
   const handleStartOver = () => {
     setStep("personal-info");
     setFormData(null);
-    setSelectedCategory(null);
-    setSelectionPath([]);
-    setSelectionHistory([]);
     setIsDirty(false);
     setNewInquiry(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -484,29 +435,20 @@ export function BookingForm({
               <PersonalInfoForm
                 onSubmit={handlePersonalInfoSubmit}
                 onFormChange={handleFormChange}
-                moodKeywords={moodKeywords}
+                // moodKeywords prop removed
                 availableDates={availableDates}
               />
             </div>
           </div>
         )}
 
-        {step === "category-selection" && (
-          <div className="min-h-[100dvh] flex flex-col">
-            <CategoryTournament
-              rootCategories={rootCategories}
-              allCategories={allCategories}
-              onComplete={handleCategoryComplete}
-              isSubmitting={isSubmitting}
-            />
-          </div>
-        )}
+        {/* Category selection step removed - no longer using tournament */}
 
-        {step === "success" && formData && selectedCategory && (
+        {step === "success" && newInquiry && (
           <div className="min-h-[100dvh] flex items-center justify-center">
             <SuccessScreen
               formData={newInquiry as Inquiry}
-              category={selectedCategory}
+              category={null}
               onStartOver={handleStartOver}
             />
           </div>

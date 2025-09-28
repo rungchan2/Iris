@@ -54,58 +54,65 @@ export async function confirmTossPayment(formData: FormData) {
       .eq('order_id', orderId)
       .single();
 
-    if (!existingPayment) {
+    // 테스트 주문인 경우 DB 검증 스킵
+    const isTestOrder = orderId.startsWith('TEST_ORDER_');
+    
+    if (!existingPayment && !isTestOrder) {
       return { 
         success: false, 
         error: '결제 정보를 찾을 수 없습니다.' 
       };
     }
 
-    // 3. 결제 상태 업데이트
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({
-        provider_transaction_id: tossPayment.paymentKey,
-        payment_method: tossPayment.method,
-        status: mapTossStatusToInternal(tossPayment.status),
-        paid_at: tossPayment.approvedAt ? new Date(tossPayment.approvedAt).toISOString() : new Date().toISOString(),
-        raw_response: tossPayment as any,
-        card_info: tossPayment.card as any || null,
-        receipt_url: tossPayment.receipt?.url || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingPayment.id);
-
-    if (updateError) {
-      console.error('결제 상태 업데이트 실패:', updateError);
-      return { 
-        success: false, 
-        error: '결제 정보 저장에 실패했습니다.' 
-      };
-    }
-
-    // 4. 문의 상태 업데이트 (결제 완료로)
-    if (existingPayment.inquiry_id) {
-      await supabase
-        .from('inquiries')
+    // 3. 결제 상태 업데이트 (테스트 주문이 아닌 경우만)
+    if (existingPayment) {
+      const { error: updateError } = await supabase
+        .from('payments')
         .update({
-          status: 'reserved', // 결제 완료 시 예약 확정
+          provider_transaction_id: tossPayment.paymentKey,
+          payment_method: tossPayment.method,
+          status: mapTossStatusToInternal(tossPayment.status),
+          paid_at: tossPayment.approvedAt ? new Date(tossPayment.approvedAt).toISOString() : new Date().toISOString(),
+          raw_response: tossPayment as any,
+          card_info: tossPayment.card as any || null,
+          receipt_url: tossPayment.receipt?.url || null,
           updated_at: new Date().toISOString()
         })
-        .eq('id', existingPayment.inquiry_id);
+        .eq('id', existingPayment.id);
+
+      if (updateError) {
+        console.error('결제 상태 업데이트 실패:', updateError);
+        return { 
+          success: false, 
+          error: '결제 정보 저장에 실패했습니다.' 
+        };
+      }
+
+      // 4. 문의 상태 업데이트 (결제 완료로)
+      if (existingPayment.inquiry_id) {
+        await supabase
+          .from('inquiries')
+          .update({
+            status: 'reserved', // 결제 완료 시 예약 확정
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingPayment.inquiry_id);
+      }
     }
 
-    // 5. 결제 로그 기록
-    await supabase
-      .from('payment_logs')
-      .insert({
-        payment_id: existingPayment.id,
-        event_type: 'payment_confirmed',
-        provider: 'toss',
-        request_data: { paymentKey, orderId, amount },
-        response_data: tossPayment,
-        created_at: new Date().toISOString()
-      });
+    // 5. 결제 로그 기록 (테스트 주문이 아닌 경우만)
+    if (existingPayment) {
+      await supabase
+        .from('payment_logs')
+        .insert({
+          payment_id: existingPayment.id,
+          event_type: 'payment_confirmed',
+          provider: 'toss',
+          request_data: { paymentKey, orderId, amount },
+          response_data: tossPayment,
+          created_at: new Date().toISOString()
+        });
+    }
 
     revalidatePath('/admin/payments');
     
@@ -113,7 +120,8 @@ export async function confirmTossPayment(formData: FormData) {
       success: true, 
       paymentKey,
       orderId,
-      amount: tossPayment.totalAmount
+      amount: tossPayment.totalAmount,
+      isTestPayment: isTestOrder
     };
 
   } catch (error) {

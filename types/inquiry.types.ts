@@ -13,9 +13,7 @@ export const inquiryFormSchema = z.object({
   people_count: z.number().int().min(1).max(6, { message: "최대 6명까지 가능합니다." }),
   relationship: z.string().optional(),
 
-  // Mood Keywords
-  current_mood_keywords: z.array(z.string()).min(1, { message: "최소 하나의 현재 기분을 선택해주세요" }),
-  desired_mood_keywords: z.array(z.string()).min(1, { message: "최소 하나의 원하는 기분을 선택해주세요" }),
+  // Mood keywords and categories removed - no longer used
 
   // Additional Info
   special_request: z.string().optional(),
@@ -34,41 +32,11 @@ export const inquiryFormSchema = z.object({
 
 export type InquiryFormValues = z.infer<typeof inquiryFormSchema>
 
-export interface Category {
-  id: string
-  parent_id: string | null
-  name: string
-  depth: number
-  path: string
-  display_order: number | null
-  is_active: boolean | null
-  representative_image_url: string | null
-  representative_image_id: string | null
-  created_at: string | null
-  updated_at: string | null
-  place_recommendation: string | null
-  male_clothing_recommendation: string | null
-  female_clothing_recommendation: string | null
-  accessories_recommendation: string | null
-  representative_image?: {
-    id: string
-    storage_url: string
-    thumbnail_url: string | null
-  } | null
-}
+// Category interface removed - no longer using categories
 
-export interface MoodKeyword {
-  id: string
-  name: string
-  type: "current_mood" | "desired_mood"
-  display_order: number
-}
+// MoodKeyword interface removed - no longer using keywords table
 
-export interface SelectionHistoryStep {
-  level: number
-  selected_id: string
-  options: string[]
-}
+// SelectionHistoryStep interface removed - no longer using tournament
 
 export interface AvailableSlot {
   id: string
@@ -94,49 +62,23 @@ export interface Inquiry {
   gender?: "male" | "female" | "other"
   desired_date: string
   people_count: number
-  selected_category_id?: string
-  selection_path?: string[]
   status: "new" | "contacted" | "completed"
   created_at: string
   special_request?: string
   admin_note?: string
-  place_recommendation?: string
   difficulty_note?: string
   // Final Questions (Step 4)
   conversation_preference?: string
   conversation_topics?: string
   favorite_music?: string
   shooting_meaning?: string
-  categories?: {
-    id: string
-    name: string
-    path: string
-    representative_image_url?: string
-    male_clothing_recommendation?: string
-    female_clothing_recommendation?: string
-    accessories_recommendation?: string
-  }
-  current_mood_keywords: {
-    id: string
-    name: string
-  }[]
-  desired_mood_keywords: {
-    id: string
-    name: string
-  }[]
+  // categories field removed - no longer using categories
+  // mood keywords and selection history removed - no longer used
   selected_slot_id: {
     id: string
     date: string
     start_time: string
     end_time: string
-  }
-  selection_history?: {
-    steps: {
-      level: number
-      selected_id: string
-      options: string[]
-    }[]
-    completed_at: string
   }
 }
 

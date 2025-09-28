@@ -22,16 +22,13 @@ import {
   RefreshCw,
   Download,
   Filter,
-  AlertCircle,
-  Sparkles
+  AlertCircle
 } from "lucide-react";
 import { 
   getAnalyticsData,
   getBookingAnalytics,
-  getAIGenerationAnalytics,
   type AnalyticsData,
-  type BookingAnalytics,
-  type AIGenerationAnalytics
+  type BookingAnalytics
 } from "@/lib/actions/analytics";
 
 // Quiz Analytics type definition (removed from server)
@@ -65,7 +62,6 @@ export function AnalyticsDashboard() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [quizAnalytics, setQuizAnalytics] = useState<QuizAnalytics | null>(null);
   const [bookingAnalytics, setBookingAnalytics] = useState<BookingAnalytics | null>(null);
-  const [aiAnalytics, setAIAnalytics] = useState<AIGenerationAnalytics | null>(null);
 
   // 데이터 로드
   const loadAnalyticsData = async () => {
@@ -73,10 +69,9 @@ export function AnalyticsDashboard() {
     setError(null);
     
     try {
-      const [analyticsResult, bookingResult, aiResult] = await Promise.all([
+      const [analyticsResult, bookingResult] = await Promise.all([
         getAnalyticsData(timeRange),
-        getBookingAnalytics(timeRange),
-        getAIGenerationAnalytics(timeRange)
+        getBookingAnalytics(timeRange)
       ]);
 
       if (analyticsResult.success) {
@@ -97,10 +92,6 @@ export function AnalyticsDashboard() {
 
       if (bookingResult.success) {
         setBookingAnalytics(bookingResult.data || null);
-      }
-
-      if (aiResult.success) {
-        setAIAnalytics(aiResult.data || null);
       }
     } catch (error) {
       console.error('Error loading analytics data:', error);
@@ -221,18 +212,6 @@ export function AnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI 이미지 생성</CardTitle>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{aiAnalytics?.totalGenerations || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              성공률: {aiAnalytics?.successRate || 0}%
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -255,7 +234,6 @@ export function AnalyticsDashboard() {
           <TabsTrigger value="overview">전체 개요</TabsTrigger>
           <TabsTrigger value="quiz">성향 진단</TabsTrigger>
           <TabsTrigger value="booking">예약 현황</TabsTrigger>
-          <TabsTrigger value="ai">AI 생성</TabsTrigger>
         </TabsList>
 
         {/* 전체 개요 */}
@@ -296,18 +274,6 @@ export function AnalyticsDashboard() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">AI 이미지 생성</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-purple-500 h-2 rounded-full" 
-                          style={{ width: `${Math.min((aiAnalytics?.totalGenerations || 0) / 30 * 100, 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium">{aiAnalytics?.totalGenerations || 0}</span>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -333,12 +299,6 @@ export function AnalyticsDashboard() {
                         {bookingAnalytics?.completionRate || 0}%
                       </div>
                       <p className="text-xs text-muted-foreground">예약 완료율</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {aiAnalytics?.successRate || 0}%
-                      </div>
-                      <p className="text-xs text-muted-foreground">AI 생성 성공률</p>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-orange-600">
@@ -460,70 +420,6 @@ export function AnalyticsDashboard() {
           </div>
         </TabsContent>
 
-        {/* AI 생성 분석 */}
-        <TabsContent value="ai" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>AI 생성 현황</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {aiAnalytics?.successfulGenerations || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">성공</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-red-600">
-                      {aiAnalytics?.failedGenerations || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">실패</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {aiAnalytics?.averageProcessingTime || 0}s
-                    </div>
-                    <p className="text-xs text-muted-foreground">평균 처리시간</p>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {aiAnalytics?.averageRating || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">평균 만족도</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>성격유형별 AI 생성</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {aiAnalytics?.personalityGenerations?.map((item) => (
-                    <div key={item.personalityType} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">{item.personalityType}</Badge>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-500 h-2 rounded-full" 
-                            style={{ width: `${Math.min(item.count / 5 * 100, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium w-8">{item.count}</span>
-                      </div>
-                    </div>
-                  )) || []}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

@@ -34,7 +34,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   const [formData, setFormData] = useState<InquiryFormValues | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newInquiry, setNewInquiry] = useState<Inquiry | null>(null)
-  const [moodKeywords, setMoodKeywords] = useState<MoodKeyword[]>([])
+  // Removed moodKeywords - no longer using keywords table
   const [availableDates, setAvailableDates] = useState<string[]>([])
   const [paymentData, setPaymentData] = useState<any>(null)
 
@@ -55,15 +55,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   // Fetch mood keywords and available dates on component mount
   React.useEffect(() => {
     const fetchData = async () => {
-      // Fetch mood keywords
-      const { data: keywords } = await supabase
-        .from('keywords')
-        .select('*')
-        .order('display_order', { ascending: true })
-
-      if (keywords) {
-        setMoodKeywords(keywords as MoodKeyword[])
-      }
+      // Removed mood keywords fetching - no longer using keywords table
 
       // Fetch available dates for this specific photographer
       const currentDate = new Date()
@@ -417,7 +409,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
             <div className="w-full max-w-2xl">
               <PersonalInfoForm
                 onSubmit={handlePersonalInfoSubmit}
-                moodKeywords={moodKeywords}
+                // Removed moodKeywords prop
                 availableDates={availableDates}
                 photographerId={photographer.id}
                 photographer={{

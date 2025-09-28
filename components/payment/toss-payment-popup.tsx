@@ -6,7 +6,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface TossPaymentWidgetProps {
+interface TossPaymentPopupProps {
   inquiry: {
     id: string;
     name: string;
@@ -24,46 +24,42 @@ interface TossPaymentWidgetProps {
     name: string;
   };
   customerKey: string;
-  orderId?: string; // orderId를 props로 받을 수 있도록 추가
+  orderId?: string;
   onPaymentComplete?: (paymentKey: string, orderId: string) => void;
   onPaymentError?: (error: string) => void;
 }
 
-export function TossPaymentWidget({
+export function TossPaymentPopup({
   inquiry,
   product,
   photographer,
   customerKey,
-  orderId: propOrderId, // props로 받은 orderId
+  orderId: propOrderId,
   onPaymentComplete,
   onPaymentError,
-}: TossPaymentWidgetProps) {
-  const [widgets, setWidgets] = useState<any>(null);
-  const [ready, setReady] = useState(false);
+}: TossPaymentPopupProps) {
+  const [payment, setPayment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState(product.price);
   
-  const paymentMethodsWidgetRef = useRef<any>(null);
-  const agreementWidgetRef = useRef<any>(null);
-  // props로 받은 orderId가 있으면 사용, 없으면 생성
   const orderIdRef = useRef<string>(propOrderId || generateOrderId());
 
-  // 결제위젯 초기화
+  // 결제창 초기화
   useEffect(() => {
-    async function initWidgets() {
+    async function initPayment() {
       try {
         setLoading(true);
         setError(null);
         
         const tossPayments = await getTossPayments();
-        const widgetInstance = tossPayments.widgets({ 
+        const paymentInstance = tossPayments.payment({ 
           customerKey,
         });
         
-        setWidgets(widgetInstance);
+        setPayment(paymentInstance);
       } catch (err) {
-        console.error('결제위젯 초기화 실패:', err);
+        console.error('결제창 초기화 실패:', err);
         setError('결제 시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
         onPaymentError?.('결제 시스템 초기화 실패');
       } finally {
@@ -71,55 +67,8 @@ export function TossPaymentWidget({
       }
     }
     
-    initWidgets();
+    initPayment();
   }, [customerKey, onPaymentError]);
-
-  // 위젯 렌더링
-  useEffect(() => {
-    if (!widgets) return;
-
-    async function renderWidgets() {
-      try {
-        // 금액 설정
-        await widgets.setAmount({
-          currency: 'KRW',
-          value: amount,
-        });
-
-        // 결제 방법 위젯 렌더링
-        if (!paymentMethodsWidgetRef.current) {
-          paymentMethodsWidgetRef.current = await widgets.renderPaymentMethods({
-            selector: '#payment-methods',
-            variantKey: 'DEFAULT',
-          });
-        } else {
-          // 금액 업데이트
-          await paymentMethodsWidgetRef.current.updateAmount(amount);
-        }
-
-        // 약관 위젯 렌더링
-        if (!agreementWidgetRef.current) {
-          agreementWidgetRef.current = await widgets.renderAgreement({
-            selector: '#agreement',
-            variantKey: 'AGREEMENT',
-          });
-        }
-
-        setReady(true);
-      } catch (err) {
-        console.error('위젯 렌더링 실패:', err);
-        setError('결제 화면 로딩에 실패했습니다.');
-      }
-    }
-
-    renderWidgets();
-  }, [widgets, amount]);
-
-  // 쿠폰/할인 적용
-  const applyDiscount = async (discountAmount: number) => {
-    const newAmount = Math.max(0, product.price - discountAmount);
-    setAmount(newAmount);
-  };
 
   // 전화번호에서 특수문자 제거
   const cleanPhoneNumber = (phone: string): string => {
@@ -128,7 +77,7 @@ export function TossPaymentWidget({
 
   // 결제 요청
   const handlePayment = async () => {
-    if (!widgets) {
+    if (!payment) {
       setError('결제 시스템이 준비되지 않았습니다.');
       return;
     }
@@ -141,7 +90,12 @@ export function TossPaymentWidget({
       const cleanedPhone = cleanPhoneNumber(inquiry.phone);
       
       // 결제 요청
-      await widgets.requestPayment({
+      await payment.requestPayment({
+        method: 'CARD', // 카드 결제
+        amount: {
+          currency: 'KRW',
+          value: amount,
+        },
         orderId: orderIdRef.current,
         orderName: `${product.name} - ${photographer.name}`,
         successUrl: getSuccessUrl(orderIdRef.current),
@@ -149,12 +103,6 @@ export function TossPaymentWidget({
         customerEmail: inquiry.email,
         customerName: inquiry.name,
         customerMobilePhone: cleanedPhone,
-        // 메타데이터로 추가 정보 전달
-        metadata: {
-          inquiryId: inquiry.id,
-          productId: product.id,
-          photographerId: photographer.id,
-        },
       });
     } catch (err: any) {
       console.error('결제 요청 실패:', err);
@@ -172,7 +120,7 @@ export function TossPaymentWidget({
     }
   };
 
-  if (loading && !widgets) {
+  if (loading && !payment) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -220,22 +168,23 @@ export function TossPaymentWidget({
         </div>
       </div>
 
-      {/* 결제 수단 선택 */}
+      {/* 결제 수단 안내 */}
       <div className="bg-white rounded-lg border p-6">
         <h2 className="text-lg font-semibold mb-4">결제 수단</h2>
-        <div id="payment-methods" className="min-h-[200px]" />
-      </div>
-
-      {/* 약관 동의 */}
-      <div className="bg-white rounded-lg border p-6">
-        <h2 className="text-lg font-semibold mb-4">이용 약관</h2>
-        <div id="agreement" className="min-h-[100px]" />
+        <div className="text-sm text-gray-600 mb-4">
+          <p>• 신용카드, 체크카드</p>
+          <p>• 간편결제 (토스페이, 카카오페이, 네이버페이 등)</p>
+          <p>• 계좌이체</p>
+        </div>
+        <p className="text-xs text-gray-500">
+          결제 버튼 클릭 시 토스페이먼츠 결제창이 새 창으로 열립니다.
+        </p>
       </div>
 
       {/* 결제 버튼 */}
       <Button
         onClick={handlePayment}
-        disabled={!ready || loading}
+        disabled={!payment || loading}
         className="w-full h-14 text-lg font-semibold"
         size="lg"
       >
@@ -259,4 +208,4 @@ export function TossPaymentWidget({
 }
 
 // Default export 추가
-export default TossPaymentWidget;
+export default TossPaymentPopup;

@@ -10,18 +10,12 @@ export default async function InquiryDetailPage({
 }) {
   const supabase = await createClient();
 
-  // Get inquiry with category
+  // Get inquiry (categories removed)
   const { data: inquiry, error } = await supabase
     .from("inquiries")
     .select(
       `
       *,
-      categories (
-        id,
-        name,
-        path,
-        representative_image_url
-      ),
       selected_slot_id (
         id,
         date,
@@ -35,27 +29,10 @@ export default async function InquiryDetailPage({
 
   console.log("server inquiry", inquiry);
 
-  const currentMoodkeywordId = inquiry?.current_mood_keywords;
-  const desiredMoodkeywordId = inquiry?.desired_mood_keywords;
-
-  const { data: keywords } = await supabase
-    .from("keywords")
-    .select("id, name")
-    .in("id", [
-      ...(currentMoodkeywordId || []),
-      ...(desiredMoodkeywordId || []),
-    ]);
-
+  // Keywords and mood keywords removed - no longer used
   const transformedInquiry = {
     ...inquiry,
-    current_mood_keywords:
-      keywords?.filter((keyword) =>
-        currentMoodkeywordId?.includes(keyword.id)
-      ) || [],
-    desired_mood_keywords:
-      keywords?.filter((keyword) =>
-        desiredMoodkeywordId?.includes(keyword.id)
-      ) || [],
+    // Removed mood keyword transformation
   };
 
   if (error || !inquiry) {
@@ -63,24 +40,8 @@ export default async function InquiryDetailPage({
     notFound();
   }
 
-  // Get photos for selected category if available
+  // Category photos removed - no longer using categories
   let photos: any[] = [];
-  if (inquiry.selected_category_id) {
-    const { data: photoData } = await supabase
-      .from("photos")
-      .select(
-        `
-      *,
-      photo_categories!inner (
-        category_id
-      )
-    `
-      )
-      .eq("photo_categories.category_id", inquiry.selected_category_id || "")
-      .eq("is_active", true);
-
-    photos = photoData || [];
-  }
 
   return (
     <InquiryDetailClient

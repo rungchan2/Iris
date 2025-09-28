@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admins: {
@@ -47,63 +72,6 @@ export type Database = {
           phone?: string | null
           role?: string | null
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      ai_image_generations: {
-        Row: {
-          api_provider: string
-          api_request_payload: Json | null
-          api_response_data: Json | null
-          created_at: string | null
-          error_message: string | null
-          generated_image_url: string | null
-          generated_prompt: string
-          generation_status: string | null
-          id: string
-          is_shared: boolean | null
-          personality_code: string | null
-          processing_time_seconds: number | null
-          quiz_session_id: string | null
-          updated_at: string | null
-          user_rating: number | null
-          user_uploaded_image_url: string
-        }
-        Insert: {
-          api_provider: string
-          api_request_payload?: Json | null
-          api_response_data?: Json | null
-          created_at?: string | null
-          error_message?: string | null
-          generated_image_url?: string | null
-          generated_prompt: string
-          generation_status?: string | null
-          id?: string
-          is_shared?: boolean | null
-          personality_code?: string | null
-          processing_time_seconds?: number | null
-          quiz_session_id?: string | null
-          updated_at?: string | null
-          user_rating?: number | null
-          user_uploaded_image_url: string
-        }
-        Update: {
-          api_provider?: string
-          api_request_payload?: Json | null
-          api_response_data?: Json | null
-          created_at?: string | null
-          error_message?: string | null
-          generated_image_url?: string | null
-          generated_prompt?: string
-          generation_status?: string | null
-          id?: string
-          is_shared?: boolean | null
-          personality_code?: string | null
-          processing_time_seconds?: number | null
-          quiz_session_id?: string | null
-          updated_at?: string | null
-          user_rating?: number | null
-          user_uploaded_image_url?: string
         }
         Relationships: []
       }
@@ -252,20 +220,15 @@ export type Database = {
       inquiries: {
         Row: {
           admin_note: string | null
-          ai_generation_id: string | null
           conversation_preference: string | null
           conversation_topics: string | null
           created_at: string | null
-          current_mood_keywords: string[] | null
           desired_date: string | null
-          desired_mood_keywords: string[] | null
           difficulty_note: string | null
-          estimated_price: number | null
           favorite_music: string | null
           gender: string | null
           id: string
           instagram_id: string | null
-          matched_admin_id: string | null
           name: string
           payment_amount: number | null
           payment_deadline: string | null
@@ -276,15 +239,8 @@ export type Database = {
           phone: string
           photographer_id: string | null
           product_id: string | null
-          quiz_session_id: string | null
           relationship: string | null
-          selected_category_id: string | null
-          selected_options: Json | null
-          selected_personality_code: string | null
-          selected_pricing_id: string | null
           selected_slot_id: string | null
-          selection_history: Json | null
-          selection_path: string[] | null
           shooting_meaning: string | null
           special_request: string | null
           status: string | null
@@ -293,20 +249,15 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
-          ai_generation_id?: string | null
           conversation_preference?: string | null
           conversation_topics?: string | null
           created_at?: string | null
-          current_mood_keywords?: string[] | null
           desired_date?: string | null
-          desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
-          estimated_price?: number | null
           favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
-          matched_admin_id?: string | null
           name: string
           payment_amount?: number | null
           payment_deadline?: string | null
@@ -317,15 +268,8 @@ export type Database = {
           phone: string
           photographer_id?: string | null
           product_id?: string | null
-          quiz_session_id?: string | null
           relationship?: string | null
-          selected_category_id?: string | null
-          selected_options?: Json | null
-          selected_personality_code?: string | null
-          selected_pricing_id?: string | null
           selected_slot_id?: string | null
-          selection_history?: Json | null
-          selection_path?: string[] | null
           shooting_meaning?: string | null
           special_request?: string | null
           status?: string | null
@@ -334,20 +278,15 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
-          ai_generation_id?: string | null
           conversation_preference?: string | null
           conversation_topics?: string | null
           created_at?: string | null
-          current_mood_keywords?: string[] | null
           desired_date?: string | null
-          desired_mood_keywords?: string[] | null
           difficulty_note?: string | null
-          estimated_price?: number | null
           favorite_music?: string | null
           gender?: string | null
           id?: string
           instagram_id?: string | null
-          matched_admin_id?: string | null
           name?: string
           payment_amount?: number | null
           payment_deadline?: string | null
@@ -358,15 +297,8 @@ export type Database = {
           phone?: string
           photographer_id?: string | null
           product_id?: string | null
-          quiz_session_id?: string | null
           relationship?: string | null
-          selected_category_id?: string | null
-          selected_options?: Json | null
-          selected_personality_code?: string | null
-          selected_pricing_id?: string | null
           selected_slot_id?: string | null
-          selection_history?: Json | null
-          selection_path?: string[] | null
           shooting_meaning?: string | null
           special_request?: string | null
           status?: string | null
@@ -374,20 +306,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "inquiries_ai_generation_id_fkey"
-            columns: ["ai_generation_id"]
-            isOneToOne: false
-            referencedRelation: "ai_image_generations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inquiries_matched_admin_id_fkey"
-            columns: ["matched_admin_id"]
-            isOneToOne: false
-            referencedRelation: "photographers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "inquiries_payment_id_fkey"
             columns: ["payment_id"]
@@ -410,13 +328,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "inquiries_selected_category_id_fkey"
-            columns: ["selected_category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "inquiries_selected_slot_id_fkey"
             columns: ["selected_slot_id"]
             isOneToOne: false
@@ -431,33 +342,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      keywords: {
-        Row: {
-          created_at: string | null
-          display_order: number | null
-          id: string
-          is_active: boolean | null
-          name: string
-          type: string
-        }
-        Insert: {
-          created_at?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          type: string
-        }
-        Update: {
-          created_at?: string | null
-          display_order?: number | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          type?: string
-        }
-        Relationships: []
       }
       matching_performance_logs: {
         Row: {
@@ -860,6 +744,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_photographer_keywords_photographer_id"
+            columns: ["photographer_id"]
+            isOneToOne: false
+            referencedRelation: "photographer_profiles"
+            referencedColumns: ["photographer_id"]
+          },
+          {
             foreignKeyName: "photographer_keywords_photographer_id_fkey"
             columns: ["photographer_id"]
             isOneToOne: false
@@ -1248,39 +1139,6 @@ export type Database = {
           },
         ]
       }
-      refund_reasons: {
-        Row: {
-          category_code: string
-          category_name: string
-          created_at: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          category_code: string
-          category_name: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          category_code?: string
-          category_name?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       refunds: {
         Row: {
           admin_note: string | null
@@ -1292,6 +1150,7 @@ export type Database = {
           processed_by: string | null
           provider: string
           provider_refund_id: string | null
+          reason: string | null
           refund_account: string | null
           refund_amount: number
           refund_bank_code: string | null
@@ -1316,6 +1175,7 @@ export type Database = {
           processed_by?: string | null
           provider?: string
           provider_refund_id?: string | null
+          reason?: string | null
           refund_account?: string | null
           refund_amount: number
           refund_bank_code?: string | null
@@ -1340,6 +1200,7 @@ export type Database = {
           processed_by?: string | null
           provider?: string
           provider_refund_id?: string | null
+          reason?: string | null
           refund_account?: string | null
           refund_amount?: number
           refund_bank_code?: string | null
@@ -1996,6 +1857,14 @@ export type Database = {
         Args: { p_inquiry_id: string; p_slot_id: string }
         Returns: boolean
       }
+      save_matching_results: {
+        Args: { session_id_param: string }
+        Returns: {
+          message: string
+          results_count: number
+          success: boolean
+        }[]
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown
@@ -2160,6 +2029,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
