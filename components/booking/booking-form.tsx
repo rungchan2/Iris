@@ -448,7 +448,7 @@ export function BookingForm({
           <div className="min-h-[100dvh] flex items-center justify-center">
             <SuccessScreen
               formData={newInquiry as Inquiry}
-              category={null}
+              category={undefined}
               onStartOver={handleStartOver}
             />
           </div>

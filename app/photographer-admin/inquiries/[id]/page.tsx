@@ -47,7 +47,7 @@ export default async function PhotographerInquiryDetailPage({
   }
 
   // Category photos removed - no longer using categories
-  let photos: any[] = [];
+  const photos: any[] = [];
 
   return (
     <div className="space-y-6">

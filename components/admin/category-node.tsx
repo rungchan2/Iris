@@ -75,7 +75,7 @@ export function CategoryNode({
     }
   }
 
-  const indentLevel = category.depth - 1
+  const indentLevel = (category.depth ?? 1) - 1
   const indentWidth = indentLevel * 24
 
   return (
@@ -135,9 +135,9 @@ export function CategoryNode({
         </div>
 
         {/* Representative Image */}
-        {category.representative_image?.thumbnail_url && (
+        {category.representative_image && typeof category.representative_image === 'string' && (
           <img
-            src={category.representative_image.thumbnail_url || "/placeholder.svg"}
+            src={category.representative_image || "/placeholder.svg"}
             alt={`${category.name} representative`}
             className="h-8 w-8 rounded object-cover"
           />

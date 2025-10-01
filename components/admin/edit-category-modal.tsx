@@ -52,7 +52,7 @@ export function EditCategoryModal({
   useEffect(() => {
     if (category) {
       setName(category.name)
-      setParentId(category.parent_id)
+      setParentId(category.parent_id ?? null)
       setMaleClothingRecommendation(category.male_clothing_recommendation || "")
       setFemaleClothingRecommendation(category.female_clothing_recommendation || "")
       setAccessoriesRecommendation(category.accessories_recommendation || "")

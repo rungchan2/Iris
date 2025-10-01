@@ -290,9 +290,13 @@ export function PersonalInfoForm({
                   x:
                     activeSection === "personal"
                       ? 0
-                      : activeSection === "mood"
+                      : activeSection === "additional"
                       ? -20
-                      : -40,
+                      : activeSection === "final_questions"
+                      ? -40
+                      : activeSection === "payment"
+                      ? -60
+                      : 0,
                 }}
                 transition={{ duration: 0.3 }}
                 className={cn(

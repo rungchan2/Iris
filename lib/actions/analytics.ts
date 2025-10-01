@@ -136,10 +136,7 @@ export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise
     // 전체 예약 조회
     const { data: inquiries, count: totalBookings } = await supabase
       .from('inquiries')
-      .select(`
-        *,
-        matched_admin:photographers!matched_admin_id(name)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
 
@@ -173,30 +170,14 @@ export async function getBookingAnalytics(timeRange: TimeRange = '30d'): Promise
       percentage: totalBookings && totalBookings > 0 ? Math.round(count / totalBookings * 1000) / 10 : 0
     }))
 
-    // 작가별 통계
-    const adminStats = inquiries?.reduce((acc, inquiry) => {
-      if (inquiry.matched_admin_id) {
-        const adminId = inquiry.matched_admin_id
-        if (!acc[adminId]) {
-          acc[adminId] = {
-            adminId,
-            adminName: inquiry.matched_admin?.name || 'Unknown',
-            bookings: 0,
-            completed: 0
-          }
-        }
-        acc[adminId].bookings++
-        if (inquiry.status === 'completed') {
-          acc[adminId].completed++
-        }
-      }
-      return acc
-    }, {} as Record<string, { adminId: string; adminName: string; bookings: number; completed: number }>) || {}
-
-    const adminStatsArray = Object.values(adminStats).map(admin => ({
-      ...admin,
-      completionRate: admin.bookings > 0 ? Math.round(admin.completed / admin.bookings * 100) : 0
-    }))
+    // 작가별 통계 - disabled as matched_admin_id was removed
+    const adminStatsArray: Array<{
+      adminId: string;
+      adminName: string;
+      bookings: number;
+      completed: number;
+      completionRate: number;
+    }> = []
 
     // 월별 수익 (임시 데이터)
     const monthlyRevenue = []

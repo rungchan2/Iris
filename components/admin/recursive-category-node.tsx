@@ -117,10 +117,10 @@ export function RecursiveCategoryNode({
         </div>
 
         {/* Representative Image */}
-        {category.representative_image_url || category.representative_image?.storage_url ? (
+        {category.representative_image_url || (category.representative_image && typeof category.representative_image === 'string') ? (
           <div className="relative">
             <img
-              src={category.representative_image_url || category.representative_image?.storage_url || ""}
+              src={category.representative_image_url || (typeof category.representative_image === 'string' ? category.representative_image : '') || ""}
               alt={`${category.name} representative`}
               className="h-8 w-8 rounded object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setIsImageDialogOpen(true)}
@@ -191,7 +191,7 @@ export function RecursiveCategoryNode({
           </DialogHeader>
           <div className="flex justify-center">
             <img
-              src={category.representative_image_url || category.representative_image?.storage_url || ""}
+              src={category.representative_image_url || (typeof category.representative_image === 'string' ? category.representative_image : '') || ""}
               alt={`${category.name} representative`}
               className="max-w-full max-h-[400px] object-contain rounded-lg"
             />

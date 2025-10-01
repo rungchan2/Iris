@@ -347,42 +347,42 @@ export function InquiryDetails({
               )}
 
             {/* Mood Keywords */}
-            {(inquiry.current_mood_keywords.length > 0 ||
-              inquiry.desired_mood_keywords.length > 0) && (
+            {((inquiry.current_mood_keywords && inquiry.current_mood_keywords.length > 0) ||
+              (inquiry.desired_mood_keywords && inquiry.desired_mood_keywords.length > 0)) && (
               <div className="pt-4 border-t">
                 <div className="space-y-3">
-                  {inquiry.current_mood_keywords.length > 0 && (
+                  {inquiry.current_mood_keywords && inquiry.current_mood_keywords.length > 0 && (
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-2">
                         현재 분위기
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {inquiry.current_mood_keywords.map((keyword) => (
+                        {inquiry.current_mood_keywords.map((keyword: string) => (
                           <Badge
-                            key={keyword.id}
+                            key={keyword}
                             variant="outline"
                             className="bg-blue-50 text-xs"
                           >
-                            {keyword.name}
+                            {keyword}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {inquiry.desired_mood_keywords.length > 0 && (
+                  {inquiry.desired_mood_keywords && inquiry.desired_mood_keywords.length > 0 && (
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-2">
                         원하는 분위기
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {inquiry.desired_mood_keywords.map((keyword) => (
+                        {inquiry.desired_mood_keywords.map((keyword: string) => (
                           <Badge
-                            key={keyword.id}
+                            key={keyword}
                             variant="outline"
                             className="bg-green-50 text-xs"
                           >
-                            {keyword.name}
+                            {keyword}
                           </Badge>
                         ))}
                       </div>

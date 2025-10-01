@@ -32,12 +32,6 @@ npm run lint
 npm run gen-types
 ```
 
-### Database Management
-```bash
-# Generate TypeScript types from Supabase
-npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/database.types.ts
-```
-
 ## Architecture Overview
 
 ### Tech Stack
@@ -56,6 +50,7 @@ npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/data
   - `matching/` - 10-question matching flow and results
   - `gallery/` - Public photo gallery
   - `login/` - Authentication pages
+- `hooks/` - Custom React hooks
 - `components/` - Reusable UI components
   - `admin/` - Admin-specific components (including matching system controls)
   - `matching/` - Matching flow components (questionnaire, results)
@@ -64,7 +59,6 @@ npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/data
 - `lib/` - Utility functions and configurations
   - `actions/` - Server actions (including matching algorithms)
   - `supabase/` - Database client configurations
-  - `hooks/` - Custom React hooks
   - `matching/` - Matching algorithms and embedding utilities
 - `types/` - TypeScript type definitions
 - `specs/` - Detailed project documentation

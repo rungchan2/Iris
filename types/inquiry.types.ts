@@ -13,7 +13,9 @@ export const inquiryFormSchema = z.object({
   people_count: z.number().int().min(1).max(6, { message: "최대 6명까지 가능합니다." }),
   relationship: z.string().optional(),
 
-  // Mood keywords and categories removed - no longer used
+  // Legacy fields for backward compatibility
+  current_mood_keywords: z.array(z.string()).optional(),
+  desired_mood_keywords: z.array(z.string()).optional(),
 
   // Additional Info
   special_request: z.string().optional(),
@@ -32,11 +34,27 @@ export const inquiryFormSchema = z.object({
 
 export type InquiryFormValues = z.infer<typeof inquiryFormSchema>
 
-// Category interface removed - no longer using categories
+// Legacy types for backward compatibility with old code
+export interface Category {
+  id: string
+  name: string
+  parent_id?: string | null
+  children?: Category[]
+  depth?: number
+  display_order?: number
+  is_active?: boolean
+  representative_image?: string | null
+  representative_image_url?: string | null
+  male_clothing_recommendation?: string | null
+  female_clothing_recommendation?: string | null
+  accessories_recommendation?: string | null
+  path?: string
+}
 
-// MoodKeyword interface removed - no longer using keywords table
-
-// SelectionHistoryStep interface removed - no longer using tournament
+export interface MoodKeyword {
+  id: string
+  name: string
+}
 
 export interface AvailableSlot {
   id: string
@@ -72,13 +90,28 @@ export interface Inquiry {
   conversation_topics?: string
   favorite_music?: string
   shooting_meaning?: string
-  // categories field removed - no longer using categories
-  // mood keywords and selection history removed - no longer used
+  // Legacy fields for backward compatibility
+  matched_admin_id?: string | null
+  selected_category_id?: string | null
+  selection_path?: string[] | null
+  place_recommendation?: string | null
+  current_mood_keywords?: string[] | null
+  desired_mood_keywords?: string[] | null
+  relationship?: string
   selected_slot_id: {
     id: string
     date: string
     start_time: string
     end_time: string
   }
+  photographers?: Photographer
+  matched_admin?: Array<{ name: string | null }>
+  assigned_admin?: Array<{ name: string | null; email: string | null }>
+}
+
+export interface Photographer {
+  id: string
+  name: string | null
+  email: string | null
 }
 

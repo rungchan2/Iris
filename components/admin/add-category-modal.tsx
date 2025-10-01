@@ -71,7 +71,7 @@ export function AddCategoryModal({
 
     const addCategoryOptions = (cats: Category[], prefix = "") => {
       cats
-        .filter((cat) => cat.depth < 10) // Only allow parents that won't exceed max depth
+        .filter((cat) => (cat.depth ?? 0) < 10) // Only allow parents that won't exceed max depth
         .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
         .forEach((cat) => {
           options.push({

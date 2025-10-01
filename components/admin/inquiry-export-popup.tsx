@@ -245,7 +245,7 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
       case "selection_path":
         return inquiry.selection_path && inquiry.selection_path.length > 0 ? (
           <div className="flex flex-wrap gap-1 mt-1">
-            {inquiry.selection_path.map((item, index) => (
+            {inquiry.selection_path.map((item: string, index: number) => (
               <div key={index} className="flex items-center">
                 <span className="text-lg font-medium">{item}</span>
                 {index < inquiry.selection_path!.length - 1 && (
@@ -256,26 +256,26 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
           </div>
         ) : null
       case "current_mood_keywords":
-        return inquiry.current_mood_keywords.length > 0 ? (
+        return inquiry.current_mood_keywords && inquiry.current_mood_keywords.length > 0 ? (
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">현재 분위기</p>
             <div className="flex flex-wrap gap-1">
-              {inquiry.current_mood_keywords.map((keyword) => (
-                <Badge key={keyword.id} variant="outline" className="bg-blue-50 text-xs">
-                  {keyword.name}
+              {inquiry.current_mood_keywords.map((keyword: string) => (
+                <Badge key={keyword} variant="outline" className="bg-blue-50 text-xs">
+                  {keyword}
                 </Badge>
               ))}
             </div>
           </div>
         ) : null
       case "desired_mood_keywords":
-        return inquiry.desired_mood_keywords.length > 0 ? (
+        return inquiry.desired_mood_keywords && inquiry.desired_mood_keywords.length > 0 ? (
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">원하는 분위기</p>
             <div className="flex flex-wrap gap-1">
-              {inquiry.desired_mood_keywords.map((keyword) => (
-                <Badge key={keyword.id} variant="outline" className="bg-green-50 text-xs">
-                  {keyword.name}
+              {inquiry.desired_mood_keywords.map((keyword: string) => (
+                <Badge key={keyword} variant="outline" className="bg-green-50 text-xs">
+                  {keyword}
                 </Badge>
               ))}
             </div>

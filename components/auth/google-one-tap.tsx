@@ -58,68 +58,70 @@ export function GoogleOneTap({
   const supabase = createClient()
   const router = useRouter()
 
-  const initializeGoogleOneTap = async () => {
-    if (!window.google) {
-      console.error('Google One Tap script not loaded')
-      return
-    }
-
-    try {
-      const { data, error } = await supabase.auth.getSession()
-      
-      if (error) {
-        console.error('Error getting session:', error)
-      }
-      
-      if (data.session) {
-        router.push(redirectTo)
+  const initializeGoogleOneTap = () => {
+    void (async () => {
+      if (!window.google) {
+        console.error('Google One Tap script not loaded')
         return
       }
 
-      const [nonce, hashedNonce] = await generateNonce()
+      try {
+        const { data, error } = await supabase.auth.getSession()
 
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (response: CredentialResponse) => {
-          try {
-            setIsLoading(true)
-            
-            const { data, error } = await supabase.auth.signInWithIdToken({
-              provider: 'google',
-              token: response.credential,
-              nonce,
-            })
-
-            if (error) {
-              throw error
-            }
-
-            console.log('Successfully logged in with Google One Tap')
-            onSuccess?.()
-            router.push(redirectTo)
-          } catch (error) {
-            console.error('Error logging in with Google One Tap:', error)
-            onError?.(error as Error)
-          } finally {
-            setIsLoading(false)
-          }
-        },
-        nonce: hashedNonce,
-        auto_select: autoSelect,
-        cancel_on_tap_outside: cancelOnTapOutside,
-        use_fedcm_for_prompt: true,
-        itp_support: true,
-      })
-
-      window.google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.log('One Tap not displayed or skipped')
+        if (error) {
+          console.error('Error getting session:', error)
         }
-      })
-    } catch (error) {
-      console.error('Error initializing Google One Tap:', error)
-      onError?.(error as Error)
-    }
+
+        if (data.session) {
+          router.push(redirectTo)
+          return
+        }
+
+        const [nonce, hashedNonce] = await generateNonce()
+
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: CredentialResponse) => {
+            try {
+              setIsLoading(true)
+
+              const { data, error } = await supabase.auth.signInWithIdToken({
+                provider: 'google',
+                token: response.credential,
+                nonce,
+              })
+
+              if (error) {
+                throw error
+              }
+
+              console.log('Successfully logged in with Google One Tap')
+              onSuccess?.()
+              router.push(redirectTo)
+            } catch (error) {
+              console.error('Error logging in with Google One Tap:', error)
+              onError?.(error as Error)
+            } finally {
+              setIsLoading(false)
+            }
+          },
+          nonce: hashedNonce,
+          auto_select: autoSelect,
+          cancel_on_tap_outside: cancelOnTapOutside,
+          use_fedcm_for_prompt: true,
+          itp_support: true,
+        })
+
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('One Tap not displayed or skipped')
+          }
+        })
+      } catch (error) {
+        console.error('Error initializing Google One Tap:', error)
+        onError?.(error as Error)
+      }
+    })()
   }
 
   return (

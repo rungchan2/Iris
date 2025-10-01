@@ -44,13 +44,10 @@ export async function getInquiryById(inquiryId: string): Promise<{
   try {
     const supabase = await createClient()
     
-    // inquiry와 assigned admin 정보를 함께 조회
+    // inquiry 조회
     const { data: inquiry, error: inquiryError } = await supabase
       .from('inquiries')
-      .select(`
-        *,
-        assigned_admin:photographers!matched_admin_id(name, email)
-      `)
+      .select('*')
       .eq('id', inquiryId)
       .single()
     
@@ -72,20 +69,17 @@ export async function getInquiryById(inquiryId: string): Promise<{
         admin_notes: inquiry.admin_note || '',
         created_at: inquiry.created_at || new Date().toISOString(),
         updated_at: inquiry.updated_at || new Date().toISOString(),
-        assigned_admin_id: inquiry.matched_admin_id || '',
-        selected_category_id: inquiry.selected_category_id || '',
+        assigned_admin_id: '',
+        selected_category_id: '',
         selected_slot_id: inquiry.selected_slot_id || '',
         special_request: inquiry.special_request || '',
         gender: inquiry.gender || 'other',
         people_count: inquiry.people_count || 1,
         relationship: inquiry.relationship || '',
         desired_date: inquiry.desired_date || '',
-        current_mood_keywords: inquiry.current_mood_keywords || [],
-        desired_mood_keywords: inquiry.desired_mood_keywords || [],
-        assigned_admin: inquiry.assigned_admin ? {
-          name: inquiry.assigned_admin.name || '',
-          email: inquiry.assigned_admin.email || ''
-        } : undefined
+        current_mood_keywords: [],
+        desired_mood_keywords: [],
+        assigned_admin: undefined
       }
     }
   } catch (error) {

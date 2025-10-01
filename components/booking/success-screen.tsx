@@ -9,7 +9,7 @@ import { formatDate, formatTime, formatDateWithSeparator } from "@/lib/date-fns"
 import { format } from "date-fns"
 interface SuccessScreenProps {
   formData: Inquiry
-  category: Category
+  category?: Category
   onStartOver: () => void
 }
 

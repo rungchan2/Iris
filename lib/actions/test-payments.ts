@@ -32,7 +32,7 @@ export async function createTestPaymentRequest(testData: {
     if (existingPhotographers && existingPhotographers.length > 0) {
       // 기존 승인된 작가 사용
       testPhotographerId = existingPhotographers[0].id;
-      photographerName = existingPhotographers[0].name;
+      photographerName = existingPhotographers[0].name || 'Test Photographer';
     } else {
       // 테스트용 작가 생성
       testPhotographerId = crypto.randomUUID();

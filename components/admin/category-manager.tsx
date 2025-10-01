@@ -119,7 +119,7 @@ export function CategoryManager({ initialCategories }: CategoryManagerProps) {
       await updateOrderMutation.mutateAsync({
         activeId,
         overId,
-        activeParentId: activeCategory.parent_id,
+        activeParentId: activeCategory.parent_id ?? null,
       })
     } catch (error) {
       // Error is handled by the mutation

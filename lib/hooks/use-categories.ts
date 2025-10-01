@@ -59,7 +59,7 @@ export function useAddCategory() {
       
       // Calculate depth
       const parentCategory = parentId ? currentCategories.find((c) => c.id === parentId) : null
-      const depth = parentCategory ? parentCategory.depth + 1 : 1
+      const depth = parentCategory ? (parentCategory.depth ?? 0) + 1 : 1
 
       // Check max depth
       if (depth > 10) {
@@ -137,8 +137,8 @@ export function useUpdateCategory() {
 
       // Calculate new depth and path
       const parentCategory = updates.parent_id ? currentCategories.find((c) => c.id === updates.parent_id) : null
-      const newDepth = parentCategory ? parentCategory.depth + 1 : 1
-      const newPath = parentCategory ? `${parentCategory.path}/${updates.name}` : updates.name
+      const newDepth = parentCategory ? (parentCategory.depth ?? 0) + 1 : 1
+      const newPath = parentCategory ? `${parentCategory.path ?? ''}/${updates.name}` : updates.name
 
       // Check max depth
       if (newDepth > 10) {

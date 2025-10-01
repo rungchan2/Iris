@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Download, Camera, Users, ArrowRight, Sparkles } from "lucide-react";
 import { personalityTypes, type PersonalityType } from "@/lib/quiz-data";
-import { AIImageGenerator } from "@/components/quiz/ai-image-generator";
+// import { AIImageGenerator } from "@/components/quiz/ai-image-generator";
 import { RecommendedGallery } from "@/components/quiz/recommended-gallery";
 import { ShareResult } from "@/components/quiz/share-result";
 import { RecommendedPhotographers } from "@/components/quiz/recommended-photographers";
@@ -175,10 +175,7 @@ export function QuizResult({ personalityType, scores, sessionId }: QuizResultPro
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <AIImageGenerator 
-            sessionId={sessionId} 
-            personalityCode={personalityType} 
-          />
+          {/* AIImageGenerator removed - feature deprecated */}
         </motion.section>
 
         {/* Share Result Section */}

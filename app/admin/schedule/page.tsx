@@ -50,12 +50,7 @@ export default async function AdminSchedulePage() {
   const { data: inquiries } = await supabase
     .from("inquiries")
     .select(`
-      *,
-      photographers!matched_admin_id (
-        id,
-        name,
-        email
-      )
+      *
     `)
     .gte("created_at", startOfMonth.toISOString())
     .lte("created_at", endOfMonth.toISOString())
@@ -73,8 +68,12 @@ export default async function AdminSchedulePage() {
     const photographerBooked = photographerSlots.filter(slot =>
       inquiries?.some(inquiry => inquiry.selected_slot_id === slot.id)
     ).length
-    const photographerInquiries = inquiries?.filter(inquiry => inquiry.matched_admin_id === photographer.id) || []
-    
+    const photographerInquiries = inquiries?.filter(inquiry => {
+      // Check if the inquiry is related to this photographer's slot
+      const inquirySlot = allSlots?.find(s => s.id === inquiry.selected_slot_id)
+      return inquirySlot?.admin_id === photographer.id
+    }) || []
+
     return {
       ...photographer,
       totalSlots: photographerSlots.length,
@@ -117,10 +116,10 @@ export default async function AdminSchedulePage() {
       </div>
 
       {/* Calendar and Schedule Overview Component */}
-      <AdminScheduleOverview 
-        allSlots={allSlots || []} 
+      <AdminScheduleOverview
+        allSlots={allSlots || []}
         photographers={photographers || []}
-        inquiries={inquiries || []}
+        inquiries={(inquiries || []) as any[]}
       />
 
       {/* Photographer Statistics */}
