@@ -6,21 +6,6 @@
 - **Database Type**: PostgreSQL (Supabase) with pgvector extension
 - **Project ID**: `kypwcsgwjtnkiiwjedcn`
 - **Region**: ap-northeast-2
-- **Major Update**: 2025년 9월 16일 - 10문항 매칭 시스템 구축
-
-### 최신 변경사항 (2025.09.16)
-- **매칭 시스템**: 10문항 설문 기반 4차원 작가 매칭 시스템 구축
-- **pgvector 통합**: 임베딩 기반 semantic similarity search 지원
-- **익명 매칭**: 로그인 없이 매칭 가능한 세션 토큰 시스템
-- **A/B 테스트 테이블 제거**: 조기 최적화 방지를 위해 실험 관련 테이블 삭제
-
-## 🔐 핵심 아키텍처 변경사항 (2025.09)
-
-### 매칭 시스템 도입
-- **이전**: 성향 진단 기반 매칭 (삭제됨)
-- **현재**: 10문항 설문 → 4차원 점수 → pgvector 유사도 매칭
-- **권한 시스템**: 익명 사용자도 매칭 시스템 전체 이용 가능
-- **데이터 수집**: 딥러닝 V2/V3를 위한 사용자 행동 추적
 
 ## 📊 핵심 테이블 구조
 
@@ -320,23 +305,6 @@ CREATE INDEX idx_matching_sessions_token ON matching_sessions(session_token);
 CREATE INDEX idx_matching_results_session ON matching_results(session_id);
 CREATE INDEX idx_photographer_keywords_keyword ON photographer_keywords(keyword);
 ```
-
-## 🔄 마이그레이션 이력
-
-### 2025년 9월 16일 - 매칭 시스템 구축
-1. **pgvector 확장 활성화**
-2. **매칭 시스템 테이블 생성**: survey_*, matching_*, photographer_profiles 등
-3. **10문항 질문 데이터 입력**: 가중치 설정과 함께
-4. **RLS 정책 설정**: 익명 사용자 매칭 지원
-5. **A/B 테스트 테이블 제거**: experiment_sessions, weight_experiments 삭제
-
-### 2025년 9월 15일 - 시스템 정리
-- 성향 진단 시스템 완전 제거 (personality_*, quiz_* 테이블)
-- 초대 코드 시스템 제거 (admin_invite_codes 테이블)
-
-### 2025년 8월 31일 - 결제 시스템 통합
-- Multi-PG 결제 시스템 구축
-- products 테이블로 상품 관리 통합
 
 ## 🎯 핵심 특징
 

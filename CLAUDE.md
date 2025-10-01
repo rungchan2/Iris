@@ -209,6 +209,26 @@ NEXT_PUBLIC_APP_URL=
 
 ## Recent Updates
 
+### 2025.09.29 - AI Image Generation System Removal
+**MAJOR CLEANUP**: Complete removal of AI image generation feature
+
+#### Database Changes
+- ✅ **Table Removal**: Dropped `ai_image_generations` table entirely
+- ✅ **Column Cleanup**: Removed `ai_generation_id` from inquiries table
+- ✅ **Constraint Cleanup**: Dropped foreign key constraints linking to AI generation
+- ✅ **Type Regeneration**: Updated TypeScript types to reflect schema changes
+
+#### Code Cleanup
+- ✅ **Component Removal**: Moved AI generation components to .unused files
+- ✅ **Function Cleanup**: Removed AI generation server actions and analytics
+- ✅ **Dashboard Update**: Cleaned up admin analytics dashboard AI references
+- ✅ **Build Verification**: Confirmed successful compilation without AI code
+
+#### System Simplification
+- ✅ **Focused Analytics**: Analytics now focus on matching and booking metrics only
+- ✅ **Cleaner Schema**: Simplified inquiries table without AI-related complexity
+- ✅ **Reduced Dependencies**: No longer requires OpenAI DALL-E API integration
+
 ### 2025.09.16 - Matching System Implementation
 **MAJOR FEATURE**: Complete 10-question photographer matching system
 
