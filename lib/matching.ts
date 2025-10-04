@@ -1,42 +1,28 @@
 import { createClient } from '@/lib/supabase/client'
-import { 
-  SurveyQuestion, 
-  MatchingSession, 
+import {
+  SurveyQuestion,
+  MatchingSession,
   MatchingResult,
   SurveyResponses,
   generateSessionToken,
   MatchingFilters
 } from '@/types/matching.types'
+import { matchingLogger } from '@/lib/logger'
 
 // Survey Questions & Choices
 export async function getSurveyQuestions() {
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('survey_questions')
     .select(`
       *,
-      survey_choices(*)
+      survey_choices(*),
+      survey_images(*)
     `)
     .eq('is_active', true)
     .order('question_order')
-  
-  // Fetch images separately for image-type questions
-  if (data) {
-    const imageQuestions = data.filter((q: any) => q.question_type === 'image_choice')
-    
-    for (const question of imageQuestions) {
-      const { data: images } = await supabase
-        .from('survey_images')
-        .select('*')
-        .eq('question_id', question.id)
-        .eq('is_active', true)
-        .order('image_order')
-      
-      ;(question as any).survey_images = images || []
-    }
-  }
-  
+
   return { data: data as SurveyQuestion[], error }
 }
 
@@ -123,8 +109,8 @@ export async function createMatchingSession(
     
     return { data: data as MatchingSession, error }
   } catch (embeddingError) {
-    console.error('Error generating embeddings:', embeddingError)
-    
+    matchingLogger.error('Error generating embeddings', embeddingError)
+
     // Fallback: create session without embeddings
     const { data, error } = await supabase
       .from('matching_sessions')
@@ -164,40 +150,34 @@ export async function getMatchingSessionByToken(token: string) {
 // Get Matching Results
 export async function getMatchingResults(sessionId: string) {
   const supabase = createClient()
-  
+
   const { data, error } = await supabase
     .from('matching_results')
     .select(`
       *,
-      photographer:photographers!inner(
+      photographer:photographers!matching_results_photographer_id_fkey(
         id,
         name,
         email,
         bio,
         price_range_min,
-        price_range_max
+        price_range_max,
+        photographer_profiles(
+          *,
+          photographer_keywords(*)
+        )
       )
     `)
     .eq('session_id', sessionId)
     .order('rank_position')
-  
-  // Fetch photographer profiles with 4D descriptions
-  if (data) {
-    for (const result of data) {
-      const { data: profile } = await supabase
-        .from('photographer_profiles')
-        .select(`
-          *,
-          photographer_keywords(*)
-        `)
-        .eq('photographer_id', result.photographer_id)
-        .single()
-      
-      ;(result as any).photographer_profile = profile
-    }
-  }
-  
-  return { data: data as MatchingResult[], error }
+
+  // Flatten photographer_profiles from nested structure
+  const processedData = data?.map(result => ({
+    ...result,
+    photographer_profile: result.photographer?.photographer_profiles
+  }))
+
+  return { data: processedData, error }
 }
 
 // Get Filtered Photographers (for hard filtering)
@@ -250,10 +230,16 @@ export async function trackMatchingInteraction(
   interactionType: 'viewed' | 'clicked' | 'contacted'
 ) {
   const supabase = createClient()
-  
-  const updateData: any = {}
+
+  type MatchingResultUpdate = {
+    viewed_at?: string | null
+    clicked_at?: string | null
+    contacted_at?: string | null
+  }
+
+  const updateData: MatchingResultUpdate = {}
   const timestamp = new Date().toISOString()
-  
+
   switch (interactionType) {
     case 'viewed':
       updateData.viewed_at = timestamp

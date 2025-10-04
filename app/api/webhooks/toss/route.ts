@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { verifyWebhookSignature } from '@/lib/payments/toss-server';
 import type { TossWebhookEvent } from '@/lib/payments/toss-types';
+import { webhookLogger } from '@/lib/logger';
 
 /**
  * TossPayments 웹훅 처리 엔드포인트
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     // 웹훅 시크릿 키로 서명 검증
     const webhookSecret = process.env.TOSS_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.error('TossPayments 웹훅 시크릿 키가 설정되지 않았습니다.');
+      webhookLogger.error('TossPayments 웹훅 시크릿 키가 설정되지 않았습니다.');
       return NextResponse.json(
         { error: 'Webhook secret not configured' },
         { status: 500 }
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     // 서명 검증
     const isValidSignature = verifyWebhookSignature(body, signature, webhookSecret);
     if (!isValidSignature) {
-      console.error('TossPayments 웹훅 서명 검증 실패');
+      webhookLogger.error('TossPayments 웹훅 서명 검증 실패');
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     const webhookEvent: TossWebhookEvent = JSON.parse(body);
     const { eventType, data } = webhookEvent;
 
-    console.log(`TossPayments 웹훅 수신: ${eventType}`, {
+    webhookLogger.info(`TossPayments 웹훅 수신: ${eventType}`, {
       eventId: webhookEvent.eventId,
       timestamp: webhookEvent.timestamp
     });
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
         break;
         
       default:
-        console.log(`처리되지 않은 웹훅 이벤트: ${eventType}`);
+        webhookLogger.info(`처리되지 않은 웹훅 이벤트: ${eventType}`);
     }
 
     // 웹훅 로그 저장
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('TossPayments 웹훅 처리 오류:', error);
+    webhookLogger.error('TossPayments 웹훅 처리 오류', error);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }
@@ -124,12 +125,12 @@ async function handlePaymentDone(supabase: any, data: any) {
       .eq('id', data.metadata?.inquiryId);
 
     if (inquiryError) {
-      console.error('문의 상태 업데이트 실패:', inquiryError);
+      webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
     }
 
-    console.log(`결제 완료 처리됨: ${orderId} (${paymentKey})`);
+    webhookLogger.info(`결제 완료 처리됨: ${orderId} (${paymentKey})`);
   } catch (error) {
-    console.error('결제 완료 처리 오류:', error);
+    webhookLogger.error('결제 완료 처리 오류:', error);
     throw error;
   }
 }
@@ -188,14 +189,14 @@ async function handlePaymentCanceled(supabase: any, data: any) {
           });
 
         if (refundError) {
-          console.error('환불 레코드 생성 실패:', refundError);
+          webhookLogger.error('환불 레코드 생성 실패:', refundError);
         }
       }
     }
 
-    console.log(`결제 취소 처리됨: ${orderId} (${paymentKey})`);
+    webhookLogger.info(`결제 취소 처리됨: ${orderId} (${paymentKey})`);
   } catch (error) {
-    console.error('결제 취소 처리 오류:', error);
+    webhookLogger.error('결제 취소 처리 오류:', error);
     throw error;
   }
 }
@@ -222,9 +223,9 @@ async function handlePaymentAborted(supabase: any, data: any) {
       throw new Error(`결제 실패 상태 업데이트 실패: ${error.message}`);
     }
 
-    console.log(`결제 실패 처리됨: ${orderId}`);
+    webhookLogger.info(`결제 실패 처리됨: ${orderId}`);
   } catch (error) {
-    console.error('결제 실패 처리 오류:', error);
+    webhookLogger.error('결제 실패 처리 오류:', error);
     throw error;
   }
 }
@@ -250,9 +251,9 @@ async function handlePaymentExpired(supabase: any, data: any) {
       throw new Error(`결제 만료 상태 업데이트 실패: ${error.message}`);
     }
 
-    console.log(`결제 만료 처리됨: ${orderId}`);
+    webhookLogger.info(`결제 만료 처리됨: ${orderId}`);
   } catch (error) {
-    console.error('결제 만료 처리 오류:', error);
+    webhookLogger.error('결제 만료 처리 오류:', error);
     throw error;
   }
 }
@@ -289,12 +290,12 @@ async function handleVirtualAccountDeposit(supabase: any, data: any) {
       .eq('id', data.metadata?.inquiryId);
 
     if (inquiryError) {
-      console.error('문의 상태 업데이트 실패:', inquiryError);
+      webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
     }
 
-    console.log(`가상계좌 입금 완료 처리됨: ${orderId} (${paymentKey})`);
+    webhookLogger.info(`가상계좌 입금 완료 처리됨: ${orderId} (${paymentKey})`);
   } catch (error) {
-    console.error('가상계좌 입금 처리 오류:', error);
+    webhookLogger.error('가상계좌 입금 처리 오류:', error);
     throw error;
   }
 }
@@ -315,10 +316,10 @@ async function logWebhookEvent(supabase: any, webhookEvent: TossWebhookEvent) {
       });
 
     if (error) {
-      console.error('웹훅 로그 저장 실패:', error);
+      webhookLogger.error('웹훅 로그 저장 실패:', error);
     }
   } catch (error) {
-    console.error('웹훅 로그 저장 오류:', error);
+    webhookLogger.error('웹훅 로그 저장 오류:', error);
   }
 }
 

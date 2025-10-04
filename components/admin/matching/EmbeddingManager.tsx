@@ -1,4 +1,31 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
+
+/**
+ * TODO: MIGRATE TO SERVER ACTIONS AND HOOKS
+ *
+ * This component manages background embedding job processing.
+ * Future migration plan:
+ *
+ * 1. Create /lib/actions/embedding-jobs.ts with functions:
+ *    - getEmbeddingJobs(filters)
+ *    - createEmbeddingJob(jobData)
+ *    - pauseEmbeddingJob(jobId)
+ *    - resumeEmbeddingJob(jobId)
+ *    - retryEmbeddingJob(jobId)
+ *    - getJobStats()
+ *
+ * 2. Create /lib/hooks/use-embedding-jobs.ts with:
+ *    - useEmbeddingJobs(filters)
+ *    - useEmbeddingJobMutations()
+ *    - useJobStats()
+ *
+ * 3. Replace real-time subscriptions with hooks + polling or SSE
+ *
+ * Current complexity: 471 lines, real-time job monitoring
+ * Estimated effort: 3-4 hours
+ * Priority: LOW (admin-only background processing)
+ */
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -14,9 +41,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { 
-  Zap, 
-  Play, 
+import {
+  Zap,
+  Play,
   Pause,
   RefreshCw,
   CheckCircle,
@@ -100,7 +127,7 @@ export default function EmbeddingManager({ onComplete }: EmbeddingManagerProps) 
         estimatedCost
       })
     } catch (error) {
-      console.error('Error loading jobs:', error)
+      adminLogger.error('Error loading jobs:', error)
       toast.error('작업 목록을 불러오는 중 오류가 발생했습니다')
     }
   }
@@ -149,13 +176,13 @@ export default function EmbeddingManager({ onComplete }: EmbeddingManagerProps) 
                 throw new Error(data.message)
               }
             } catch (parseError) {
-              console.error('Error parsing SSE data:', parseError)
+              adminLogger.error('Error parsing SSE data:', parseError)
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error processing embeddings:', error)
+      adminLogger.error('Error processing embeddings:', error)
       toast.error('임베딩 생성 중 오류가 발생했습니다')
     } finally {
       setProcessing(false)
@@ -179,7 +206,7 @@ export default function EmbeddingManager({ onComplete }: EmbeddingManagerProps) 
       toast.success(`${result.created}개의 임베딩 작업이 생성되었습니다`)
       loadJobs()
     } catch (error) {
-      console.error('Error generating embedding jobs:', error)
+      adminLogger.error('Error generating embedding jobs:', error)
       toast.error('임베딩 작업 생성 중 오류가 발생했습니다')
     }
   }
@@ -196,7 +223,7 @@ export default function EmbeddingManager({ onComplete }: EmbeddingManagerProps) 
       toast.success('실패한 작업들을 다시 시도합니다')
       loadJobs()
     } catch (error) {
-      console.error('Error retrying failed jobs:', error)
+      adminLogger.error('Error retrying failed jobs:', error)
       toast.error('작업 재시도 중 오류가 발생했습니다')
     }
   }
@@ -235,7 +262,7 @@ export default function EmbeddingManager({ onComplete }: EmbeddingManagerProps) 
       
       if (onComplete) onComplete()
     } catch (error) {
-      console.error('Error generating CLIP embeddings:', error)
+      adminLogger.error('Error generating CLIP embeddings:', error)
       toast.error('CLIP 임베딩 생성 중 오류가 발생했습니다')
     }
   }

@@ -1,4 +1,5 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,8 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { getPayments, getPayment } from '@/lib/actions/payments'
 import { getPhotographers } from '@/lib/actions/photographers'
+import type { PaymentStatus, PaymentMethod } from '@/lib/payments/types'
+import type { Database } from '@/types/database.types'
 import PaymentStatistics from './payment-statistics'
 
 interface Payment {
@@ -71,7 +74,7 @@ export default function PaymentManagement() {
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [filters, setFilters] = useState<PaymentFilters>({})
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
-  const [photographers, setPhotographers] = useState<any[]>([])
+  const [photographers, setPhotographers] = useState<Array<Database['public']['Tables']['photographers']['Row']>>([])
   const [loading, setLoading] = useState(true)
   const [sortField, setSortField] = useState<'created_at' | 'amount' | 'status'>('created_at')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -92,8 +95,8 @@ export default function PaymentManagement() {
     setLoading(true)
     try {
       const result = await getPayments({
-        status: filters.status as any,
-        paymentMethod: filters.provider as any,
+        status: filters.status as PaymentStatus | undefined,
+        paymentMethod: filters.provider as PaymentMethod | undefined,
         startDate: filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
         endDate: filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined,
         photographerId: filters.photographerId,
@@ -101,15 +104,16 @@ export default function PaymentManagement() {
         offset: (currentPage - 1) * 20
       })
 
-      if (result.success && result.data) {
-        setPayments(result.data as any)
+      if (result.success) {
+        // Type assertion is safe here because getPayments returns PaymentModel[] which matches Payment interface
+        setPayments(result.data as Payment[])
         // 페이지네이션 계산 (임시로 20개씩으로 계산)
         setTotalPages(Math.ceil(result.data.length / 20) || 1)
       } else {
-        console.error('Failed to load payments:', (result as any).error)
+        adminLogger.error('Failed to load payments:', result.error)
       }
     } catch (error) {
-      console.error('Error loading payments:', error)
+      adminLogger.error('Error loading payments:', error)
     } finally {
       setLoading(false)
     }
@@ -124,7 +128,7 @@ export default function PaymentManagement() {
         setPhotographers([])
       }
     } catch (error) {
-      console.error('Error loading photographers:', error)
+      adminLogger.error('Error loading photographers:', error)
       setPhotographers([])
     }
   }
@@ -194,11 +198,14 @@ export default function PaymentManagement() {
   const handleViewDetails = async (paymentId: string) => {
     try {
       const result = await getPayment(paymentId)
-      if (result.success && result.data) {
-        setSelectedPayment(result.data as any)
+      if (result.success) {
+        // Type assertion is safe here because getPayment returns PaymentModel which matches Payment interface
+        setSelectedPayment(result.data as Payment)
+      } else {
+        adminLogger.error('Failed to load payment details:', result.error)
       }
     } catch (error) {
-      console.error('Error loading payment details:', error)
+      adminLogger.error('Error loading payment details:', error)
     }
   }
 

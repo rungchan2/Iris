@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminLogger } from "@/lib/logger"
 import { createClient } from '@/lib/supabase/server'
 import Replicate from 'replicate'
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`Generating CLIP embedding for image: ${imageId}`)
+    adminLogger.info(`Generating CLIP embedding for image: ${imageId}`)
 
     // Generate CLIP embedding using Replicate
     const input = {
@@ -50,11 +51,11 @@ export async function POST(request: NextRequest) {
       .eq('id', imageId)
 
     if (updateError) {
-      console.error('Error updating image embedding:', updateError)
+      adminLogger.error('Error updating image embedding:', updateError)
       throw updateError
     }
 
-    console.log(`✅ Successfully generated CLIP embedding for image ${imageId}`)
+    adminLogger.info(`✅ Successfully generated CLIP embedding for image ${imageId}`)
 
     return NextResponse.json({
       success: true,
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error generating CLIP embedding:', error)
+    adminLogger.error('Error generating CLIP embedding:', error)
     
     return NextResponse.json(
       { 
@@ -164,7 +165,7 @@ export async function PUT(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error in batch CLIP embedding generation:', error)
+    adminLogger.error('Error in batch CLIP embedding generation:', error)
     
     return NextResponse.json(
       { 

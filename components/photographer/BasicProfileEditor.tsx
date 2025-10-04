@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Save, MapPin, DollarSign, Users } from 'lucide-react'
-import { toast } from 'sonner'
+import { useProfileMutations } from '@/lib/hooks/use-photographer-profile'
 
 interface BasicProfileEditorProps {
   photographer: any
@@ -45,8 +44,8 @@ export default function BasicProfileEditor({
     price_max: profile?.price_max || 500000,
     companion_types: profile?.companion_types || []
   })
-  const [saving, setSaving] = useState(false)
-  const supabase = createClient()
+
+  const { updateBasic } = useProfileMutations(photographer?.id)
 
   const handleRegionToggle = (region: string) => {
     setFormData(prev => ({
@@ -67,41 +66,9 @@ export default function BasicProfileEditor({
   }
 
   const handleSave = async () => {
-    try {
-      setSaving(true)
-
-      // Update photographer bio
-      if (formData.bio !== photographer?.bio) {
-        const { error: bioError } = await supabase
-          .from('photographers')
-          .update({ bio: formData.bio })
-          .eq('id', photographer.id)
-
-        if (bioError) throw bioError
-      }
-
-      // Update profile
-      const { data: updatedProfile, error: profileError } = await supabase
-        .from('photographer_profiles')
-        .update({
-          service_regions: formData.service_regions,
-          price_min: formData.price_min,
-          price_max: formData.price_max,
-          companion_types: formData.companion_types
-        })
-        .eq('photographer_id', photographer.id)
-        .select()
-        .single()
-
-      if (profileError) throw profileError
-
-      onUpdate(updatedProfile)
-      toast.success('기본 정보가 저장되었습니다')
-    } catch (error) {
-      console.error('Error saving profile:', error)
-      toast.error('저장 중 오류가 발생했습니다')
-    } finally {
-      setSaving(false)
+    const { data, error } = await updateBasic.mutateAsync(formData)
+    if (data && !error) {
+      onUpdate(data)
     }
   }
 
@@ -291,8 +258,8 @@ export default function BasicProfileEditor({
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} size="lg">
-          {saving ? (
+        <Button onClick={handleSave} disabled={updateBasic.isPending} size="lg">
+          {updateBasic.isPending ? (
             '저장 중...'
           ) : (
             <>

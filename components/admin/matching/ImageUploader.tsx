@@ -1,4 +1,5 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect } from 'react'
 import { SurveyImage } from '@/types/matching.types'
@@ -20,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { 
+import {
   Trash2,
   Save,
   Edit,
@@ -68,7 +69,7 @@ export default function ImageUploader({
       setLocalImages(updatedImages)
       onUpdate(updatedImages)
     } catch (error) {
-      console.error('Error refreshing images:', error)
+      adminLogger.error('Error refreshing images:', error)
     }
   }
 
@@ -111,7 +112,7 @@ export default function ImageUploader({
       setEditLabel('')
       toast.success('이미지 라벨이 저장되었습니다')
     } catch (error) {
-      console.error('Error saving image:', error)
+      adminLogger.error('Error saving image:', error)
       toast.error('저장 중 오류가 발생했습니다')
     }
   }
@@ -138,7 +139,7 @@ export default function ImageUploader({
       
       toast.success('이미지가 삭제되었습니다')
     } catch (error) {
-      console.error('Error deleting image:', error)
+      adminLogger.error('Error deleting image:', error)
       toast.error('삭제 중 오류가 발생했습니다')
     }
   }
@@ -162,7 +163,7 @@ export default function ImageUploader({
       
       toast.success(`이미지가 ${isActive ? '활성화' : '비활성화'}되었습니다`)
     } catch (error) {
-      console.error('Error toggling image:', error)
+      adminLogger.error('Error toggling image:', error)
       toast.error('상태 변경 중 오류가 발생했습니다')
     }
   }

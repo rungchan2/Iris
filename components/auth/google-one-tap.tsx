@@ -1,4 +1,9 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
+
+// TODO: Refactor OAuth flow to use server actions
+// This component handles Google One Tap OAuth flow which requires direct Supabase client usage
+// Consider moving auth logic to server actions in future refactor
 
 import { useEffect, useState } from 'react'
 import Script from 'next/script'
@@ -61,7 +66,7 @@ export function GoogleOneTap({
   const initializeGoogleOneTap = () => {
     void (async () => {
       if (!window.google) {
-        console.error('Google One Tap script not loaded')
+        adminLogger.error('Google One Tap script not loaded')
         return
       }
 
@@ -69,7 +74,7 @@ export function GoogleOneTap({
         const { data, error } = await supabase.auth.getSession()
 
         if (error) {
-          console.error('Error getting session:', error)
+          adminLogger.error('Error getting session:', error)
         }
 
         if (data.session) {
@@ -95,11 +100,11 @@ export function GoogleOneTap({
                 throw error
               }
 
-              console.log('Successfully logged in with Google One Tap')
+              adminLogger.info('Successfully logged in with Google One Tap')
               onSuccess?.()
               router.push(redirectTo)
             } catch (error) {
-              console.error('Error logging in with Google One Tap:', error)
+              adminLogger.error('Error logging in with Google One Tap:', error)
               onError?.(error as Error)
             } finally {
               setIsLoading(false)
@@ -114,11 +119,11 @@ export function GoogleOneTap({
 
         window.google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            console.log('One Tap not displayed or skipped')
+            adminLogger.info('One Tap not displayed or skipped')
           }
         })
       } catch (error) {
-        console.error('Error initializing Google One Tap:', error)
+        adminLogger.error('Error initializing Google One Tap:', error)
         onError?.(error as Error)
       }
     })()

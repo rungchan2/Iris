@@ -1,4 +1,5 @@
 "use client"
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -9,10 +10,19 @@ import html2canvas from "html2canvas-pro"
 import { formatDate, formatTime } from "@/lib/date-fns"
 import { PhotoGallery } from "./photo-gallery"
 import { Inquiry } from "@/types/inquiry.types"
-import { Photo } from "@/app/_gallery/gallery-client"
 import { StatusBadge } from "./status-badge"
+
+interface Photo {
+  id: string
+  filename: string
+  storage_url: string
+  thumbnail_url?: string | null
+  width?: number | null
+  height?: number | null
+  size_kb?: number | null
+  created_at: string
+}
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
 
 interface InquiryExportPopupProps {
   inquiry: Inquiry
@@ -76,26 +86,10 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
   useEffect(() => {
     const fetchCategoryRecommendations = async () => {
       if (!inquiry.selected_category_id) return;
-      
+
       // Note: These columns don't exist in the current schema
-      // Commenting out until schema is updated
-      /*
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("categories")
-        .select("male_clothing_recommendation, female_clothing_recommendation, accessories_recommendation")
-        .eq("id", inquiry.selected_category_id)
-        .single();
-      
-      if (error) {
-        console.dir(error, { depth: null });
-      } else {
-        console.log("Category recommendations loaded:", data);
-        setCategoryRecommendations(data);
-      }
-      */
-      
-      // Set empty recommendations for now
+      // If needed in the future, create a server action in lib/actions/categories.ts
+      // For now, set empty recommendations
       setCategoryRecommendations({});
     };
 
@@ -105,12 +99,12 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
   }, [isOpen, inquiry.selected_category_id])
 
   const handleFieldToggle = (fieldKey: string) => {
-    console.log("Toggling field:", fieldKey);
+    adminLogger.info("Toggling field:", fieldKey);
     setSelectedFields(prev => {
       const newFields = prev.includes(fieldKey) 
         ? prev.filter(f => f !== fieldKey)
         : [...prev, fieldKey];
-      console.log("New selected fields:", newFields);
+      adminLogger.info("New selected fields:", newFields);
       return newFields;
     })
   }
@@ -210,7 +204,7 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
       toast.success("문의 정보가 PNG로 내보내기 되었습니다!")
       onClose()
     } catch (error) {
-      console.error("Export error:", error)
+      adminLogger.error("Export error:", error)
       toast.error("내보내기 중 오류가 발생했습니다.")
     } finally {
       setIsExporting(false)
@@ -290,13 +284,13 @@ export function InquiryExportPopup({ inquiry, photos, isOpen, onClose }: Inquiry
       case "place_recommendation":
         return inquiry.place_recommendation ? <p className="text-lg">{inquiry.place_recommendation}</p> : null
       case "male_clothing_recommendation":
-        console.log("Rendering male clothing:", categoryRecommendations.male_clothing_recommendation);
+        adminLogger.info("Rendering male clothing:", categoryRecommendations.male_clothing_recommendation);
         return categoryRecommendations.male_clothing_recommendation ? <p className="text-lg">{categoryRecommendations.male_clothing_recommendation}</p> : null
       case "female_clothing_recommendation":
-        console.log("Rendering female clothing:", categoryRecommendations.female_clothing_recommendation);
+        adminLogger.info("Rendering female clothing:", categoryRecommendations.female_clothing_recommendation);
         return categoryRecommendations.female_clothing_recommendation ? <p className="text-lg">{categoryRecommendations.female_clothing_recommendation}</p> : null
       case "accessories_recommendation":
-        console.log("Rendering accessories:", categoryRecommendations.accessories_recommendation);
+        adminLogger.info("Rendering accessories:", categoryRecommendations.accessories_recommendation);
         return categoryRecommendations.accessories_recommendation ? <p className="text-lg">{categoryRecommendations.accessories_recommendation}</p> : null
       case "status":
         return <StatusBadge status={inquiry.status} />

@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/lib/supabase/client"
 import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
+import { usePhotos } from "@/lib/hooks/use-photos"
 
 interface Photo {
   id: string
@@ -22,72 +22,22 @@ interface ImageSelectorModalProps {
 }
 
 export function ImageSelectorModal({ isOpen, onClose, onSelect }: ImageSelectorModalProps) {
-  const [photos, setPhotos] = useState<Photo[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
-  
+
   const ITEMS_PER_PAGE = 24
-  const supabase = createClient()
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchPhotos()
-      fetchTotalCount()
-    }
-  }, [isOpen, currentPage, searchTerm])
+  // Use photos hook with search and pagination
+  const { data: photosData, isLoading } = usePhotos({
+    search: searchTerm,
+    page: currentPage,
+    pageSize: ITEMS_PER_PAGE,
+    enabled: isOpen
+  })
 
-  const fetchTotalCount = async () => {
-    try {
-      let query = supabase
-        .from("photos")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true)
-
-      if (searchTerm) {
-        query = query.ilike("filename", `%${searchTerm}%`)
-      }
-
-      const { count, error } = await query
-
-      if (error) throw error
-      setTotalCount(count || 0)
-    } catch (error) {
-      console.error("Error fetching total count:", error)
-    }
-  }
-
-  const fetchPhotos = async () => {
-    setIsLoading(true)
-    try {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE
-      const to = from + ITEMS_PER_PAGE - 1
-
-      let query = supabase
-        .from("photos")
-        .select("id, filename, storage_url, thumbnail_url")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .range(from, to)
-
-      if (searchTerm) {
-        query = query.ilike("filename", `%${searchTerm}%`)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      setPhotos(data || [])
-    } catch (error) {
-      console.error("Error fetching photos:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+  const photos = photosData?.data ?? []
+  const totalCount = photosData?.count ?? 0
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const handleSearch = (value: string) => {

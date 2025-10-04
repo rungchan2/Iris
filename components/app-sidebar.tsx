@@ -2,18 +2,18 @@
 
 import type * as React from "react"
 import { useEffect, useState } from "react"
-import { 
-  Inbox, 
-  FolderTree, 
-  ImageIcon, 
-  User, 
-  LogOut, 
-  Calendar, 
-  Users, 
-  BarChart3, 
-  UserPlus, 
-  MessageSquare, 
-  CreditCard, 
+import {
+  Inbox,
+  FolderTree,
+  ImageIcon,
+  User,
+  LogOut,
+  Calendar,
+  Users,
+  BarChart3,
+  UserPlus,
+  MessageSquare,
+  CreditCard,
   Zap,
   HelpCircle,
   Camera,
@@ -33,7 +33,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { NavMain } from "@/components/nav-main"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { type UserPermissions } from "@/lib/auth/permissions"
 import { usePermissions } from "@/lib/hooks/use-permissions"
@@ -159,16 +158,15 @@ interface AdminUser {
 
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: AdminUser }) {
   const router = useRouter()
-  const supabase = createClient()
   const [mounted, setMounted] = useState(false)
-  const { permissions } = usePermissions()
+  const { permissions, signOut } = usePermissions()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut()
     router.push("/login")
   }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminLogger } from "@/lib/logger"
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
           message: 'Embedding generated successfully'
         })
       } catch (embeddingError) {
-        console.error('Error generating embedding:', embeddingError)
+        adminLogger.error('Error generating embedding:', embeddingError)
         return NextResponse.json(
           { error: 'Failed to generate embedding' },
           { status: 500 }
@@ -94,13 +95,13 @@ export async function POST(request: NextRequest) {
             .eq('id', image.id)
           
           if (updateError) {
-            console.error('Error updating image embedding:', updateError)
+            adminLogger.error('Error updating image embedding:', updateError)
             continue
           }
           
           generated++
         } catch (embeddingError) {
-          console.error('Error generating embedding for image:', embeddingError)
+          adminLogger.error('Error generating embedding for image:', embeddingError)
           continue
         }
       }
@@ -135,13 +136,13 @@ export async function POST(request: NextRequest) {
             .eq('id', choice.id)
           
           if (updateError) {
-            console.error('Error updating choice embedding:', updateError)
+            adminLogger.error('Error updating choice embedding:', updateError)
             continue
           }
           
           generated++
         } catch (embeddingError) {
-          console.error('Error generating embedding for choice:', embeddingError)
+          adminLogger.error('Error generating embedding for choice:', embeddingError)
           continue
         }
       }
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('Embedding generation error:', error)
+    adminLogger.error('Embedding generation error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

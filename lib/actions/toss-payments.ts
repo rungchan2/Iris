@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { paymentLogger } from '@/lib/logger';
 import { 
   confirmPayment, 
   getPayment, 
@@ -30,11 +31,7 @@ export async function confirmTossPayment(formData: FormData) {
 
   // 개발 환경에서 디버깅 정보 출력
   if (process.env.NODE_ENV === 'development') {
-    console.log('=== 결제 승인 요청 ===');
-    console.log('PaymentKey:', paymentKey);
-    console.log('OrderId:', orderId);
-    console.log('Amount:', amount);
-    console.log('====================');
+    paymentLogger.info('결제 승인 요청', { paymentKey, orderId, amount });
   }
 
   try {
@@ -81,10 +78,10 @@ export async function confirmTossPayment(formData: FormData) {
         .eq('id', existingPayment.id);
 
       if (updateError) {
-        console.error('결제 상태 업데이트 실패:', updateError);
-        return { 
-          success: false, 
-          error: '결제 정보 저장에 실패했습니다.' 
+        paymentLogger.error('결제 상태 업데이트 실패', updateError);
+        return {
+          success: false,
+          error: '결제 정보 저장에 실패했습니다.'
         };
       }
 
@@ -125,18 +122,18 @@ export async function confirmTossPayment(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('결제 승인 처리 실패:', error);
-    
+    paymentLogger.error('결제 승인 처리 실패', error);
+
     if (error instanceof TossApiError) {
-      return { 
-        success: false, 
-        error: getUserFriendlyErrorMessage(error) 
+      return {
+        success: false,
+        error: getUserFriendlyErrorMessage(error)
       };
     }
 
-    return { 
-      success: false, 
-      error: '결제 처리 중 오류가 발생했습니다.' 
+    return {
+      success: false,
+      error: '결제 처리 중 오류가 발생했습니다.'
     };
   }
 }
@@ -223,10 +220,10 @@ export async function createPaymentRequest(formData: FormData) {
       .single();
 
     if (paymentError) {
-      console.error('결제 레코드 생성 실패:', paymentError);
-      return { 
-        success: false, 
-        error: '결제 정보 생성에 실패했습니다.' 
+      paymentLogger.error('결제 레코드 생성 실패', paymentError);
+      return {
+        success: false,
+        error: '결제 정보 생성에 실패했습니다.'
       };
     }
 
@@ -239,10 +236,10 @@ export async function createPaymentRequest(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('결제 요청 생성 실패:', error);
-    return { 
-      success: false, 
-      error: '결제 요청 생성 중 오류가 발생했습니다.' 
+    paymentLogger.error('결제 요청 생성 실패', error);
+    return {
+      success: false,
+      error: '결제 요청 생성 중 오류가 발생했습니다.'
     };
   }
 }
@@ -309,7 +306,7 @@ export async function cancelTossPayment(formData: FormData) {
       });
 
     if (refundError) {
-      console.error('환불 레코드 생성 실패:', refundError);
+      paymentLogger.error('환불 레코드 생성 실패', refundError);
     }
 
     // 4. 결제 상태 업데이트
@@ -342,18 +339,18 @@ export async function cancelTossPayment(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('결제 취소 처리 실패:', error);
-    
+    paymentLogger.error('결제 취소 처리 실패', error);
+
     if (error instanceof TossApiError) {
-      return { 
-        success: false, 
-        error: getUserFriendlyErrorMessage(error) 
+      return {
+        success: false,
+        error: getUserFriendlyErrorMessage(error)
       };
     }
 
-    return { 
-      success: false, 
-      error: '결제 취소 처리 중 오류가 발생했습니다.' 
+    return {
+      success: false,
+      error: '결제 취소 처리 중 오류가 발생했습니다.'
     };
   }
 }
@@ -379,18 +376,18 @@ export async function getTossPaymentStatus(paymentKey: string) {
     };
 
   } catch (error) {
-    console.error('결제 상태 조회 실패:', error);
-    
+    paymentLogger.error('결제 상태 조회 실패', error);
+
     if (error instanceof TossApiError) {
-      return { 
-        success: false, 
-        error: getUserFriendlyErrorMessage(error) 
+      return {
+        success: false,
+        error: getUserFriendlyErrorMessage(error)
       };
     }
 
-    return { 
-      success: false, 
-      error: '결제 상태 조회 중 오류가 발생했습니다.' 
+    return {
+      success: false,
+      error: '결제 상태 조회 중 오류가 발생했습니다.'
     };
   }
 }
@@ -418,7 +415,7 @@ export async function handlePaymentSuccess(
       redirect(`/payment/fail?code=CONFIRM_FAILED&message=${encodeURIComponent(result.error || '')}&orderId=${orderId}`);
     }
   } catch (error) {
-    console.error('결제 성공 처리 실패:', error);
+    paymentLogger.error('결제 성공 처리 실패', error);
     redirect(`/payment/fail?code=SYSTEM_ERROR&message=${encodeURIComponent('시스템 오류가 발생했습니다.')}&orderId=${orderId}`);
   }
 }
@@ -446,12 +443,12 @@ export async function handlePaymentFailure(
       .eq('order_id', orderId);
 
     if (error) {
-      console.error('결제 실패 상태 업데이트 오류:', error);
+      paymentLogger.error('결제 실패 상태 업데이트 오류', error);
     }
 
     redirect(`/payment/fail?code=${code}&message=${encodeURIComponent(message)}&orderId=${orderId}`);
   } catch (error) {
-    console.error('결제 실패 처리 오류:', error);
+    paymentLogger.error('결제 실패 처리 오류', error);
     redirect(`/payment/fail?code=SYSTEM_ERROR&message=${encodeURIComponent('시스템 오류가 발생했습니다.')}&orderId=${orderId}`);
   }
 }

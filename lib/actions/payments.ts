@@ -2,13 +2,15 @@
 
 /**
  * 결제 관련 Server Actions
- * 
+ *
  * 이 파일은 클라이언트에서 호출할 수 있는 서버 액션들을 정의합니다.
  * 모든 데이터베이스 작업과 비즈니스 로직을 처리합니다.
  */
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { paymentLogger } from '@/lib/logger'
+import type { Json } from '@/types/database.types'
 // Payment utilities
 function generateOrderId(): string {
   const timestamp = Date.now().toString()
@@ -70,7 +72,7 @@ export async function createPayment(
       .single()
 
     if (insertError) {
-      console.error('Payment creation error:', insertError)
+      paymentLogger.error('Payment creation error', insertError)
       return {
         success: false,
         error: '결제 정보 저장 중 오류가 발생했습니다'
@@ -102,7 +104,7 @@ export async function createPayment(
     }
 
   } catch (error) {
-    console.error('Create payment error:', error)
+    paymentLogger.error('Create payment error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -119,9 +121,18 @@ export async function updatePaymentStatus(
   additionalData?: Partial<PaymentModel>
 ): Promise<ApiResponse<void>> {
   const supabase = await createClient()
-  
+
   try {
-    const updateData: any = {
+    type PaymentUpdate = {
+      status?: string
+      updated_at?: string
+      paid_at?: string
+      cancelled_at?: string
+      failed_at?: string
+      [key: string]: string | number | null | undefined | Json
+    }
+
+    const updateData: PaymentUpdate = {
       status,
       updated_at: new Date().toISOString()
     }
@@ -180,7 +191,7 @@ export async function updatePaymentStatus(
     return { success: true, data: undefined }
 
   } catch (error) {
-    console.error('Update payment status error:', error)
+    paymentLogger.error('Update payment status error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -270,7 +281,7 @@ export async function getPayments(
     return { success: true, data: (data || []) as any }
 
   } catch (error) {
-    console.error('Get payments error:', error)
+    paymentLogger.error('Get payments error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -330,7 +341,7 @@ export async function getPayment(paymentId: string): Promise<ApiResponse<Payment
     return { success: true, data: data as any }
 
   } catch (error) {
-    console.error('Get payment error:', error)
+    paymentLogger.error('Get payment error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -363,7 +374,7 @@ export async function getPaymentByOrderId(orderId: string): Promise<ApiResponse<
     return { success: true, data: data as any }
 
   } catch (error) {
-    console.error('Get payment by order ID error:', error)
+    paymentLogger.error('Get payment by order ID error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -476,7 +487,7 @@ export async function getPaymentStatistics(
     return { success: true, data: stats }
 
   } catch (error) {
-    console.error('Get payment statistics error:', error)
+    paymentLogger.error('Get payment statistics error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -576,7 +587,7 @@ export async function requestRefund(request: RefundRequest): Promise<RefundRespo
     }
 
   } catch (error) {
-    console.error('Request refund error:', error)
+    paymentLogger.error('Request refund error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -647,7 +658,7 @@ export async function getRefunds(
     return { success: true, data: (data || []) as any }
 
   } catch (error) {
-    console.error('Get refunds error:', error)
+    paymentLogger.error('Get refunds error', error)
     return {
       success: false,
       error: formatErrorMessage(error)
@@ -682,7 +693,7 @@ async function logPaymentEvent(
     })
   } catch (error) {
     // 로그 기록 실패는 주요 기능에 영향을 주지 않도록 에러를 던지지 않음
-    console.error('Payment log error:', error)
+    paymentLogger.error('Payment log error', error)
   }
 }
 
@@ -726,7 +737,7 @@ export async function cleanupExpiredPayments(): Promise<ApiResponse<number>> {
     return { success: true, data: expiredCount }
 
   } catch (error) {
-    console.error('Cleanup expired payments error:', error)
+    paymentLogger.error('Cleanup expired payments error', error)
     return {
       success: false,
       error: formatErrorMessage(error)

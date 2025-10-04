@@ -6,7 +6,36 @@ import { Button } from "@/components/ui/button"
 import { Download, X } from "lucide-react"
 import { AspectImage } from "../ui/aspect-image"
 import Image from "next/image"
-import { handleDownload, Photo } from "@/app/_gallery/gallery-client"
+
+interface Photo {
+  id: string
+  filename: string
+  storage_url: string
+  thumbnail_url?: string | null
+  width?: number | null
+  height?: number | null
+  size_kb?: number | null
+  created_at: string
+}
+
+const handleDownload = async (photos: Photo[]) => {
+  for (const photo of photos) {
+    try {
+      const response = await fetch(photo.storage_url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = photo.filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Download failed:', error)
+    }
+  }
+}
 
 
 export function PhotoGallery({ photos, isForExport = false }: { photos: Photo[], isForExport?: boolean }) {

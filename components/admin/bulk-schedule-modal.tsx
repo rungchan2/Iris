@@ -8,8 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { useSlotMutations } from "@/lib/hooks/use-available-slots"
 import type { SlotInput, RecurringSchedule } from "@/types/schedule.types"
 
 interface BulkScheduleModalProps {
@@ -33,8 +32,7 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
       },
     ],
   })
-  const [isCreating, setIsCreating] = useState(false)
-  const supabase = createClient()
+  const { createBulkSlotsAsync, isCreatingBulk } = useSlotMutations(adminId)
 
   const daysOfWeek = [
     { value: 0, label: "Sunday" },
@@ -100,16 +98,13 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
 
   const handleCreateSchedule = async () => {
     if (schedule.daysOfWeek.length === 0) {
-      toast.error("최소 하나의 요일을 선택해주세요")
       return
     }
 
     if (schedule.slots.length === 0) {
-      toast.error("최소 하나의 시간대를 추가해주세요")
       return
     }
 
-    setIsCreating(true)
     try {
       const startDate = new Date(schedule.startDate)
       const endDate = new Date(schedule.endDate)
@@ -127,49 +122,17 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
               start_time: slot.startTime,
               end_time: slot.endTime,
               duration_minutes: slot.duration,
-              is_available: true,
-              admin_id: adminId,
             })
           }
         }
       }
 
       if (slotsToCreate.length === 0) {
-        toast.error("선택한 조건으로 생성할 수 있는 슬롯이 없습니다")
         return
       }
 
-      // Check for existing slots to avoid unique constraint violation
-      const { data: existingSlots } = await supabase
-        .from("available_slots")
-        .select("date, start_time")
-        .eq("admin_id", adminId)
-        .in("date", [...new Set(slotsToCreate.map(s => s.date))])
+      await createBulkSlotsAsync(slotsToCreate)
 
-      const existingSlotKeys = new Set(
-        existingSlots?.map(slot => `${slot.date}_${slot.start_time}`) || []
-      )
-
-      // Filter out slots that already exist
-      const uniqueSlotsToCreate = slotsToCreate.filter(slot => 
-        !existingSlotKeys.has(`${slot.date}_${slot.start_time}`)
-      )
-
-      if (uniqueSlotsToCreate.length === 0) {
-        toast.error("선택한 시간대가 모두 이미 존재합니다")
-        return
-      }
-
-      if (uniqueSlotsToCreate.length < slotsToCreate.length) {
-        const duplicateCount = slotsToCreate.length - uniqueSlotsToCreate.length
-        toast.warning(`${duplicateCount}개의 중복된 시간대를 건너뛰었습니다`)
-      }
-
-      const { error } = await supabase.from("available_slots").insert(uniqueSlotsToCreate)
-
-      if (error) throw error
-
-      toast.success(`${uniqueSlotsToCreate.length}개의 시간대가 생성되었습니다`)
       onScheduleCreated()
       onOpenChange(false)
 
@@ -189,15 +152,6 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
       })
     } catch (error: any) {
       console.error("Error creating schedule:", error)
-      
-      // Check for unique constraint violation (duplicate slot)
-      if (error?.code === "23505" && error?.message?.includes("available_slots_date_start_time_admin_id_key")) {
-        toast.error("이미 이 시간에 추가된 일정이 있습니다")
-      } else {
-        toast.error("스케줄 생성에 실패했습니다")
-      }
-    } finally {
-      setIsCreating(false)
     }
   }
 
@@ -338,8 +292,8 @@ export function BulkScheduleModal({ open, onOpenChange, adminId, onScheduleCreat
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateSchedule} disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create Schedule"}
+            <Button onClick={handleCreateSchedule} disabled={isCreatingBulk}>
+              {isCreatingBulk ? "Creating..." : "Create Schedule"}
             </Button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
@@ -116,10 +117,10 @@ export default function PhotographerPaymentManagement() {
       if (result.success && result.data) {
         setPayments(result.data as any)
       } else {
-        console.error('Failed to load payments:', (result as any).error || 'Unknown error')
+        adminLogger.error('Failed to load payments:', (result as any).error || 'Unknown error')
       }
     } catch (error) {
-      console.error('Error loading payments:', error)
+      adminLogger.error('Error loading payments:', error)
     } finally {
       setLoading(false)
     }
@@ -139,7 +140,7 @@ export default function PhotographerPaymentManagement() {
         setStatistics(result.data)
       }
     } catch (error) {
-      console.error('Error loading statistics:', error)
+      adminLogger.error('Error loading statistics:', error)
     }
   }
 
@@ -212,7 +213,7 @@ export default function PhotographerPaymentManagement() {
         setSelectedPayment(result.data as any)
       }
     } catch (error) {
-      console.error('Error loading payment details:', error)
+      adminLogger.error('Error loading payment details:', error)
     }
   }
 

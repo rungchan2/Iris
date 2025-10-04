@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { User, Youtube, Camera, Palette, Users, Focus, Trash2, Upload, Phone, Globe, Instagram, MapPin, DollarSign, Award, Briefcase, FileText } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import Image from "next/image"
+import { useProfileMutations, useProfileImage } from "@/lib/hooks/use-photographer-profile"
 
 interface PhotographerProfile {
   id: string
@@ -65,53 +65,47 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
     price_range_max: photographer.price_range_max?.toString() || "",
     price_description: photographer.price_description || "",
   })
-  const [isUpdating, setIsUpdating] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const supabase = createClient()
 
+  // Use hooks for profile mutations
+  const { updateBasic } = useProfileMutations(photographer.id)
+  const { updateImageUrl } = useProfileImage(photographer.id)
+
   const handleSave = async () => {
-    setIsUpdating(true)
     try {
       // Process specialties array
       const specialtiesArray = formData.specialties
         ? formData.specialties.split(",").map(s => s.trim()).filter(s => s)
-        : null
+        : []
 
-      const { error } = await supabase
-        .from("photographers")
-        .update({
-          name: formData.name.trim(),
-          personality_type: formData.personality_type || null,
-          directing_style: formData.directing_style || null,
-          photography_approach: formData.photography_approach || null,
-          youtube_intro_url: formData.youtube_intro_url || null,
-          profile_image_url: formData.profile_image_url || null,
-          phone: formData.phone || null,
-          website_url: formData.website_url || null,
-          instagram_handle: formData.instagram_handle || null,
-          gender: formData.gender || null,
-          birth_year: formData.birth_year ? parseInt(formData.birth_year) : null,
-          age_range: formData.age_range || null,
-          years_experience: formData.years_experience ? parseInt(formData.years_experience) : null,
-          specialties: specialtiesArray,
-          studio_location: formData.studio_location || null,
-          equipment_info: formData.equipment_info || null,
-          bio: formData.bio || null,
-          price_range_min: formData.price_range_min ? parseInt(formData.price_range_min) : null,
-          price_range_max: formData.price_range_max ? parseInt(formData.price_range_max) : null,
-          price_description: formData.price_description || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", photographer.id)
-
-      if (error) throw error
+      // Use server action to update profile
+      await updateBasic.mutateAsync({
+        name: formData.name.trim(),
+        personality_type: formData.personality_type || undefined,
+        directing_style: formData.directing_style || undefined,
+        photography_approach: formData.photography_approach || undefined,
+        youtube_intro_url: formData.youtube_intro_url || undefined,
+        phone: formData.phone || undefined,
+        website_url: formData.website_url || undefined,
+        instagram_handle: formData.instagram_handle || undefined,
+        gender: formData.gender || undefined,
+        birth_year: formData.birth_year ? parseInt(formData.birth_year) : undefined,
+        age_range: formData.age_range || undefined,
+        years_experience: formData.years_experience ? parseInt(formData.years_experience) : undefined,
+        specialties: specialtiesArray.length > 0 ? specialtiesArray : undefined,
+        studio_location: formData.studio_location || undefined,
+        equipment_info: formData.equipment_info || undefined,
+        bio: formData.bio || undefined,
+        price_range_min: formData.price_range_min ? parseInt(formData.price_range_min) : undefined,
+        price_range_max: formData.price_range_max ? parseInt(formData.price_range_max) : undefined,
+        price_description: formData.price_description || undefined,
+      })
 
       toast.success("프로필이 성공적으로 업데이트되었습니다")
     } catch (error) {
       console.error("Error updating profile:", error)
       toast.error("프로필 업데이트에 실패했습니다")
-    } finally {
-      setIsUpdating(false)
     }
   }
 
@@ -142,7 +136,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
       const fileExt = file.name.split('.').pop()
       const fileName = `profile-${Date.now()}.${fileExt}`
       const path = `${photographer.id}/profile/${fileName}`
-      
+
       const { data, error } = await supabase.storage
         .from('photos')
         .upload(path, file, {
@@ -156,16 +150,8 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
         .from('photos')
         .getPublicUrl(path)
 
-      // Update profile image URL in database immediately
-      const { error: updateError } = await supabase
-        .from("photographers")
-        .update({
-          profile_image_url: publicUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", photographer.id)
-
-      if (updateError) throw updateError
+      // Update profile image URL using server action
+      await updateImageUrl.mutateAsync(publicUrl)
 
       setFormData(prev => ({ ...prev, profile_image_url: publicUrl }))
       toast.success("프로필 이미지가 업로드되었습니다")
@@ -186,7 +172,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
         // Extract the full path from URL
         const url = new URL(formData.profile_image_url)
         const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)$/)
-        
+
         if (pathMatch) {
           const fullPath = pathMatch[1]
           await supabase.storage
@@ -195,16 +181,8 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
         }
       }
 
-      // Update database
-      const { error: updateError } = await supabase
-        .from("photographers")
-        .update({
-          profile_image_url: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", photographer.id)
-
-      if (updateError) throw updateError
+      // Update database using server action
+      await updateImageUrl.mutateAsync('')
 
       setFormData(prev => ({ ...prev, profile_image_url: '' }))
       if (showToast) {
@@ -218,9 +196,20 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
     }
   }
 
+  const handleSaveProfileUrl = async () => {
+    if (!formData.profile_image_url.trim()) return
+
+    try {
+      await updateImageUrl.mutateAsync(formData.profile_image_url.trim())
+      toast.success('프로필 이미지 URL이 저장되었습니다')
+    } catch (error) {
+      toast.error('URL 저장에 실패했습니다')
+    }
+  }
+
   return (
     <div className="space-y-6">
-      
+
       {/* Basic Profile Info */}
       <Card>
         <CardHeader>
@@ -289,7 +278,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="profile-image" className="flex items-center gap-2">
@@ -314,7 +303,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
                   JPG, PNG 파일만 가능 (최대 5MB)
                 </p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="profile-url">또는 이미지 URL 직접 입력</Label>
                 <div className="flex gap-2">
@@ -328,25 +317,7 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      // Update database immediately when URL is manually set
-                      if (formData.profile_image_url.trim()) {
-                        supabase
-                          .from("photographers")
-                          .update({
-                            profile_image_url: formData.profile_image_url.trim(),
-                            updated_at: new Date().toISOString(),
-                          })
-                          .eq("id", photographer.id)
-                          .then(({ error }) => {
-                            if (error) {
-                              toast.error('URL 저장에 실패했습니다')
-                            } else {
-                              toast.success('프로필 이미지 URL이 저장되었습니다')
-                            }
-                          })
-                      }
-                    }}
+                    onClick={handleSaveProfileUrl}
                     disabled={!formData.profile_image_url.trim()}
                   >
                     저장
@@ -706,11 +677,11 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
       {/* Save Button */}
       <Button
         onClick={handleSave}
-        disabled={isUpdating}
+        disabled={updateBasic.isPending}
         className="w-full"
         size="lg"
       >
-        {isUpdating ? "저장 중..." : "모든 변경사항 저장"}
+        {updateBasic.isPending ? "저장 중..." : "모든 변경사항 저장"}
       </Button>
     </div>
   )

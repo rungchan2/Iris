@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
+import { logger } from '@/lib/logger'
 
 export type Review = Tables<'reviews'>
 export type ReviewInsert = TablesInsert<'reviews'>
@@ -94,7 +95,7 @@ export async function generateReviewLink(inquiryId: string) {
       }
     }
   } catch (error) {
-    console.error('Error generating review link:', error)
+    logger.error('Error generating review link', error)
     return { error: 'Failed to generate review link' }
   }
 }
@@ -137,7 +138,7 @@ export async function getReviewByToken(token: string) {
 
     return { data: review }
   } catch (error) {
-    console.error('Error fetching review by token:', error)
+    logger.error('Error fetching review by token', error)
     return { error: 'Failed to fetch review' }
   }
 }
@@ -199,7 +200,7 @@ export async function submitReview(token: string, reviewData: ReviewSubmissionDa
 
     return { data: updatedReview }
   } catch (error) {
-    console.error('Error submitting review:', error)
+    logger.error('Error submitting review', error)
     return { error: 'Failed to submit review ' + error }
   }
 }
@@ -239,7 +240,7 @@ export async function getReviewsForInquiry(inquiryId: string) {
 
     return { data: reviews }
   } catch (error) {
-    console.error('Error fetching reviews for inquiry:', error)
+    logger.error('Error fetching reviews for inquiry', error)
     return { error: 'Failed to fetch reviews' }
   }
 }
@@ -274,7 +275,7 @@ export async function getPhotographerReviews() {
 
     return { data: reviews }
   } catch (error) {
-    console.error('Error fetching photographer reviews:', error)
+    logger.error('Error fetching photographer reviews', error)
     return { error: 'Failed to fetch reviews' }
   }
 }
@@ -311,7 +312,7 @@ export async function getPublicReviews(limit: number = 20) {
 
     return { data: reviews }
   } catch (error) {
-    console.error('Error fetching public reviews:', error)
+    logger.error('Error fetching public reviews', error)
     return { error: 'Failed to fetch public reviews' }
   }
 }
@@ -377,7 +378,7 @@ export async function getReviewStats(photographerId?: string) {
       }
     }
   } catch (error) {
-    console.error('Error fetching review stats:', error)
+    logger.error('Error fetching review stats', error)
     return { error: 'Failed to fetch review stats' }
   }
 }
@@ -415,13 +416,13 @@ export async function getPhotographerInquiries() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching photographer inquiries:', error)
+      logger.error('Error fetching photographer inquiries', error)
       return { error: 'Failed to fetch inquiries' }
     }
 
     return { data: inquiries }
   } catch (error) {
-    console.error('Error in getPhotographerInquiries:', error)
+    logger.error('Error in getPhotographerInquiries', error)
     return { error: 'Failed to fetch inquiries' }
   }
 }
@@ -475,7 +476,7 @@ export async function toggleReviewVisibility(reviewId: string) {
 
     return { data: updatedReview }
   } catch (error) {
-    console.error('Error toggling review visibility:', error)
+    logger.error('Error toggling review visibility', error)
     return { error: 'Failed to update review visibility' }
   }
 }

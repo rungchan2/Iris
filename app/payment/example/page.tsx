@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { generateOrderId } from '@/lib/payments/toss-client';
+import { paymentLogger } from '@/lib/logger';
 
 /**
  * TossPayments 결제 위젯 통합 예제 페이지
@@ -39,12 +40,12 @@ export default function PaymentExamplePage() {
   const customerKey = `customer_${mockInquiry.id}`;
 
   const handlePaymentComplete = (paymentKey: string, orderId: string) => {
-    console.log('결제 완료:', { paymentKey, orderId });
+    paymentLogger.info('결제 완료:', { paymentKey, orderId });
     alert(`결제가 완료되었습니다!\n주문번호: ${orderId}\n결제키: ${paymentKey}`);
   };
 
   const handlePaymentError = (error: string) => {
-    console.error('결제 오류:', error);
+    paymentLogger.error('결제 오류:', error);
     alert(`결제 중 오류가 발생했습니다: ${error}`);
   };
 

@@ -1,6 +1,14 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { photographerLogger } from '@/lib/logger'
+
+/**
+ * Photographer Collection Operations
+ *
+ * This file contains functions for querying multiple photographers.
+ * For single photographer operations (create, approve, reject), see photographer.ts
+ */
 
 export interface PhotographerData {
   id: string
@@ -27,6 +35,12 @@ export interface PhotographerFilters {
   personalityCode?: string
   sortBy?: 'name' | 'rating' | 'experience' | 'portfolio' | 'compatibility'
 }
+
+/**
+ * Get list of photographers with filtering and sorting
+ * @param filters - Optional filters for search, personality, and sorting
+ * @returns List of photographers with portfolio counts
+ */
 
 export async function getPhotographers(filters: PhotographerFilters = {}) {
   try {
@@ -57,7 +71,7 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
     const { data: photographers, error } = await query
     
     if (error) {
-      console.error('Error fetching photographers:', error.message)
+      photographerLogger.error('Error fetching photographers', error)
       return { error: error.message }
     }
     
@@ -117,7 +131,7 @@ export async function getPhotographers(filters: PhotographerFilters = {}) {
     
     return { data: transformedData }
   } catch (error) {
-    console.error('Error in getPhotographers:', error)
+    photographerLogger.error('Error in getPhotographers', error)
     return { error: 'Failed to fetch photographers' }
   }
 }
@@ -147,7 +161,7 @@ export async function getPhotographerById(id: string) {
       .single()
     
     if (error) {
-      console.error('Error fetching photographer:', error.message)
+      photographerLogger.error('Error fetching photographer', error)
       return { error: error.message }
     }
     
@@ -157,7 +171,7 @@ export async function getPhotographerById(id: string) {
     
     return { data: photographer }
   } catch (error) {
-    console.error('Error in getPhotographerById:', error)
+    photographerLogger.error('Error in getPhotographerById', error)
     return { error: 'Failed to fetch photographer' }
   }
 }
@@ -168,7 +182,7 @@ export async function getPersonalityTypes() {
     // TODO: 새로운 매칭 시스템으로 교체 필요
     return { data: [] }
   } catch (error) {
-    console.error('Error in getPersonalityTypes:', error)
+    photographerLogger.error('Error in getPersonalityTypes', error)
     return { error: 'Failed to fetch personality types' }
   }
 }

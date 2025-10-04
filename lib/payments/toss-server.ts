@@ -1,4 +1,5 @@
 // TossPayments 서버 측 유틸리티
+import { paymentLogger } from "@/lib/logger"
 
 import { TossPaymentResponse, TossPaymentError } from './toss-types';
 import crypto from 'crypto';
@@ -73,12 +74,12 @@ export async function confirmPayment(params: {
   // 개발 환경에서 API 키 정보 확인
   if (process.env.NODE_ENV === 'development') {
     const secretKey = process.env.TOSS_SECRET_KEY;
-    console.log('=== 토스페이먼츠 API 호출 ===');
-    console.log('Endpoint: /payments/confirm');
-    console.log('Secret Key 존재:', !!secretKey);
-    console.log('Secret Key 타입:', secretKey?.startsWith('test_') ? 'TEST' : secretKey?.startsWith('live_') ? 'LIVE' : 'UNKNOWN');
-    console.log('Request Body:', JSON.stringify(params, null, 2));
-    console.log('========================');
+    paymentLogger.info('=== 토스페이먼츠 API 호출 ===');
+    paymentLogger.info('Endpoint: /payments/confirm');
+    paymentLogger.info('Secret Key 존재:', !!secretKey);
+    paymentLogger.info('Secret Key 타입:', secretKey?.startsWith('test_') ? 'TEST' : secretKey?.startsWith('live_') ? 'LIVE' : 'UNKNOWN');
+    paymentLogger.info('Request Body:', JSON.stringify(params, null, 2));
+    paymentLogger.info('========================');
   }
   
   return tossApiRequest<TossPaymentResponse>('/payments/confirm', {

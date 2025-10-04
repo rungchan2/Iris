@@ -9,22 +9,21 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Eye, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { useInquiryMutations } from "@/lib/hooks/use-inquiries"
 import { Inquiry } from "@/types/inquiry.types"
 
-export function InquiryTable({ 
-  inquiries, 
-  basePath = "/admin", 
-  onStatusUpdate 
-}: { 
-  inquiries: Inquiry[], 
+export function InquiryTable({
+  inquiries,
+  basePath = "/admin",
+  onStatusUpdate
+}: {
+  inquiries: Inquiry[],
   basePath?: string,
-  onStatusUpdate?: (id: string, newStatus: string) => void 
+  onStatusUpdate?: (id: string, newStatus: string) => void
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const supabase = createClient()
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const { updateStatus, isUpdatingStatus } = useInquiryMutations()
   const [mounted, setMounted] = useState(false)
 
   React.useEffect(() => {
@@ -84,27 +83,12 @@ export function InquiryTable({
     return currentOrder === 'desc' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />
   }
 
-  const handleStatusChange = async (id: string, newStatus: "new" | "contacted" | "completed") => {
-    setUpdatingId(id)
+  const handleStatusChange = (id: string, newStatus: "new" | "contacted" | "completed") => {
+    updateStatus({ id, status: newStatus })
 
-    try {
-      const { error } = await supabase.from("inquiries").update({ status: newStatus }).eq("id", id)
-
-      if (error) {
-        console.error("Error updating status:", error.message)
-        throw error
-      }
-
-      // Call optional callback to update parent state
-      if (onStatusUpdate) {
-        onStatusUpdate(id, newStatus)
-      } else {
-        // Fallback to hard refresh if no callback provided
-        window.location.reload()
-      }
-    } catch (error) {
-      console.error("Error updating status:", error)
-      setUpdatingId(null)
+    // Call optional callback to update parent state
+    if (onStatusUpdate) {
+      onStatusUpdate(id, newStatus)
     }
   }
 
@@ -164,7 +148,7 @@ export function InquiryTable({
                         variant="ghost"
                         size="sm"
                         className="h-8 p-0 flex items-center gap-1"
-                        disabled={updatingId === inquiry.id}
+                        disabled={isUpdatingStatus}
                       >
                         <StatusBadge status={inquiry.status} />
                         <ChevronDown size={16} />

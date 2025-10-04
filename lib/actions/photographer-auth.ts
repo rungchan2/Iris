@@ -1,4 +1,5 @@
 'use server'
+import { authLogger } from "@/lib/logger"
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -9,10 +10,10 @@ export async function checkPhotographerApprovalStatus() {
     
     const { data: { session } } = await supabase.auth.getSession()
     
-    console.log('Checking photographer approval status for user:', session?.user?.id)
+    authLogger.info('Checking photographer approval status for user:', session?.user?.id)
     
     if (!session) {
-      console.log('No session found')
+      authLogger.info('No session found')
       return { error: 'Not authenticated' }
     }
 
@@ -32,17 +33,17 @@ export async function checkPhotographerApprovalStatus() {
       .eq('id', session.user.id)
       .single()
 
-    console.log('Photographer query result:', { photographer, error })
+    authLogger.info('Photographer query result:', { photographer, error })
 
     if (error || !photographer) {
-      console.log('Photographer not found or error:', error)
+      authLogger.info('Photographer not found or error:', error)
       return { error: 'Photographer not found' }
     }
 
-    console.log('Photographer status:', photographer.approval_status)
+    authLogger.info('Photographer status:', photographer.approval_status)
     return { data: photographer }
   } catch (error) {
-    console.error('Error checking photographer approval status:', error)
+    authLogger.error('Error checking photographer approval status:', error)
     return { error: 'Failed to check approval status' }
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { photographerLogger } from '@/lib/logger';
 import React, { useState } from 'react'
 import { PersonalInfoForm } from '@/components/booking/personal-info-form'
 import { SuccessScreen } from '@/components/booking/success-screen'
@@ -133,7 +134,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
 
           if (error || slotError) {
             insertError = error
-            console.log(`Insert attempt ${retryCount + 1} failed:`, error)
+            photographerLogger.info(`Insert attempt ${retryCount + 1} failed:`, error)
 
             if (error && error.code === "42501") {
               await new Promise((resolve) =>
@@ -292,13 +293,13 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
         : '예약 정보가 저장되었습니다.';
       toast.success(successMessage)
     } catch (error: any) {
-      console.error('Error submitting inquiry:', error)
+      photographerLogger.error('Error submitting inquiry:', error)
       
       if (
         error?.code === "42501" ||
         error?.message?.includes("row-level security")
       ) {
-        console.error("RLS Policy violation detected")
+        photographerLogger.error("RLS Policy violation detected")
         toast.error(
           "알 수 없는 오류가 발생하였습니다. 페이지를 새로고침합니다."
         )

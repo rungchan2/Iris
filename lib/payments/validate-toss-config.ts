@@ -2,6 +2,8 @@
  * 토스페이먼츠 환경 변수 검증 유틸리티
  */
 
+import { paymentLogger } from "@/lib/logger"
+
 /**
  * 토스페이먼츠 설정 검증
  */
@@ -102,17 +104,17 @@ export function logTossDebugInfo(): void {
   const validation = validateTossConfig();
   const keyPair = checkTossKeyPair();
   
-  console.log('=== 토스페이먼츠 설정 검증 ===');
-  console.log('설정 유효성:', validation.isValid ? '✅ 유효' : '❌ 무효');
-  console.log('환경:', keyPair.environment);
-  console.log('메시지:', keyPair.message);
+  paymentLogger.info('=== 토스페이먼츠 설정 검증 ===');
+  paymentLogger.info('설정 유효성:', validation.isValid ? '✅ 유효' : '❌ 무효');
+  paymentLogger.info('환경:', keyPair.environment);
+  paymentLogger.info('메시지:', keyPair.message);
   
   if (!validation.isValid) {
-    console.log('오류 목록:');
+    paymentLogger.info('오류 목록:');
     validation.errors.forEach(error => {
-      console.log(`  - ${error}`);
+      paymentLogger.info(`  - ${error}`);
     });
   }
   
-  console.log('===============================');
+  paymentLogger.info('===============================');
 }

@@ -1,4 +1,5 @@
 "use client";
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +96,7 @@ export function AdminUsersManagementEnhanced() {
         setError(result.error || '작가 목록을 불러오는데 실패했습니다.');
       }
     } catch (error) {
-      console.error('Error loading admin users:', error);
+      adminLogger.error('Error loading admin users:', error);
       setError('작가 목록을 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -118,7 +119,7 @@ export function AdminUsersManagementEnhanced() {
         setPendingCount(result.count || 0);
       }
     } catch (error) {
-      console.error('Error loading pending count:', error);
+      adminLogger.error('Error loading pending count:', error);
     }
   };
 
@@ -136,7 +137,7 @@ export function AdminUsersManagementEnhanced() {
         setError(result.error || '승인 처리에 실패했습니다.');
       }
     } catch (error) {
-      console.error('Error approving user:', error);
+      adminLogger.error('Error approving user:', error);
       setError('승인 처리 중 오류가 발생했습니다.');
     }
   };
@@ -156,7 +157,7 @@ export function AdminUsersManagementEnhanced() {
         setError(result.error || '거부 처리에 실패했습니다.');
       }
     } catch (error) {
-      console.error('Error rejecting user:', error);
+      adminLogger.error('Error rejecting user:', error);
       setError('거부 처리 중 오류가 발생했습니다.');
     }
   };
@@ -177,7 +178,7 @@ export function AdminUsersManagementEnhanced() {
         setScheduleStats(scheduleResult.scheduleStats);
       }
     } catch (error) {
-      console.error('Error loading user detail:', error);
+      adminLogger.error('Error loading user detail:', error);
     }
   };
 
@@ -198,7 +199,7 @@ export function AdminUsersManagementEnhanced() {
         setError(result.error || '작가 정보 업데이트에 실패했습니다.');
       }
     } catch (error) {
-      console.error('Error updating user:', error);
+      adminLogger.error('Error updating user:', error);
       setError('작가 정보 업데이트 중 오류가 발생했습니다.');
     }
   };

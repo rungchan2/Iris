@@ -1,4 +1,5 @@
 'use client'
+import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -157,7 +158,7 @@ export default function MatchingSettingsPage() {
       setSettings(settingsState)
 
     } catch (error) {
-      console.error('Error loading data:', error)
+      adminLogger.error('Error loading data:', error)
       toast.error('데이터 로딩 실패', {
         description: '설정 데이터를 불러오는 중 오류가 발생했습니다.'
       })
@@ -190,7 +191,7 @@ export default function MatchingSettingsPage() {
       toast.success('질문 제목이 업데이트되었습니다')
       setEditingQuestion(null)
     } catch (error) {
-      console.error('Error updating question:', error)
+      adminLogger.error('Error updating question:', error)
       toast.error('질문 업데이트 실패')
     }
   }
@@ -223,7 +224,7 @@ export default function MatchingSettingsPage() {
       toast.success('선택지가 업데이트되었습니다')
       setEditingChoice(null)
     } catch (error) {
-      console.error('Error updating choice:', error)
+      adminLogger.error('Error updating choice:', error)
       toast.error('선택지 업데이트 실패')
     }
   }
@@ -243,7 +244,7 @@ export default function MatchingSettingsPage() {
 
       toast.success(isActive ? '질문이 활성화되었습니다' : '질문이 비활성화되었습니다')
     } catch (error) {
-      console.error('Error toggling question:', error)
+      adminLogger.error('Error toggling question:', error)
       toast.error('질문 상태 변경 실패')
     }
   }
@@ -295,7 +296,7 @@ export default function MatchingSettingsPage() {
       toast.success('가중치가 저장되었습니다')
       await loadData() // Reload to verify changes
     } catch (error) {
-      console.error('Error updating weights:', error)
+      adminLogger.error('Error updating weights:', error)
       toast.error('가중치 저장 실패')
     } finally {
       setSaving(false)
@@ -317,7 +318,7 @@ export default function MatchingSettingsPage() {
 
       toast.success('시스템 설정이 저장되었습니다')
     } catch (error) {
-      console.error('Error saving system settings:', error)
+      adminLogger.error('Error saving system settings:', error)
       toast.error('시스템 설정 저장 실패')
     } finally {
       setSaving(false)
@@ -348,7 +349,7 @@ export default function MatchingSettingsPage() {
       
       toast.success('모든 설정이 저장되었습니다')
     } catch (error) {
-      console.error('Error saving settings:', error)
+      adminLogger.error('Error saving settings:', error)
       toast.error('설정 저장 중 오류가 발생했습니다')
     } finally {
       setSaving(false)
@@ -380,7 +381,7 @@ export default function MatchingSettingsPage() {
       
       toast.info('설정이 초기화되었습니다')
     } catch (error) {
-      console.error('Error resetting settings:', error)
+      adminLogger.error('Error resetting settings:', error)
       toast.error('설정 초기화 실패')
     }
   }

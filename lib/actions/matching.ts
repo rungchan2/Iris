@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { matchingLogger } from '@/lib/logger'
 
 export interface RecommendedPhotographer {
   id: string;
@@ -115,7 +116,7 @@ export async function getRecommendedPhotographers(personalityCode: string) {
     
     // return { success: true, photographers }
   } catch (error) {
-    console.error('Error fetching recommended photographers:', error)
+    matchingLogger.error('Error fetching recommended photographers', error)
     return { success: false, error: 'Failed to fetch recommended photographers', photographers: [] }
   }
 }
@@ -148,7 +149,7 @@ export async function getAllPhotographers() {
     
     return { success: true, photographers }
   } catch (error) {
-    console.error('Error fetching all photographers:', error)
+    matchingLogger.error('Error fetching all photographers', error)
     return { success: false, error: 'Failed to fetch photographers' }
   }
 }
@@ -235,7 +236,7 @@ export async function getPhotographerDetails(photographerId: string) {
       }
     }
   } catch (error) {
-    console.error('Error fetching photographer details:', error)
+    matchingLogger.error('Error fetching photographer details', error)
     return { success: false, error: 'Failed to fetch photographer details' }
   }
 }

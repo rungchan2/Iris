@@ -1,5 +1,30 @@
 'use client'
 
+/**
+ * TODO: MIGRATE TO SERVER ACTIONS AND HOOKS
+ *
+ * This component is extremely complex with extensive analytics queries.
+ * Future migration plan:
+ *
+ * 1. Create /lib/actions/matching-analytics.ts with functions:
+ *    - getMatchingStats(filters)
+ *    - getSessionMetrics(filters)
+ *    - getPhotographerPerformance(filters)
+ *    - getConversionFunnels(filters)
+ *    - getExperimentResults(experimentId)
+ *
+ * 2. Create /lib/hooks/use-matching-analytics.ts with:
+ *    - useMatchingStats(filters)
+ *    - useSessionMetrics(filters)
+ *    - usePhotographerPerformance(filters)
+ *
+ * 3. Replace all Supabase client queries with hook calls
+ *
+ * Current complexity: 848 lines, multiple real-time subscriptions
+ * Estimated effort: 4-6 hours
+ * Priority: LOW (analytics are not critical user flow)
+ */
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

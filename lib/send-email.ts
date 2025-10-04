@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { adminLogger } from "@/lib/logger";
 
 const isEmailEnabled = process.env.NODE_ENV === "production";
 
@@ -9,7 +10,7 @@ export const sendEmail = async (
   body: string,
 ) => {
   if (!isEmailEnabled) {
-    console.log("이메일 전송 비활성화");
+    adminLogger.info("이메일 전송 비활성화");
     return { data: null, error: null };
   }
 
@@ -21,14 +22,14 @@ export const sendEmail = async (
     });
 
     if (error) {
-      console.error("이메일 전송 오류:", error);
+      adminLogger.error("이메일 전송 오류:", error);
       throw error;
     }
     
-    console.log("이메일 전송 성공:", data);
+    adminLogger.info("이메일 전송 성공:", data);
     return { data, error: null };
   } catch (err) {
-    console.error("이메일 전송 중 예외 발생:", err);
+    adminLogger.error("이메일 전송 중 예외 발생:", err);
     return { data: null, error: err };
   }
 };

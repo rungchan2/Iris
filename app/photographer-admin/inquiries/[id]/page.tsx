@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
+import { photographerLogger } from '@/lib/logger';
 import { Inquiry } from "@/types/inquiry.types";
 import { InquiryDetailClient } from "@/components/admin/inquiry-detail-client";
 
@@ -33,7 +34,7 @@ export default async function PhotographerInquiryDetailPage({
     .eq("photographer_id", user.id) // Much faster direct FK filtering
     .single();
 
-  console.log("photographer inquiry", inquiry);
+  photographerLogger.info("photographer inquiry", inquiry);
 
   // Keywords and mood keywords removed - no longer used
   const transformedInquiry = {
@@ -42,7 +43,7 @@ export default async function PhotographerInquiryDetailPage({
   };
 
   if (error || !inquiry) {
-    console.error("Error fetching inquiry or unauthorized:", error);
+    photographerLogger.error("Error fetching inquiry or unauthorized:", error);
     notFound();
   }
 

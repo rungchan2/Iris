@@ -1,5 +1,6 @@
 import { getReviewByToken } from "@/lib/actions/reviews";
 import { ReviewForm } from "@/components/review/review-form";
+import { reviewLogger } from '@/lib/logger';
 import { Clock, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
@@ -14,7 +15,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
   
   const result = await getReviewByToken(token);
 
-  console.log("result", result)
+  reviewLogger.info("result", result)
 
   if (result.error || !result.data) {
     return (

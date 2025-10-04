@@ -1,4 +1,5 @@
 "use client"
+import { adminLogger } from "@/lib/logger"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -50,13 +51,13 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
       const end = addMinutes(start, durationMinutes)
       return format(end, "HH:mm")
     } catch (error) {
-      console.error("Error calculating end time:", error)
+      adminLogger.error("Error calculating end time:", error)
       return startTime
     }
   }
 
   const handleAddSlot = async () => {
-    console.log(newSlot)
+    adminLogger.info('Adding new slot', newSlot)
     try {
       // Calculate end time based on custom duration
       const endTime = calculateEndTime(newSlot.startTime, newSlot.durationMinutes)
@@ -97,7 +98,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
       onSlotsChange()
       toast.success("시간 슬롯이 성공적으로 추가되었습니다")
     } catch (error) {
-      console.error("Error adding slot:", error)
+      adminLogger.error("Error adding slot:", error)
       toast.error("시간 슬롯 추가에 실패했습니다")
     }
   }
@@ -113,7 +114,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
       onSlotsChange()
       toast.success("시간 슬롯이 삭제되었습니다")
     } catch (error) {
-      console.error("Error deleting slot:", error)
+      adminLogger.error("Error deleting slot:", error)
       toast.error("시간 슬롯 삭제에 실패했습니다")
     }
   }
@@ -127,7 +128,7 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
       onSlotsChange()
       toast.success(`슬롯이 ${!currentStatus ? "예약 가능" : "예약 불가"}으로 변경되었습니다`)
     } catch (error) {
-      console.error("Error updating slot:", error)
+      adminLogger.error("Error updating slot:", error)
       toast.error("슬롯 상태 변경에 실패했습니다")
     }
   }

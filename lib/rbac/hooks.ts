@@ -103,6 +103,11 @@ export function useUserProfile() {
  */
 export function usePermissions() {
   const { user } = useUserProfile()
+  const supabase = createClient()
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
 
   return {
     user,
@@ -112,6 +117,7 @@ export function usePermissions() {
     isAdmin: () => isAdmin(user),
     isPhotographer: () => isPhotographer(user),
     canAccessPage: (path: string) => canAccessPage(user, path),
+    signOut,
   }
 }
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Inquiry } from "@/types/inquiry.types";
 import { InquiryDetailClient } from "@/components/admin/inquiry-detail-client";
+import { adminLogger } from "@/lib/logger";
 
 export default async function InquiryDetailPage({
   params,
@@ -27,7 +28,7 @@ export default async function InquiryDetailPage({
     .eq("id", (await params).id)
     .single();
 
-  console.log("server inquiry", inquiry);
+  adminLogger.info("server inquiry", inquiry);
 
   // Keywords and mood keywords removed - no longer used
   const transformedInquiry = {
@@ -36,7 +37,7 @@ export default async function InquiryDetailPage({
   };
 
   if (error || !inquiry) {
-    console.error("Error fetching inquiry:", error);
+    adminLogger.error("Error fetching inquiry:", error);
     notFound();
   }
 

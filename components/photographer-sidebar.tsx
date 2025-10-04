@@ -18,8 +18,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter, usePathname } from "next/navigation"
+import { usePermissions } from "@/lib/rbac/hooks"
 
 interface MenuItem {
   title: string
@@ -78,15 +78,15 @@ interface PhotographerUser {
 export function PhotographerSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: PhotographerUser }) {
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
   const [mounted, setMounted] = useState(false)
+  const { signOut } = usePermissions()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut()
     router.push("/login")
   }
 

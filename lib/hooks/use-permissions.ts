@@ -9,6 +9,10 @@ export function usePermissions() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+
   useEffect(() => {
     const getPermissions = async () => {
       try {
@@ -127,5 +131,5 @@ export function usePermissions() {
     getPermissions()
   }, [supabase])
 
-  return { permissions, loading }
+  return { permissions, loading, signOut }
 }

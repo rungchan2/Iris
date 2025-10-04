@@ -5,6 +5,7 @@ import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
+import { authLogger } from "@/lib/logger";
 
 export const metadata: Metadata = {
   title: "로그인 | Iris",
@@ -38,7 +39,7 @@ export default async function Page() {
       } else {
         // No matching user type - just show login form without redirecting
         // This prevents infinite redirect loop
-        console.log('User has session but no matching role, showing login form');
+        authLogger.info('User has session but no matching role, showing login form');
       }
     }
   }

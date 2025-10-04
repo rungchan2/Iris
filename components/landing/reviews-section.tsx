@@ -1,5 +1,6 @@
 'use client'
 
+import { reviewLogger } from '@/lib/logger';
 import { useEffect, useState } from 'react'
 import { Star, X, Camera, ArrowRight, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -219,9 +220,9 @@ export function ReviewsSection() {
     const fetchReviews = async () => {
       try {
         const result = await getPublicReviews()
-        console.log("result", result)
+        reviewLogger.info("result", result)
         if (result.error) {
-          console.error('Error fetching reviews:', result.error)
+          reviewLogger.error('Error fetching reviews:', result.error)
           setReviews(FALLBACK_REVIEWS)
         } else if (result.data && result.data.length > 0) {
           // PublicReview 타입을 Review 타입으로 변환
@@ -246,7 +247,7 @@ export function ReviewsSection() {
           setReviews(FALLBACK_REVIEWS)
         }
       } catch (error) {
-        console.error('Error in fetchReviews:', error)
+        reviewLogger.error('Error in fetchReviews:', error)
         setReviews(FALLBACK_REVIEWS)
       } finally {
         setLoading(false)

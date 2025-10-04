@@ -2,27 +2,18 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { photographerLogger } from '@/lib/logger'
 
-export interface PhotographerData {
-  id: string
-  name: string
-  email: string
-  created_at: string
-  portfolioCount: number
-  personalityTypes: Array<{
-    code: string
-    name: string
-    compatibility: number
-    isPrimary: boolean
-    notes?: string
-  }>
-}
+/**
+ * Photographer Entity Operations
+ *
+ * This file contains functions for creating, updating, and managing individual photographers.
+ * For querying multiple photographers (list, search), see photographers.ts
+ */
 
-export interface PhotographerFilters {
-  search?: string
-  personalityCode?: string
-  sortBy?: 'name' | 'rating' | 'experience' | 'portfolio' | 'compatibility'
-}
+// Re-export types and query functions from photographers.ts
+export type { PhotographerData, PhotographerFilters } from './photographers'
+export { getPhotographers, getPhotographerById, getPersonalityTypes } from './photographers'
 
 export interface PhotographerApplicationData {
   email: string
@@ -77,17 +68,17 @@ export async function createPhotographerProfile(
       })
 
     if (userError) {
-      console.error('Error creating photographer profile:', userError)
+      photographerLogger.error('Error creating photographer profile', userError)
       return { success: false, error: `작가 프로필 생성 실패: ${userError.message}` }
     }
 
     return { success: true }
 
   } catch (error: any) {
-    console.error('Photographer profile creation error:', error)
-    return { 
-      success: false, 
-      error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.' 
+    photographerLogger.error('Photographer profile creation error', error)
+    return {
+      success: false,
+      error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.'
     }
   }
 }
@@ -133,7 +124,7 @@ export async function uploadPortfolioImages(
           })
 
         if (uploadError) {
-          console.error('Portfolio upload error:', uploadError)
+          photographerLogger.error('Portfolio upload error', uploadError)
           throw new Error(`포트폴리오 이미지 ${i + 1} 업로드 실패: ${uploadError.message}`)
         }
 
@@ -167,7 +158,7 @@ export async function uploadPortfolioImages(
           .single()
 
         if (photoError) {
-          console.error('Photo record creation error:', photoError)
+          photographerLogger.error('Photo record creation error', photoError)
           throw new Error(`포트폴리오 레코드 생성 실패: ${photoError.message}`)
         }
 
@@ -178,7 +169,7 @@ export async function uploadPortfolioImages(
         })
 
       } catch (error: any) {
-        console.error(`Portfolio upload ${i + 1} failed:`, error)
+        photographerLogger.error(`Portfolio upload ${i + 1} failed`, error)
         portfolioUploadResults.push({
           success: false,
           error: error.message
@@ -198,7 +189,7 @@ export async function uploadPortfolioImages(
     }
 
     if (failedUploads.length > 0) {
-      console.warn(`${failedUploads.length}개의 포트폴리오 이미지 업로드 실패`)
+      photographerLogger.warn(`${failedUploads.length}개의 포트폴리오 이미지 업로드 실패`)
     }
 
     return { 
@@ -207,10 +198,10 @@ export async function uploadPortfolioImages(
     }
 
   } catch (error: any) {
-    console.error('Portfolio upload error:', error)
-    return { 
-      success: false, 
-      error: error.message || '포트폴리오 업로드 중 오류가 발생했습니다.' 
+    photographerLogger.error('Portfolio upload error', error)
+    return {
+      success: false,
+      error: error.message || '포트폴리오 업로드 중 오류가 발생했습니다.'
     }
   }
 }
@@ -251,14 +242,14 @@ export async function approvePhotographerApplication(
       .eq('photographer_id', applicationId)
 
     if (portfolioError) {
-      console.warn('Portfolio public status update failed:', portfolioError)
+      photographerLogger.warn('Portfolio public status update failed', portfolioError)
     }
 
     revalidatePath('/admin')
     return { success: true }
 
   } catch (error: any) {
-    console.error('Photographer approval error:', error)
+    photographerLogger.error('Photographer approval error', error)
     return { success: false, error: '승인 처리 중 오류가 발생했습니다.' }
   }
 }
@@ -293,7 +284,7 @@ export async function rejectPhotographerApplication(
     return { success: true }
 
   } catch (error: any) {
-    console.error('Photographer rejection error:', error)
+    photographerLogger.error('Photographer rejection error', error)
     return { success: false, error: '거절 처리 중 오류가 발생했습니다.' }
   }
 }
@@ -341,143 +332,9 @@ export async function getPendingApplications(): Promise<{
     return { success: true, applications: data || [] }
 
   } catch (error: any) {
-    console.error('Error fetching pending applications:', error)
+    photographerLogger.error('Error fetching pending applications', error)
     return { success: false, error: '지원서 목록 조회 중 오류가 발생했습니다.' }
   }
 }
 
-export async function getPhotographers(filters: PhotographerFilters = {}) {
-  try {
-    const supabase = await createClient()
-    
-    // Base query to get admin users with portfolio count
-    let query = supabase
-      .from('photographers')
-      .select(`
-        id,
-        name,
-        email,
-        created_at,
-        admin_portfolio_photos(count)
-      `)
-    
-    // Apply search filter
-    if (filters.search) {
-      query = query.ilike('name', `%${filters.search}%`)
-    }
-    
-    const { data: photographers, error } = await query
-    
-    if (error) {
-      console.error('Error fetching photographers:', error.message)
-      return { error: error.message }
-    }
-    
-    if (!photographers) {
-      return { data: [] }
-    }
-    
-    // Transform data
-    const transformedData: PhotographerData[] = photographers.map(photographer => ({
-      id: photographer.id,
-      name: photographer.name || '',
-      email: photographer.email || '',
-      created_at: photographer.created_at || '',
-      portfolioCount: photographer.admin_portfolio_photos?.length || 0,
-      personalityTypes: [] // TODO: personality_admin_mapping 테이블 생성 후 활성화
-    }))
-    
-    // Apply personality filter
-    // TODO: personality_admin_mapping 테이블 생성 후 활성화
-    // if (filters.personalityCode) {
-    //   transformedData = transformedData.filter(photographer => 
-    //     photographer.personalityTypes.some(pt => pt.code === filters.personalityCode)
-    //   )
-    // }
-    
-    // Apply sorting
-    switch (filters.sortBy) {
-      case 'name':
-        transformedData.sort((a, b) => a.name.localeCompare(b.name))
-        break
-      case 'portfolio':
-        transformedData.sort((a, b) => b.portfolioCount - a.portfolioCount)
-        break
-      case 'compatibility':
-        transformedData.sort((a, b) => {
-          const aMaxCompat = Math.max(...a.personalityTypes.map(pt => pt.compatibility), 0)
-          const bMaxCompat = Math.max(...b.personalityTypes.map(pt => pt.compatibility), 0)
-          return bMaxCompat - aMaxCompat
-        })
-        break
-      case 'experience':
-        // For now, sort by created_at (older accounts = more experience)
-        transformedData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        break
-      case 'rating':
-        // For now, sort by portfolio count as a proxy for rating
-        transformedData.sort((a, b) => b.portfolioCount - a.portfolioCount)
-        break
-      default:
-        transformedData.sort((a, b) => a.name.localeCompare(b.name))
-    }
-    
-    return { data: transformedData }
-  } catch (error) {
-    console.error('Error in getPhotographers:', error)
-    return { error: 'Failed to fetch photographers' }
-  }
-}
-
-export async function getPhotographerById(id: string) {
-  try {
-    const supabase = await createClient()
-    
-    const { data: photographer, error } = await supabase
-      .from('photographers')
-      .select(`
-        id,
-        name,
-        email,
-        created_at,
-        admin_portfolio_photos(
-          id,
-          photo_url,
-          thumbnail_url,
-          title,
-          description,
-          style_tags,
-          display_order,
-          is_representative,
-          view_count
-        )
-      `)
-      .eq('id', id)
-      .single()
-    
-    if (error) {
-      console.error('Error fetching photographer:', error.message)
-      return { error: error.message }
-    }
-    
-    if (!photographer) {
-      return { error: 'Photographer not found' }
-    }
-    
-    return { data: photographer }
-  } catch (error) {
-    console.error('Error in getPhotographerById:', error)
-    return { error: 'Failed to fetch photographer' }
-  }
-}
-
-export async function getPersonalityTypes() {
-  try {
-    // personality_types 테이블이 삭제되었으므로 빈 배열 반환
-    // TODO: 새로운 매칭 시스템으로 교체 필요
-    return { data: [] }
-  } catch (error) {
-    console.error('Error in getPersonalityTypes:', error)
-    return { error: 'Failed to fetch personality types' }
-  }
-}
+// Query functions are now imported from photographers.ts (see exports above)

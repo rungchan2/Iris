@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { SurveyChoice } from '@/types/matching.types'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { 
+import {
   Plus,
   Trash2,
   GripVertical,
@@ -31,6 +30,7 @@ import {
   Clock
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useChoiceMutations } from '@/lib/hooks/use-survey-management'
 
 interface ChoiceEditorProps {
   questionId: string
@@ -45,14 +45,14 @@ export default function ChoiceEditor({
 }: ChoiceEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
-  const [saving, setSaving] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [newChoice, setNewChoice] = useState({
     choice_key: '',
     choice_label: '',
     choice_order: choices.length + 1
   })
-  const supabase = createClient()
+
+  const { create, update, remove } = useChoiceMutations(questionId)
 
   const startEdit = (choice: SurveyChoice) => {
     setEditingId(choice.id)
@@ -65,124 +65,44 @@ export default function ChoiceEditor({
   }
 
   const saveChoice = async (choiceId: string) => {
-    try {
-      setSaving(choiceId)
-      
-      const { error } = await supabase
-        .from('survey_choices')
-        .update({ 
-          choice_label: editText,
-          embedding_generated_at: null // Reset to trigger regeneration
-        })
-        .eq('id', choiceId)
+    await update.mutateAsync({
+      choiceId,
+      data: { choice_label: editText }
+    })
 
-      if (error) throw error
-
-      // Update local state
-      const updatedChoices = choices.map(choice =>
-        choice.id === choiceId 
-          ? { ...choice, choice_label: editText, choice_embedding: null }
-          : choice
-      )
-      onUpdate(updatedChoices)
-
-      // Queue embedding regeneration
-      await fetch('/api/admin/matching/embeddings/queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'choice_embedding',
-          targetId: choiceId
-        })
-      })
-
-      setEditingId(null)
-      setEditText('')
-      toast.success('선택지가 저장되었습니다')
-    } catch (error) {
-      console.error('Error saving choice:', error)
-      toast.error('저장 중 오류가 발생했습니다')
-    } finally {
-      setSaving(null)
-    }
+    setEditingId(null)
+    setEditText('')
   }
 
   const deleteChoice = async (choiceId: string) => {
-    try {
-      const { error } = await supabase
-        .from('survey_choices')
-        .delete()
-        .eq('id', choiceId)
-
-      if (error) throw error
-
-      const updatedChoices = choices.filter(choice => choice.id !== choiceId)
-      onUpdate(updatedChoices)
-      
-      toast.success('선택지가 삭제되었습니다')
-    } catch (error) {
-      console.error('Error deleting choice:', error)
-      toast.error('삭제 중 오류가 발생했습니다')
-    }
+    await remove.mutateAsync(choiceId)
   }
 
   const addChoice = async () => {
-    try {
-      if (!newChoice.choice_key || !newChoice.choice_label) {
-        toast.error('선택지 키와 라벨을 모두 입력해주세요')
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('survey_choices')
-        .insert({
-          question_id: questionId,
-          choice_key: newChoice.choice_key,
-          choice_label: newChoice.choice_label,
-          choice_order: newChoice.choice_order,
-          is_active: true
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      onUpdate([...choices, data])
-      setNewChoice({
-        choice_key: '',
-        choice_label: '',
-        choice_order: choices.length + 2
-      })
-      setAdding(false)
-      
-      toast.success('선택지가 추가되었습니다')
-    } catch (error) {
-      console.error('Error adding choice:', error)
-      toast.error('추가 중 오류가 발생했습니다')
+    if (!newChoice.choice_key || !newChoice.choice_label) {
+      toast.error('선택지 키와 라벨을 모두 입력해주세요')
+      return
     }
+
+    await create.mutateAsync({
+      choice_key: newChoice.choice_key,
+      choice_label: newChoice.choice_label,
+      choice_order: newChoice.choice_order
+    })
+
+    setNewChoice({
+      choice_key: '',
+      choice_label: '',
+      choice_order: choices.length + 2
+    })
+    setAdding(false)
   }
 
   const toggleActive = async (choiceId: string, isActive: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('survey_choices')
-        .update({ is_active: isActive })
-        .eq('id', choiceId)
-
-      if (error) throw error
-
-      const updatedChoices = choices.map(choice =>
-        choice.id === choiceId 
-          ? { ...choice, is_active: isActive }
-          : choice
-      )
-      onUpdate(updatedChoices)
-      
-      toast.success(`선택지가 ${isActive ? '활성화' : '비활성화'}되었습니다`)
-    } catch (error) {
-      console.error('Error toggling choice:', error)
-      toast.error('상태 변경 중 오류가 발생했습니다')
-    }
+    await update.mutateAsync({
+      choiceId,
+      data: { is_active: isActive }
+    })
   }
 
   const getEmbeddingStatus = (choice: SurveyChoice) => {
@@ -253,9 +173,9 @@ export default function ChoiceEditor({
                     <Button 
                       size="sm"
                       onClick={() => saveChoice(choice.id)}
-                      disabled={saving === choice.id}
+                      disabled={update.isPending}
                     >
-                      {saving === choice.id ? (
+                      {update.isPending ? (
                         <Clock className="h-4 w-4 animate-spin" />
                       ) : (
                         <Save className="h-4 w-4" />

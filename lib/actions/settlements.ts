@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { paymentLogger } from '@/lib/logger';
 
 export interface SettlementData {
   id: string;
@@ -94,10 +95,10 @@ export async function getSettlements(params: {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('정산 목록 조회 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 목록을 불러오는데 실패했습니다.' 
+      paymentLogger.error('정산 목록 조회 실패', error);
+      return {
+        success: false,
+        error: '정산 목록을 불러오는데 실패했습니다.'
       };
     }
 
@@ -120,10 +121,10 @@ export async function getSettlements(params: {
     };
 
   } catch (error) {
-    console.error('정산 목록 조회 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 목록 조회 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -161,10 +162,10 @@ export async function getSettlementById(settlementId: string) {
       .single();
 
     if (error) {
-      console.error('정산 상세 조회 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 정보를 찾을 수 없습니다.' 
+      paymentLogger.error('정산 상세 조회 실패', error);
+      return {
+        success: false,
+        error: '정산 정보를 찾을 수 없습니다.'
       };
     }
 
@@ -178,10 +179,10 @@ export async function getSettlementById(settlementId: string) {
     };
 
   } catch (error) {
-    console.error('정산 상세 조회 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 상세 조회 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -219,10 +220,10 @@ export async function approveSettlement(formData: FormData) {
       .eq('status', 'pending'); // 대기 상태인 것만 승인 가능
 
     if (error) {
-      console.error('정산 승인 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 승인에 실패했습니다.' 
+      paymentLogger.error('정산 승인 실패', error);
+      return {
+        success: false,
+        error: '정산 승인에 실패했습니다.'
       };
     }
 
@@ -234,10 +235,10 @@ export async function approveSettlement(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('정산 승인 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 승인 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -270,10 +271,10 @@ export async function completeSettlementTransfer(formData: FormData) {
       .eq('status', 'approved'); // 승인된 것만 완료 가능
 
     if (error) {
-      console.error('정산 이체 완료 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 이체 완료 처리에 실패했습니다.' 
+      paymentLogger.error('정산 이체 완료 실패', error);
+      return {
+        success: false,
+        error: '정산 이체 완료 처리에 실패했습니다.'
       };
     }
 
@@ -285,10 +286,10 @@ export async function completeSettlementTransfer(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('정산 이체 완료 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 이체 완료 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -320,10 +321,10 @@ export async function rejectSettlement(formData: FormData) {
       .eq('id', settlementId);
 
     if (error) {
-      console.error('정산 거부 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 거부 처리에 실패했습니다.' 
+      paymentLogger.error('정산 거부 실패', error);
+      return {
+        success: false,
+        error: '정산 거부 처리에 실패했습니다.'
       };
     }
 
@@ -335,10 +336,10 @@ export async function rejectSettlement(formData: FormData) {
     };
 
   } catch (error) {
-    console.error('정산 거부 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 거부 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -374,10 +375,10 @@ export async function getSettlementStats(params: {
     const { data, error } = await query;
 
     if (error) {
-      console.error('정산 통계 조회 실패:', error);
-      return { 
-        success: false, 
-        error: '정산 통계를 불러오는데 실패했습니다.' 
+      paymentLogger.error('정산 통계 조회 실패', error);
+      return {
+        success: false,
+        error: '정산 통계를 불러오는데 실패했습니다.'
       };
     }
 
@@ -414,10 +415,10 @@ export async function getSettlementStats(params: {
     };
 
   } catch (error) {
-    console.error('정산 통계 조회 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('정산 통계 조회 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }
@@ -444,10 +445,10 @@ export async function getPhotographerSettlements(photographerId: string) {
       .limit(10);
 
     if (error) {
-      console.error('작가별 정산 조회 실패:', error);
-      return { 
-        success: false, 
-        error: '작가별 정산 내역을 불러오는데 실패했습니다.' 
+      paymentLogger.error('작가별 정산 조회 실패', error);
+      return {
+        success: false,
+        error: '작가별 정산 내역을 불러오는데 실패했습니다.'
       };
     }
 
@@ -457,10 +458,10 @@ export async function getPhotographerSettlements(photographerId: string) {
     };
 
   } catch (error) {
-    console.error('작가별 정산 조회 오류:', error);
-    return { 
-      success: false, 
-      error: '시스템 오류가 발생했습니다.' 
+    paymentLogger.error('작가별 정산 조회 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
     };
   }
 }

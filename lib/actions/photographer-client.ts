@@ -1,4 +1,5 @@
 'use client'
+import { photographerLogger } from "@/lib/logger"
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -29,15 +30,15 @@ async function waitForSession(maxRetries = 10, delay = 500): Promise<boolean> {
   for (let i = 0; i < maxRetries; i++) {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
-      console.log(`Session found after ${i + 1} attempts`)
+      photographerLogger.info(`Session found after ${i + 1} attempts`)
       return true
     }
     
-    console.log(`Waiting for session, attempt ${i + 1}/${maxRetries}`)
+    photographerLogger.info(`Waiting for session, attempt ${i + 1}/${maxRetries}`)
     await new Promise(resolve => setTimeout(resolve, delay))
   }
   
-  console.error('Session not found after maximum retries')
+  photographerLogger.error('Session not found after maximum retries')
   return false
 }
 
@@ -62,7 +63,7 @@ export async function createPhotographerProfile(
       return { success: false, error: '사용자 인증 실패' }
     }
 
-    console.log('Creating photographer profile for user:', data.userId)
+    photographerLogger.info('Creating photographer profile for user:', data.userId)
 
     // photographers 테이블에 작가 정보 생성
     const { error: userError } = await supabase
@@ -90,15 +91,15 @@ export async function createPhotographerProfile(
       })
 
     if (userError) {
-      console.error('Error creating photographer profile:', userError)
+      photographerLogger.error('Error creating photographer profile:', userError)
       return { success: false, error: `작가 프로필 생성 실패: ${userError.message}` }
     }
 
-    console.log('Photographer profile created successfully')
+    photographerLogger.info('Photographer profile created successfully')
     return { success: true }
 
   } catch (error: any) {
-    console.error('Photographer profile creation error:', error)
+    photographerLogger.error('Photographer profile creation error:', error)
     return { 
       success: false, 
       error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.' 
@@ -123,7 +124,7 @@ export async function uploadPortfolioImages(
       return { success: false, error: '사용자 인증 실패. 로그인이 필요합니다.' }
     }
 
-    console.log('Starting portfolio upload for user:', user.id)
+    photographerLogger.info('Starting portfolio upload for user:', user.id)
 
     // 기존 uploadMultiplePhotos 함수 사용
     const { uploadMultiplePhotos } = await import('@/lib/upload')
@@ -142,10 +143,10 @@ export async function uploadPortfolioImages(
     }
 
     if (failedUploads.length > 0) {
-      console.warn(`${failedUploads.length}개의 포트폴리오 이미지 업로드 실패`)
+      photographerLogger.warn(`${failedUploads.length}개의 포트폴리오 이미지 업로드 실패`)
     }
 
-    console.log(`Portfolio upload completed: ${successfulUploads.length}/${portfolioFiles.length} successful`)
+    photographerLogger.info(`Portfolio upload completed: ${successfulUploads.length}/${portfolioFiles.length} successful`)
 
     return { 
       success: true, 
@@ -153,7 +154,7 @@ export async function uploadPortfolioImages(
     }
 
   } catch (error: any) {
-    console.error('Portfolio upload error:', error)
+    photographerLogger.error('Portfolio upload error:', error)
     return { 
       success: false, 
       error: error.message || '포트폴리오 업로드 중 오류가 발생했습니다.' 

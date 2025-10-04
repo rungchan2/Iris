@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useAvailableSlotsByDate } from "@/lib/hooks/use-available-slots";
 
 interface TimeSlotSelectorProps {
   date: Date;
@@ -16,90 +14,13 @@ interface TimeSlotSelectorProps {
   photographerId?: string;
 }
 
-interface AvailableSlot {
-  id: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  duration_minutes: number;
-  is_available: boolean;
-  admin_id: string;
-  photographers: {
-    name: string;
-    email: string;
-  };
-}
-
 export function TimeSlotSelector({
   date,
   selectedSlotId,
   onSelect,
   photographerId,
 }: TimeSlotSelectorProps) {
-  const [slots, setSlots] = useState<AvailableSlot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("available_slots")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "available_slots" },
-        (payload) => {
-          console.log("available_slots updated:", payload);
-          setLoading(true);
-          setSlots([]);
-          fetchSlots();
-        }
-      );
-    if (!date) return;
-
-    channel.subscribe();
-
-    const fetchSlots = async () => {
-      setLoading(true);
-      try {
-        const formattedDate = format(date, "yyyy-MM-dd");
-
-        let query = supabase
-          .from("available_slots")
-          .select(
-            `
-            *,
-            photographers (
-              name,
-              email
-            )
-          `
-          )
-          .eq("date", formattedDate);
-
-        // Filter by photographer ID if provided
-        if (photographerId) {
-          query = query.eq("admin_id", photographerId);
-        }
-
-        const { data, error } = await query.order("start_time");
-
-        if (error) throw error;
-
-        setSlots(data as AvailableSlot[]);
-      } catch (error) {
-        console.error("Error fetching slots:", error);
-        toast.error("시간대를 불러오는 중 오류가 발생했습니다.");
-        setSlots([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSlots();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [date, supabase, photographerId]);
+  const { data: slots = [], isLoading: loading, error } = useAvailableSlotsByDate(date, photographerId);
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");
@@ -186,7 +107,7 @@ export function TimeSlotSelector({
                 </div>
 
                 <div className="text-xs text-muted-foreground">
-                  작가: {slot.photographers.name}
+                  작가: {(slot as any).photographers?.name}
                 </div>
 
                 <Badge variant="secondary" className="text-xs">
@@ -212,7 +133,7 @@ export function TimeSlotSelector({
               </div>
 
               <div className="text-xs text-muted-foreground">
-                작가: {slot.photographers.name}
+                작가: {(slot as any).photographers?.name}
               </div>
 
               <div className="flex items-center justify-center gap-2">

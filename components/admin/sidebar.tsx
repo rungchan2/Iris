@@ -6,7 +6,6 @@ import { Inbox, FolderTree, ImageIcon, User, LogOut, Menu, X, Users, Calendar, S
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { usePermissions } from "@/lib/rbac"
 
@@ -80,11 +79,10 @@ export function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
-  const { user, hasAnyPermission, isAdmin } = usePermissions()
+  const { user, hasAnyPermission, isAdmin, signOut } = usePermissions()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await signOut()
     router.push("/login")
   }
 

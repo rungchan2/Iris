@@ -1,5 +1,6 @@
 'use client';
 
+import { paymentLogger } from '@/lib/logger';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +48,7 @@ export default function TestPaymentPage() {
         setError(result.error || '결제 준비 중 오류가 발생했습니다.');
       }
     } catch (err) {
-      console.error('결제 준비 실패:', err);
+      paymentLogger.error('결제 준비 실패:', err);
       setError('결제 준비 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -55,11 +56,11 @@ export default function TestPaymentPage() {
   };
 
   const handlePaymentComplete = (paymentKey: string, orderId: string) => {
-    console.log('결제 완료:', { paymentKey, orderId });
+    paymentLogger.info('결제 완료:', { paymentKey, orderId });
   };
 
   const handlePaymentError = (error: string) => {
-    console.error('결제 오류:', error);
+    paymentLogger.error('결제 오류:', error);
     setError(error);
   };
 

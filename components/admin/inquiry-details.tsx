@@ -1,5 +1,6 @@
 "use client";
 
+import { adminLogger } from '@/lib/logger';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { createClient } from "@/lib/supabase/client";
+import { useInquiryMutations } from "@/lib/hooks/use-inquiries";
 import { Inquiry } from "@/types/inquiry.types";
 import { formatDate, formatTime } from "@/lib/date-fns";
 import { useRouter } from "next/navigation";
@@ -36,84 +37,51 @@ export function InquiryDetails({
   onUpdate?: (updates: Partial<Inquiry>) => void;
 }) {
   const router = useRouter();
-  const supabase = createClient();
+  const { updateInquiry, updateStatus, deleteInquiry, isUpdating, isDeleting } = useInquiryMutations();
   const [status, setStatus] = useState(inquiry.status);
   const [adminNotes, setAdminNotes] = useState(inquiry.admin_note || "");
   const [placeRecommendation, setPlaceRecommendation] = useState(
     inquiry.place_recommendation || ""
   );
-  const [isSaving, setIsSaving] = useState(false);
-  const [isPlaceRecommendationSaving, setIsPlaceRecommendationSaving] =
-    useState(false);
   const [categoryRecommendations, setCategoryRecommendations] = useState<{
     male_clothing_recommendation?: string | null;
     female_clothing_recommendation?: string | null;
     accessories_recommendation?: string | null;
   }>({});
 
-  const handleStatusChange = async (
+  const handleStatusChange = (
     newStatus: "new" | "contacted" | "completed"
   ) => {
     setStatus(newStatus);
+    updateStatus({ id: inquiry.id, status: newStatus });
 
-    setIsSaving(true);
-    const { error } = await supabase
-      .from("inquiries")
-      .update({ status: newStatus })
-      .eq("id", inquiry.id);
-
-    if (error) {
-      console.error("Error updating status:", error);
-    } else {
-      // 상위 컴포넌트에 업데이트 알림
-      onUpdate?.({ status: newStatus });
-    }
-    setIsSaving(false);
+    // 상위 컴포넌트에 업데이트 알림
+    onUpdate?.({ status: newStatus });
   };
 
-  const saveNotes = async () => {
-    setIsSaving(true);
-    const { error } = await supabase
-      .from("inquiries")
-      .update({ admin_note: adminNotes })
-      .eq("id", inquiry.id);
+  const saveNotes = () => {
+    updateInquiry({
+      id: inquiry.id,
+      updates: { admin_note: adminNotes }
+    });
 
-    if (error) {
-      toast.error("메모 저장 실패");
-    } else {
-      toast.success("메모 저장 성공");
-      // 상위 컴포넌트에 업데이트 알림
-      onUpdate?.({ admin_note: adminNotes });
-    }
-    setIsSaving(false);
+    // 상위 컴포넌트에 업데이트 알림
+    onUpdate?.({ admin_note: adminNotes });
   };
 
-  const savePlaceRecommendation = async () => {
-    setIsPlaceRecommendationSaving(true);
-    const { error } = await supabase
-      .from("inquiries")
-      .update({ place_recommendation: placeRecommendation } as any)
-      .eq("id", inquiry.id);
+  const savePlaceRecommendation = () => {
+    updateInquiry({
+      id: inquiry.id,
+      updates: { place_recommendation: placeRecommendation } as any
+    });
 
-    if (error) {
-      toast.error("장소 추천 저장 실패");
-    } else {
-      toast.success("장소 추천 저장 성공");
-      // 상위 컴포넌트에 업데이트 알림
-      onUpdate?.({ place_recommendation: placeRecommendation });
-    }
-    setIsPlaceRecommendationSaving(false);
+    // 상위 컴포넌트에 업데이트 알림
+    onUpdate?.({ place_recommendation: placeRecommendation });
   };
 
-  const handleDeleteInquiry = async () => {
+  const handleDeleteInquiry = () => {
     if (confirm("문의를 삭제하시겠습니까?")) {
-      const { error } = await supabase
-        .from("inquiries")
-        .delete()
-        .eq("id", inquiry.id);
-      if (error) {
-        console.error("Error deleting inquiry:", error);
-      }
+      deleteInquiry(inquiry.id);
       router.push("/admin");
     }
   };
@@ -124,34 +92,16 @@ export function InquiryDetails({
       if (!inquiry.selection_path || inquiry.selection_path.length === 0)
         return;
 
-      const lastCategoryId = inquiry.selected_category_id || "";
-
       // Note: These columns don't exist in the current schema
-      // Commenting out until schema is updated
-      /*
-      const { data, error } = await supabase
-        .from("categories")
-        .select(
-          "male_clothing_recommendation, female_clothing_recommendation, accessories_recommendation"
-        )
-        .eq("id", lastCategoryId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching category recommendations:", error);
-      } else {
-        setCategoryRecommendations(data);
-      }
-      */
-      
-      // Set empty recommendations for now
+      // If needed in the future, create a server action in lib/actions/categories.ts
+      // For now, set empty recommendations
       setCategoryRecommendations({});
     };
 
     fetchCategoryRecommendations();
-  }, [inquiry.selected_category_id, supabase]);
+  }, [inquiry.selected_category_id]);
 
-  console.log(inquiry);
+  adminLogger.info('Inquiry details:', inquiry);
 
   return (
     <>
@@ -433,10 +383,10 @@ export function InquiryDetails({
               />
               <Button
                 onClick={saveNotes}
-                disabled={isSaving}
+                disabled={isUpdating}
                 className="w-full"
               >
-                {isSaving ? "저장중..." : "메모 저장"}
+                {isUpdating ? "저장중..." : "메모 저장"}
               </Button>
             </div>
 
@@ -452,20 +402,20 @@ export function InquiryDetails({
               />
               <Button
                 onClick={savePlaceRecommendation}
-                disabled={isPlaceRecommendationSaving}
+                disabled={isUpdating}
                 className="w-full"
               >
-                {isPlaceRecommendationSaving ? "저장중..." : "장소 추천 저장"}
+                {isUpdating ? "저장중..." : "장소 추천 저장"}
               </Button>
             </div>
 
-            
+
             <Button
               onClick={handleDeleteInquiry}
-              disabled={isSaving}
+              disabled={isDeleting}
               className="w-full border-red-500 border-1 text-red-500 bg-transparent hover:text-white hover:bg-red-500"
             >
-              문의 삭제
+              {isDeleting ? "삭제중..." : "문의 삭제"}
             </Button>
           </div>
         </CardContent>

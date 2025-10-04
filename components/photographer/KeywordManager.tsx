@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +10,7 @@ import { Slider } from '@/components/ui/slider'
 import { Plus, Tags, Trash2, Star, Target, Camera, Palette } from 'lucide-react'
 import { toast } from 'sonner'
 import { PhotographerKeyword } from '@/types/matching.types'
+import { usePhotographerKeywords, useKeywordMutations } from '@/lib/hooks/use-photographer-keywords'
 
 interface KeywordManagerProps {
   photographerId: string
@@ -64,40 +64,16 @@ const PROFICIENCY_LABELS = {
 }
 
 export default function KeywordManager({ photographerId }: KeywordManagerProps) {
-  const [keywords, setKeywords] = useState<PhotographerKeyword[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [newKeyword, setNewKeyword] = useState('')
   const [newProficiency, setNewProficiency] = useState([3])
   const [selectedCategory, setSelectedCategory] = useState<string>('style')
-  const supabase = createClient()
 
-  useEffect(() => {
-    loadKeywords()
-  }, [photographerId])
-
-  const loadKeywords = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('photographer_keywords')
-        .select('*')
-        .eq('photographer_id', photographerId)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setKeywords(data || [])
-    } catch (error) {
-      console.error('Error loading keywords:', error)
-      toast.error('키워드를 불러오는 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: keywords = [], isLoading: loading } = usePhotographerKeywords(photographerId)
+  const { create, update, remove } = useKeywordMutations(photographerId)
 
   const handleAddKeyword = async (keyword?: string) => {
     const keywordToAdd = keyword || newKeyword.trim()
-    
+
     if (!keywordToAdd) {
       toast.error('키워드를 입력해주세요')
       return
@@ -108,72 +84,24 @@ export default function KeywordManager({ photographerId }: KeywordManagerProps) 
       return
     }
 
-    try {
-      setSaving(true)
-      const { data, error } = await supabase
-        .from('photographer_keywords')
-        .insert({
-          photographer_id: photographerId,
-          keyword: keywordToAdd,
-          proficiency_level: newProficiency[0]
-        })
-        .select()
-        .single()
+    await create.mutateAsync({
+      keyword: keywordToAdd,
+      proficiency_level: newProficiency[0]
+    })
 
-      if (error) throw error
-
-      setKeywords(prev => [data, ...prev])
-      setNewKeyword('')
-      setNewProficiency([3])
-      toast.success('키워드가 추가되었습니다')
-    } catch (error) {
-      console.error('Error adding keyword:', error)
-      toast.error('키워드 추가 중 오류가 발생했습니다')
-    } finally {
-      setSaving(false)
-    }
+    setNewKeyword('')
+    setNewProficiency([3])
   }
 
   const handleUpdateProficiency = async (keyword: string, proficiency: number) => {
-    try {
-      const { error } = await supabase
-        .from('photographer_keywords')
-        .update({ proficiency_level: proficiency })
-        .eq('photographer_id', photographerId)
-        .eq('keyword', keyword)
-
-      if (error) throw error
-
-      setKeywords(prev => 
-        prev.map(k => 
-          k.keyword === keyword 
-            ? { ...k, proficiency_level: proficiency }
-            : k
-        )
-      )
-      toast.success('숙련도가 업데이트되었습니다')
-    } catch (error) {
-      console.error('Error updating proficiency:', error)
-      toast.error('숙련도 업데이트 중 오류가 발생했습니다')
-    }
+    await update.mutateAsync({
+      keyword,
+      data: { proficiency_level: proficiency }
+    })
   }
 
   const handleDeleteKeyword = async (keyword: string) => {
-    try {
-      const { error } = await supabase
-        .from('photographer_keywords')
-        .delete()
-        .eq('photographer_id', photographerId)
-        .eq('keyword', keyword)
-
-      if (error) throw error
-
-      setKeywords(prev => prev.filter(k => k.keyword !== keyword))
-      toast.success('키워드가 삭제되었습니다')
-    } catch (error) {
-      console.error('Error deleting keyword:', error)
-      toast.error('키워드 삭제 중 오류가 발생했습니다')
-    }
+    await remove.mutateAsync(keyword)
   }
 
   const getKeywordsByCategory = () => {
@@ -278,7 +206,7 @@ export default function KeywordManager({ photographerId }: KeywordManagerProps) 
                       variant="outline"
                       size="sm"
                       onClick={() => handleAddKeyword(keyword)}
-                      disabled={saving}
+                      disabled={create.isPending}
                       className="text-xs"
                     >
                       <Plus className="h-3 w-3 mr-1" />
@@ -324,7 +252,7 @@ export default function KeywordManager({ photographerId }: KeywordManagerProps) 
           
           <Button 
             onClick={() => handleAddKeyword()} 
-            disabled={saving || !newKeyword.trim()}
+            disabled={create.isPending || !newKeyword.trim()}
             className="w-full"
           >
             <Plus className="h-4 w-4 mr-2" />

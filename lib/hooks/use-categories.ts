@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "@/types/database.types"
 import { toast } from "sonner"
 import type { Category } from "@/types/inquiry.types"
 
@@ -163,8 +165,8 @@ export function useUpdateCategory() {
         newDisplayOrder = Math.max(...newSiblings.map((s) => s.display_order || 0), -1) + 1
       }
 
-      // Update the category
-      const updateData: any = {
+      // Update the category using Database type
+      const updateData: Database['public']['Tables']['categories']['Update'] = {
         name: updates.name,
         parent_id: updates.parent_id,
         depth: newDepth,
@@ -172,19 +174,8 @@ export function useUpdateCategory() {
         display_order: newDisplayOrder,
       }
 
-      // Add recommendation fields if provided
-      if (updates.place_recommendation !== undefined) {
-        updateData.place_recommendation = updates.place_recommendation
-      }
-      if (updates.male_clothing_recommendation !== undefined) {
-        updateData.male_clothing_recommendation = updates.male_clothing_recommendation
-      }
-      if (updates.female_clothing_recommendation !== undefined) {
-        updateData.female_clothing_recommendation = updates.female_clothing_recommendation
-      }
-      if (updates.accessories_recommendation !== undefined) {
-        updateData.accessories_recommendation = updates.accessories_recommendation
-      }
+      // Note: recommendation fields (place_recommendation, male/female_clothing_recommendation, accessories_recommendation)
+      // are not in the current database schema. These fields should be added to the database or removed from the UI.
 
       const { error } = await supabase.from("categories").update(updateData).eq("id", id)
 
@@ -360,7 +351,7 @@ export function useUpdateRepresentativeImage() {
 
 // Helper function to update descendant paths
 async function updateDescendantPaths(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   categories: Category[],
   categoryId: string,
   newParentPath: string,

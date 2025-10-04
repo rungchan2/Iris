@@ -31,8 +31,10 @@ export type PhotographerKeyword = Database['public']['Tables']['photographer_key
 
 // Matching Result Types
 export type MatchingResult = Database['public']['Tables']['matching_results']['Row'] & {
-  photographer?: PhotographerProfile
-  photographer_profile?: Database['public']['Tables']['photographer_profiles']['Row']
+  photographer?: Partial<PhotographerProfile>
+  photographer_profile?: (Database['public']['Tables']['photographer_profiles']['Row'] & {
+    photographer_keywords?: PhotographerKeyword[]
+  }) | null
 }
 
 // 4-Dimensional Score Interface

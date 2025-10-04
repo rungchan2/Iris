@@ -8,8 +8,18 @@ import { InquiryDetails } from "@/components/admin/inquiry-details"
 import { PhotoGallery } from "@/components/admin/photo-gallery"
 import { InquiryExportPopup } from "@/components/admin/inquiry-export-popup"
 import { Inquiry } from "@/types/inquiry.types"
-import { Photo } from "@/app/_gallery/gallery-client"
 import { useRouter } from "next/navigation"
+
+interface Photo {
+  id: string
+  filename: string
+  storage_url: string
+  thumbnail_url?: string | null
+  width?: number | null
+  height?: number | null
+  size_kb?: number | null
+  created_at: string
+}
 
 interface InquiryDetailClientProps {
   inquiry: Inquiry

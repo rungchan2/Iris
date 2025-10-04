@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { randomBytes } from 'crypto'
+import { authLogger } from '@/lib/logger'
 
 // 비밀번호 재설정 요청
 export async function requestPasswordReset(email: string): Promise<{
@@ -49,14 +50,14 @@ export async function requestPasswordReset(email: string): Promise<{
     // }
 
     // 이메일 발송 (실제 구현에서는 이메일 서비스 사용)
-    console.log(`Password reset token for ${email}: ${resetToken}`)
+    authLogger.info(`Password reset token for ${email}: ${resetToken}`)
     
     // TODO: 실제 이메일 발송 로직 구현
     // await sendPasswordResetEmail(email, resetToken)
 
     return { success: true }
   } catch (error) {
-    console.error('Error requesting password reset:', error)
+    authLogger.error('Error requesting password reset:', error)
     return {
       success: false,
       error: '비밀번호 재설정 요청에 실패했습니다.'
@@ -119,7 +120,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 
     return { success: true }
   } catch (error) {
-    console.error('Error resetting password:', error)
+    authLogger.error('Error resetting password:', error)
     return {
       success: false,
       error: '비밀번호 재설정에 실패했습니다.'

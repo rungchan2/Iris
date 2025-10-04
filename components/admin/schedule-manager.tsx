@@ -9,8 +9,7 @@ import { CalendarDays, Clock, Plus, Copy, Trash2 } from "lucide-react"
 import { SlotManager } from "@/components/admin/slot-manager"
 import { BulkScheduleModal } from "@/components/admin/bulk-schedule-modal"
 import { ScheduleStats } from "@/components/admin/schedule-stats"
-import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { useAvailableSlots, useSlotMutations } from "@/lib/hooks/use-available-slots"
 import type { AvailableSlot } from "@/types/schedule.types"
 
 interface ScheduleManagerProps {
@@ -21,10 +20,15 @@ interface ScheduleManagerProps {
 export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps) {
   const [mounted, setMounted] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [slots, setSlots] = useState<AvailableSlot[]>(initialSlots)
   const [bulkModalOpen, setBulkModalOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClient()
+  const [currentMonth, setCurrentMonth] = useState({ year: new Date().getFullYear(), month: new Date().getMonth() })
+
+  const { data: slots = initialSlots, isLoading, refetch } = useAvailableSlots(
+    adminId,
+    currentMonth.year,
+    currentMonth.month
+  )
+  const { copySlots, deleteBulkSlots, isCopying, isDeletingBulk } = useSlotMutations(adminId)
 
   useEffect(() => {
     setMounted(true)
@@ -46,36 +50,9 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
   const selectedDateStr = mounted && selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""
   const selectedDateSlots = selectedDateStr ? (slotsGroupedByDate[selectedDateStr] || []) : []
 
-  // Fetch slots for a specific month
-  const fetchSlotsForMonth = async (date: Date) => {
-    setIsLoading(true)
-    try {
-      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
-      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0)
-
-      const { data, error } = await supabase
-        .from("available_slots")
-        .select("*")
-        .eq("admin_id", adminId)
-        .gte("date", format(startOfMonth, "yyyy-MM-dd"))
-        .lte("date", format(endOfMonth, "yyyy-MM-dd"))
-        .order("date", { ascending: true })
-        .order("start_time", { ascending: true })
-
-      if (error) throw error
-
-      setSlots(data as AvailableSlot[])
-    } catch (error) {
-      console.error("Error fetching slots:", error)
-      toast.error("일정을 불러오는데 실패했습니다")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // Handle month navigation
   const handleMonthChange = (date: Date) => {
-    fetchSlotsForMonth(date)
+    setCurrentMonth({ year: date.getFullYear(), month: date.getMonth() })
   }
 
   // Get calendar day modifiers for visual indicators
@@ -104,46 +81,20 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
   }
 
   // Quick actions
-  const handleCopyLastWeek = async () => {
+  const handleCopyLastWeek = () => {
     if (!mounted || !selectedDate) return
-    
+
     const lastWeekDate = new Date(selectedDate)
     lastWeekDate.setDate(lastWeekDate.getDate() - 7)
     const lastWeekStr = format(lastWeekDate, "yyyy-MM-dd")
-    const lastWeekSlots = slotsGroupedByDate[lastWeekStr] || []
 
-    if (lastWeekSlots.length === 0) {
-      toast.error("지난 주 같은 요일에 슬롯이 없습니다")
-      return
-    }
-
-    try {
-      const newSlots = lastWeekSlots.map((slot) => ({
-        date: selectedDateStr,
-        start_time: slot.start_time,
-        end_time: slot.end_time,
-        duration_minutes: slot.duration_minutes,
-        is_available: true,
-        admin_id: adminId,
-      }))
-
-      const { error } = await supabase.from("available_slots").insert(newSlots)
-
-      if (error) throw error
-
-      await fetchSlotsForMonth(selectedDate)
-      toast.success("지난 주 슬롯을 복사했습니다")
-    } catch (error) {
-      console.error("Error copying slots:", error)
-      toast.error("슬롯 복사에 실패했습니다")
-    }
+    copySlots({ fromDate: lastWeekStr, toDate: selectedDateStr })
   }
 
-  const handleClearDay = async () => {
+  const handleClearDay = () => {
     if (!mounted || !selectedDate) return
-    
+
     if (selectedDateSlots.length === 0) {
-      toast.error("삭제할 슬롯이 없습니다")
       return
     }
 
@@ -151,18 +102,8 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
       return
     }
 
-    try {
-      const slotIds = selectedDateSlots.map((slot) => slot.id)
-      const { error } = await supabase.from("available_slots").delete().in("id", slotIds)
-
-      if (error) throw error
-
-      await fetchSlotsForMonth(selectedDate)
-      toast.success("해당 날짜의 모든 슬롯을 삭제했습니다")
-    } catch (error) {
-      console.error("Error clearing slots:", error)
-      toast.error("슬롯 삭제에 실패했습니다")
-    }
+    const slotIds = selectedDateSlots.map((slot) => slot.id)
+    deleteBulkSlots(slotIds)
   }
 
   return (
@@ -256,13 +197,13 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
                 <Plus className="h-4 w-4 mr-1" />
                 일괄 추가
               </Button>
-              <Button size="sm" variant="outline" onClick={handleCopyLastWeek}>
+              <Button size="sm" variant="outline" onClick={handleCopyLastWeek} disabled={isCopying}>
                 <Copy className="h-4 w-4 mr-1" />
-                지난 주 복사
+                {isCopying ? "복사중..." : "지난 주 복사"}
               </Button>
-              <Button size="sm" variant="outline" onClick={handleClearDay} disabled={selectedDateSlots.length === 0}>
+              <Button size="sm" variant="outline" onClick={handleClearDay} disabled={selectedDateSlots.length === 0 || isDeletingBulk}>
                 <Trash2 className="h-4 w-4 mr-1" />
-                날짜 초기화
+                {isDeletingBulk ? "삭제중..." : "날짜 초기화"}
               </Button>
             </div>
           </CardHeader>
@@ -271,7 +212,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
               date={selectedDateStr}
               slots={selectedDateSlots}
               adminId={adminId}
-              onSlotsChange={() => selectedDate && fetchSlotsForMonth(selectedDate)}
+              onSlotsChange={() => refetch()}
             />
           </CardContent>
         </Card>
@@ -282,7 +223,7 @@ export function ScheduleManager({ initialSlots, adminId }: ScheduleManagerProps)
         open={bulkModalOpen}
         onOpenChange={setBulkModalOpen}
         adminId={adminId}
-        onScheduleCreated={() => selectedDate && fetchSlotsForMonth(selectedDate)}
+        onScheduleCreated={() => refetch()}
       />
     </div>
   )

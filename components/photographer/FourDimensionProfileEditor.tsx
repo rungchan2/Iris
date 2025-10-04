@@ -1,14 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Save, Palette, MessageCircle, Target, Users, Brain, Lightbulb, Heart, Zap } from 'lucide-react'
-import { toast } from 'sonner'
+import { useProfileMutations } from '@/lib/hooks/use-photographer-profile'
 
 interface FourDimensionProfileData {
   style_emotion_description: string
@@ -105,34 +104,18 @@ export default function FourDimensionProfileEditor({
     purpose_story_description: profile?.purpose_story_description || '',
     companion_description: profile?.companion_description || ''
   })
-  const [saving, setSaving] = useState(false)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
-  const supabase = createClient()
+
+  const { update4D } = useProfileMutations(profile?.photographer_id)
 
   const handleInputChange = (key: keyof FourDimensionProfileData, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }))
   }
 
   const handleSave = async () => {
-    try {
-      setSaving(true)
-
-      const { data: updatedProfile, error } = await supabase
-        .from('photographer_profiles')
-        .update(formData)
-        .eq('photographer_id', profile.photographer_id)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      onUpdate(updatedProfile)
-      toast.success('4차원 프로필이 저장되었습니다')
-    } catch (error) {
-      console.error('Error saving 4D profile:', error)
-      toast.error('저장 중 오류가 발생했습니다')
-    } finally {
-      setSaving(false)
+    const { data, error } = await update4D.mutateAsync(formData)
+    if (data && !error) {
+      onUpdate(data)
     }
   }
 
@@ -346,13 +329,13 @@ export default function FourDimensionProfileEditor({
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave} 
-          disabled={saving || completeness === 0} 
+        <Button
+          onClick={handleSave}
+          disabled={update4D.isPending || completeness === 0}
           size="lg"
           className="px-8"
         >
-          {saving ? (
+          {update4D.isPending ? (
             '저장 중...'
           ) : (
             <>

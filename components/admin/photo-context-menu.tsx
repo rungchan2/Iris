@@ -7,8 +7,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { Eye, Trash2, Download } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { usePhotoMutations } from "@/lib/hooks/use-photos"
 import Image from "next/image"
 
 interface Photo {
@@ -38,43 +37,16 @@ interface PhotoContextMenuProps {
 
 export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenuProps) {
   const [viewOpen, setViewOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const { deletePhoto, isDeleting } = usePhotoMutations()
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!confirm("Delete this photo? This action cannot be undone.")) return
 
-    setDeleting(true)
-    const supabase = createClient()
-
-    try {
-      // Extract storage path from URL
-      const url = new URL(photo.storage_url)
-      const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
-      const path = pathMatch ? pathMatch[1] : null
-
-      // Delete from storage
-      if (path) {
-        const { error: storageError } = await supabase.storage.from("photos").remove([path])
-
-        if (storageError) throw storageError
+    deletePhoto(photo.id, {
+      onSuccess: () => {
+        onDelete?.()
       }
-
-      // Delete photo categories first (foreign key constraint)
-      await supabase.from("photo_categories").delete().eq("photo_id", photo.id)
-
-      // Delete from database
-      const { error: dbError } = await supabase.from("photos").delete().eq("id", photo.id)
-
-      if (dbError) throw dbError
-
-      toast.success("사진 삭제 성공")
-      onDelete?.()
-    } catch (error) {
-      toast.error("사진 삭제 실패")
-      console.error(error)
-    } finally {
-      setDeleting(false)
-    }
+    })
   }
 
   const handleDownload = () => {
@@ -103,11 +75,11 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
           </ContextMenuItem>
           <ContextMenuItem
             onClick={handleDelete}
-            disabled={deleting}
+            disabled={isDeleting}
             className="flex items-center gap-2 text-destructive focus:text-destructive"
           >
             <Trash2 className="h-4 w-4" />
-            {deleting ? "삭제중..." : "삭제"}
+            {isDeleting ? "삭제중..." : "삭제"}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
