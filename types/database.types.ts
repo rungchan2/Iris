@@ -39,42 +39,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admins: {
-        Row: {
-          created_at: string | null
-          department: string | null
-          email: string
-          id: string
-          last_login_at: string | null
-          name: string
-          phone: string | null
-          role: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          department?: string | null
-          email: string
-          id: string
-          last_login_at?: string | null
-          name: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          department?: string | null
-          email?: string
-          id?: string
-          last_login_at?: string | null
-          name?: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       available_slots: {
         Row: {
           admin_id: string | null
@@ -176,6 +140,115 @@ export type Database = {
           },
         ]
       }
+      coupon_templates: {
+        Row: {
+          code_prefix: string
+          created_at: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_discount_amount: number | null
+          min_purchase_amount: number | null
+          terms_description: string | null
+          valid_days: number
+        }
+        Insert: {
+          code_prefix: string
+          created_at?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          terms_description?: string | null
+          valid_days?: number
+        }
+        Update: {
+          code_prefix?: string
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_discount_amount?: number | null
+          min_purchase_amount?: number | null
+          terms_description?: string | null
+          valid_days?: number
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          issued_reason: string
+          payment_id: string | null
+          session_token: string | null
+          status: string | null
+          story_id: string | null
+          template_id: string
+          used_at: string | null
+          user_id: string | null
+          valid_from: string | null
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          issued_reason: string
+          payment_id?: string | null
+          session_token?: string | null
+          status?: string | null
+          story_id?: string | null
+          template_id: string
+          used_at?: string | null
+          user_id?: string | null
+          valid_from?: string | null
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          issued_reason?: string
+          payment_id?: string | null
+          session_token?: string | null
+          status?: string | null
+          story_id?: string | null
+          template_id?: string
+          used_at?: string | null
+          user_id?: string | null
+          valid_from?: string | null
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       embedding_jobs: {
         Row: {
           created_at: string | null
@@ -212,7 +285,7 @@ export type Database = {
             foreignKeyName: "embedding_jobs_requested_by_fkey"
             columns: ["requested_by"]
             isOneToOne: false
-            referencedRelation: "admins"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -945,7 +1018,22 @@ export type Database = {
           years_experience?: number | null
           youtube_intro_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photographers_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photographers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       photos: {
         Row: {
@@ -1120,7 +1208,7 @@ export type Database = {
             foreignKeyName: "products_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
-            referencedRelation: "admins"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1221,6 +1309,20 @@ export type Database = {
             columns: ["payment_id"]
             isOneToOne: false
             referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1434,6 +1536,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "settlements_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "settlements_photographer_id_fkey"
             columns: ["photographer_id"]
             isOneToOne: false
@@ -1441,6 +1550,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stories: {
+        Row: {
+          author_name: string | null
+          body: string
+          contact_instagram: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          images: string[] | null
+          ip_address: unknown
+          is_featured: boolean | null
+          is_suspicious: boolean | null
+          like_count: number | null
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_note: string | null
+          moderation_status: string | null
+          privacy_agreed: boolean
+          session_token: string
+          submitted_from_url: string | null
+          suspicious_reason: string | null
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string | null
+          view_count: number | null
+          visibility: string | null
+          writing_duration_sec: number | null
+        }
+        Insert: {
+          author_name?: string | null
+          body: string
+          contact_instagram: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          ip_address: unknown
+          is_featured?: boolean | null
+          is_suspicious?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_note?: string | null
+          moderation_status?: string | null
+          privacy_agreed?: boolean
+          session_token: string
+          submitted_from_url?: string | null
+          suspicious_reason?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          view_count?: number | null
+          visibility?: string | null
+          writing_duration_sec?: number | null
+        }
+        Update: {
+          author_name?: string | null
+          body?: string
+          contact_instagram?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          images?: string[] | null
+          ip_address?: unknown
+          is_featured?: boolean | null
+          is_suspicious?: boolean | null
+          like_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_note?: string | null
+          moderation_status?: string | null
+          privacy_agreed?: boolean
+          session_token?: string
+          submitted_from_url?: string | null
+          suspicious_reason?: string | null
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          view_count?: number | null
+          visibility?: string | null
+          writing_duration_sec?: number | null
+        }
+        Relationships: []
       }
       survey_choices: {
         Row: {
@@ -1617,7 +1813,7 @@ export type Database = {
             foreignKeyName: "system_settings_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
-            referencedRelation: "admins"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1678,63 +1874,33 @@ export type Database = {
       }
       users: {
         Row: {
-          birth_year: number | null
           created_at: string | null
           email: string
-          gender: string | null
           id: string
           is_active: boolean | null
-          is_verified: boolean | null
-          last_booking_at: string | null
-          last_login_at: string | null
-          marketing_consent: boolean | null
           name: string
-          notification_consent: boolean | null
           phone: string | null
-          preferred_language: string | null
-          profile_image_url: string | null
-          total_bookings: number | null
-          total_spent: number | null
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
         Insert: {
-          birth_year?: number | null
           created_at?: string | null
           email: string
-          gender?: string | null
           id: string
           is_active?: boolean | null
-          is_verified?: boolean | null
-          last_booking_at?: string | null
-          last_login_at?: string | null
-          marketing_consent?: boolean | null
           name: string
-          notification_consent?: boolean | null
           phone?: string | null
-          preferred_language?: string | null
-          profile_image_url?: string | null
-          total_bookings?: number | null
-          total_spent?: number | null
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Update: {
-          birth_year?: number | null
           created_at?: string | null
           email?: string
-          gender?: string | null
           id?: string
           is_active?: boolean | null
-          is_verified?: boolean | null
-          last_booking_at?: string | null
-          last_login_at?: string | null
-          marketing_consent?: boolean | null
           name?: string
-          notification_consent?: boolean | null
           phone?: string | null
-          preferred_language?: string | null
-          profile_image_url?: string | null
-          total_bookings?: number | null
-          total_spent?: number | null
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Relationships: []
@@ -1903,7 +2069,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "user" | "photographer" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2033,6 +2199,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["user", "photographer", "admin"],
+    },
   },
 } as const
