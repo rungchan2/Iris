@@ -20,28 +20,13 @@ export default async function AdminMyAccountPage() {
     redirect("/unauthorized")
   }
 
-  // Get or create admin record
-  let { data: admin } = await supabase
-    .from("admins")
+  // Get user record (admin)
+  const { data: admin } = await supabase
+    .from("users")
     .select("*")
     .eq("id", session.user.id)
+    .eq("role", "admin")
     .single()
-
-  // If admin record doesn't exist, create it
-  if (!admin) {
-    const { data: newAdmin } = await supabase
-      .from("admins")
-      .insert({
-        id: session.user.id,
-        email: session.user.email || '',
-        name: session.user.user_metadata?.name || 'Admin',
-        role: 'admin'
-      })
-      .select()
-      .single()
-    
-    admin = newAdmin
-  }
 
   // Get system statistics for admin
   const { data: photographerCount } = await supabase

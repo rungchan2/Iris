@@ -47,9 +47,8 @@ interface AdminUser {
   email: string
   name: string
   role: string
-  created_at: string
-  last_login_at: string | null
-  is_active: boolean
+  created_at: string | null
+  is_active: boolean | null
 }
 
 interface PhotographerUser {
@@ -106,12 +105,16 @@ export function UserManagement() {
     try {
       const result = await getPhotographerUsers()
       if (result.success && result.data) {
-        setPhotographerUsers(result.data.map(user => ({
-          ...user,
+        setPhotographerUsers(result.data.map((user: any) => ({
+          id: user.id,
           email: user.email || '',
           name: user.name || '',
+          phone: user.phone,
+          website_url: user.photographers?.[0]?.website_url || null,
+          instagram_handle: user.photographers?.[0]?.instagram_handle || null,
+          bio: user.photographers?.[0]?.bio || null,
           created_at: user.created_at || new Date().toISOString(),
-          approval_status: user.approval_status || 'pending'
+          approval_status: user.photographers?.[0]?.approval_status || 'pending'
         })))
       } else if (result.error) {
         toast.error(result.error)
@@ -400,10 +403,10 @@ export function UserManagement() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {format(new Date(user.created_at), 'PPP', { locale: ko })}
+                          {user.created_at ? format(new Date(user.created_at), 'PPP', { locale: ko }) : '-'}
                         </TableCell>
                         <TableCell>
-                          {user.last_login_at ? format(new Date(user.last_login_at), 'PPP', { locale: ko }) : '-'}
+                          {'-'}
                         </TableCell>
                         <TableCell>
                           <Badge variant={user.is_active ? 'default' : 'secondary'}>
@@ -722,20 +725,9 @@ export function UserManagement() {
                   <div>
                     <label className="text-sm font-medium text-gray-600">생성일</label>
                     <p className="mt-1">
-                      {format(new Date(selectedUser.created_at), 'PPP p', { locale: ko })}
+                      {selectedUser.created_at ? format(new Date(selectedUser.created_at), 'PPP p', { locale: ko }) : '-'}
                     </p>
                   </div>
-                  {selectedUserType === 'admin' && 'last_login_at' in selectedUser && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">마지막 로그인</label>
-                      <p className="mt-1">
-                        {selectedUser.last_login_at 
-                          ? format(new Date(selectedUser.last_login_at), 'PPP p', { locale: ko })
-                          : '로그인 기록 없음'
-                        }
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
 

@@ -35,35 +35,28 @@ export function useUserProfile() {
           return
         }
 
-        // 먼저 admins 테이블에서 확인
-        const { data: adminData } = await supabase
-          .from('admins')
+        // users 테이블에서 사용자 정보 확인
+        const { data: userData } = await supabase
+          .from('users')
           .select('id, email, name, role')
           .eq('id', authUser.id)
           .single()
 
-        if (adminData) {
-          setUser({
-            ...adminData,
-            userType: 'admin',
-            role: adminData.role as UserRole,
-          })
-          return
-        }
+        if (userData) {
+          const userType: 'admin' | 'photographer' | null =
+            userData.role === 'admin' ? 'admin' :
+            userData.role === 'photographer' ? 'photographer' :
+            null
 
-        // admins에 없으면 photographers 테이블에서 확인
-        const { data: photographerData } = await supabase
-          .from('photographers')
-          .select('id, email, name')
-          .eq('id', authUser.id)
-          .single()
-
-        if (photographerData) {
-          setUser({
-            ...photographerData,
-            role: 'photographer',
-            userType: 'photographer'
-          })
+          if (userType) {
+            setUser({
+              ...userData,
+              userType,
+              role: userData.role as UserRole,
+            })
+          } else {
+            setUser(null)
+          }
           return
         }
 

@@ -51,25 +51,6 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions> {
 
   // Admin has access to everything
   if (isAdmin) {
-    // Ensure admin record exists in admins table
-    const { data: adminRecord } = await supabase
-      .from('admins')
-      .select('id')
-      .eq('id', session.user.id)
-      .single()
-
-    if (!adminRecord) {
-      // Create admin record if it doesn't exist
-      await supabase
-        .from('admins')
-        .insert({
-          id: session.user.id,
-          email: session.user.email || '',
-          name: session.user.user_metadata?.name || 'Admin User',
-          role: 'admin'
-        })
-    }
-
     return {
       userType: 'admin',
       canAccessUsers: true,

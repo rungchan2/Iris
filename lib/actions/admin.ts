@@ -5,9 +5,9 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
 
-type Admin = Tables<'admins'>
-type AdminInsert = TablesInsert<'admins'>
-type AdminUpdate = TablesUpdate<'admins'>
+type User = Tables<'users'>
+type UserInsert = TablesInsert<'users'>
+type UserUpdate = TablesUpdate<'users'>
 
 // Service role client for admin operations
 const supabaseService = createServiceClient(
@@ -27,50 +27,29 @@ const supabaseService = createServiceClient(
 export async function getCurrentAdmin() {
   try {
     const supabase = await createClient()
-    
+
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    // Check if user is admin
-    const isAdmin = session.user.user_metadata?.user_type === 'admin'
-    if (!isAdmin) {
-      return { error: '관리자 권한이 없습니다.' }
-    }
-
-    // Get admin profile from admins table
-    const { data: admin, error } = await supabase
-      .from('admins')
+    // Get user from users table
+    const { data: user, error } = await supabase
+      .from('users')
       .select('*')
       .eq('id', session.user.id)
       .single()
 
-    if (error) {
-      // If admin record doesn't exist, create it
-      if (error.code === 'PGRST116') {
-        const { data: newAdmin, error: createError } = await supabase
-          .from('admins')
-          .insert({
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.name || 'Admin User',
-            role: 'admin'
-          })
-          .select()
-          .single()
-
-        if (createError) {
-          return { error: '관리자 프로필 생성 실패: ' + createError.message }
-        }
-        
-        return { data: newAdmin }
-      }
-      
-      return { error: '관리자 정보 조회 실패: ' + error.message }
+    if (error || !user) {
+      return { error: '사용자 정보 조회 실패: ' + (error?.message || 'User not found') }
     }
 
-    return { data: admin }
+    // Check if user is admin
+    if (user.role !== 'admin') {
+      return { error: '관리자 권한이 없습니다.' }
+    }
+
+    return { data: user }
   } catch (error) {
     console.error('Get current admin error:', error)
     return { error: '예상치 못한 오류가 발생했습니다.' }
@@ -80,19 +59,23 @@ export async function getCurrentAdmin() {
 /**
  * Update admin profile
  */
-export async function updateAdminProfile(data: Partial<AdminUpdate>) {
+export async function updateAdminProfile(data: Partial<UserUpdate>) {
   try {
     const supabase = await createClient()
-    
+
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    const { data: updatedAdmin, error } = await supabase
-      .from('admins')
+    // Don't allow role change through this function
+    const updateData = { ...data }
+    delete (updateData as any).role
+
+    const { data: updatedUser, error } = await supabase
+      .from('users')
       .update({
-        ...data,
+        ...updateData,
         updated_at: new Date().toISOString()
       })
       .eq('id', session.user.id)
@@ -104,11 +87,11 @@ export async function updateAdminProfile(data: Partial<AdminUpdate>) {
     }
 
     revalidatePath('/admin/my-page')
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: '프로필이 성공적으로 업데이트되었습니다.',
-      data: updatedAdmin
+      data: updatedUser
     }
   } catch (error) {
     console.error('Update admin profile error:', error)
@@ -117,37 +100,35 @@ export async function updateAdminProfile(data: Partial<AdminUpdate>) {
 }
 
 /**
- * Create new admin user (Super Admin only)
+ * Create new admin user (Admin only)
  */
 export async function createAdmin(params: {
   email: string
   password: string
   name: string
-  role?: 'admin' | 'super_admin'
-  department?: string
   phone?: string
 }) {
   try {
     const supabase = await createClient()
-    
-    // Check if current user is super admin
+
+    // Check if current user is admin
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    const { data: currentAdmin } = await supabase
-      .from('admins')
+    const { data: currentUser } = await supabase
+      .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (!currentAdmin || currentAdmin.role !== 'super_admin') {
-      return { error: '슈퍼 관리자 권한이 필요합니다.' }
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { error: '관리자 권한이 필요합니다.' }
     }
 
-    const { email, password, name, role = 'admin', department, phone } = params
-    
+    const { email, password, name, phone } = params
+
     // Create Auth user
     const { data: authData, error: authError } = await supabaseService.auth.admin.createUser({
       email,
@@ -155,7 +136,7 @@ export async function createAdmin(params: {
       email_confirm: true,
       user_metadata: {
         name,
-        user_type: 'admin'
+        role: 'admin'
       }
     })
 
@@ -163,32 +144,31 @@ export async function createAdmin(params: {
       return { error: '사용자 생성 중 오류가 발생했습니다: ' + authError?.message }
     }
 
-    // Create admin record
-    const { data: adminData, error: adminError } = await supabaseService
-      .from('admins')
+    // Create user record with role='admin'
+    const { data: userData, error: userError } = await supabaseService
+      .from('users')
       .insert({
         id: authData.user.id,
         email,
         name,
-        role,
-        department,
+        role: 'admin',
         phone
       })
       .select()
       .single()
 
-    if (adminError) {
+    if (userError) {
       // Rollback auth user creation
       await supabaseService.auth.admin.deleteUser(authData.user.id)
-      return { error: '관리자 정보 저장 중 오류가 발생했습니다.' }
+      return { error: '사용자 정보 저장 중 오류가 발생했습니다.' }
     }
 
     revalidatePath('/admin/users')
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       message: '관리자가 성공적으로 생성되었습니다.',
-      data: adminData
+      data: userData
     }
   } catch (error) {
     console.error('Create admin error:', error)
@@ -197,31 +177,32 @@ export async function createAdmin(params: {
 }
 
 /**
- * Get all admins (Super Admin only)
+ * Get all admins (Admin only)
  */
 export async function getAllAdmins() {
   try {
     const supabase = await createClient()
-    
-    // Check if current user is super admin
+
+    // Check if current user is admin
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    const { data: currentAdmin } = await supabase
-      .from('admins')
+    const { data: currentUser } = await supabase
+      .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (!currentAdmin || currentAdmin.role !== 'super_admin') {
-      return { error: '슈퍼 관리자 권한이 필요합니다.' }
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { error: '관리자 권한이 필요합니다.' }
     }
 
     const { data: admins, error } = await supabase
-      .from('admins')
+      .from('users')
       .select('*')
+      .eq('role', 'admin')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -236,32 +217,36 @@ export async function getAllAdmins() {
 }
 
 /**
- * Update admin (Super Admin only)
+ * Update admin (Admin only)
  */
-export async function updateAdmin(adminId: string, data: Partial<AdminUpdate>) {
+export async function updateAdmin(adminId: string, data: Partial<UserUpdate>) {
   try {
     const supabase = await createClient()
-    
-    // Check if current user is super admin
+
+    // Check if current user is admin
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    const { data: currentAdmin } = await supabase
-      .from('admins')
+    const { data: currentUser } = await supabase
+      .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (!currentAdmin || currentAdmin.role !== 'super_admin') {
-      return { error: '슈퍼 관리자 권한이 필요합니다.' }
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { error: '관리자 권한이 필요합니다.' }
     }
 
-    const { data: updatedAdmin, error } = await supabase
-      .from('admins')
+    // Don't allow role change through this function
+    const updateData = { ...data }
+    delete (updateData as any).role
+
+    const { data: updatedUser, error } = await supabase
+      .from('users')
       .update({
-        ...data,
+        ...updateData,
         updated_at: new Date().toISOString()
       })
       .eq('id', adminId)
@@ -269,43 +254,43 @@ export async function updateAdmin(adminId: string, data: Partial<AdminUpdate>) {
       .single()
 
     if (error) {
-      return { error: '관리자 정보 업데이트 실패: ' + error.message }
+      return { error: '사용자 정보 업데이트 실패: ' + error.message }
     }
 
     revalidatePath('/admin/users')
-    
-    return { 
-      success: true, 
-      message: '관리자 정보가 성공적으로 업데이트되었습니다.',
-      data: updatedAdmin
+
+    return {
+      success: true,
+      message: '사용자 정보가 성공적으로 업데이트되었습니다.',
+      data: updatedUser
     }
   } catch (error) {
     console.error('Update admin error:', error)
-    return { error: '관리자 정보 업데이트 중 예상치 못한 오류가 발생했습니다.' }
+    return { error: '사용자 정보 업데이트 중 예상치 못한 오류가 발생했습니다.' }
   }
 }
 
 /**
- * Delete admin (Super Admin only)
+ * Delete admin (Admin only)
  */
 export async function deleteAdmin(adminId: string) {
   try {
     const supabase = await createClient()
-    
-    // Check if current user is super admin
+
+    // Check if current user is admin
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
-    const { data: currentAdmin } = await supabase
-      .from('admins')
+    const { data: currentUser } = await supabase
+      .from('users')
       .select('role')
       .eq('id', session.user.id)
       .single()
 
-    if (!currentAdmin || currentAdmin.role !== 'super_admin') {
-      return { error: '슈퍼 관리자 권한이 필요합니다.' }
+    if (!currentUser || currentUser.role !== 'admin') {
+      return { error: '관리자 권한이 필요합니다.' }
     }
 
     // Prevent deleting self
@@ -313,22 +298,22 @@ export async function deleteAdmin(adminId: string) {
       return { error: '자신의 계정은 삭제할 수 없습니다.' }
     }
 
-    // Delete auth user (this will cascade delete admin record)
+    // Delete auth user (this will cascade delete user record)
     const { error: authError } = await supabaseService.auth.admin.deleteUser(adminId)
-    
+
     if (authError) {
-      return { error: '관리자 삭제 중 오류가 발생했습니다.' }
+      return { error: '사용자 삭제 중 오류가 발생했습니다.' }
     }
 
     revalidatePath('/admin/users')
-    
-    return { 
-      success: true, 
-      message: '관리자가 성공적으로 삭제되었습니다.'
+
+    return {
+      success: true,
+      message: '사용자가 성공적으로 삭제되었습니다.'
     }
   } catch (error) {
     console.error('Delete admin error:', error)
-    return { error: '관리자 삭제 중 예상치 못한 오류가 발생했습니다.' }
+    return { error: '사용자 삭제 중 예상치 못한 오류가 발생했습니다.' }
   }
 }
 
@@ -338,16 +323,16 @@ export async function deleteAdmin(adminId: string) {
 export async function updateLastLogin() {
   try {
     const supabase = await createClient()
-    
+
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
     const { error } = await supabase
-      .from('admins')
+      .from('users')
       .update({
-        last_login_at: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', session.user.id)
 
