@@ -39,8 +39,8 @@ export type Permission =
 
 export interface UserProfile {
   id: string
-  email: string
-  name: string
+  email: string | null
+  name: string | null
   role: UserRole
   userType: 'admin' | 'photographer'
 }

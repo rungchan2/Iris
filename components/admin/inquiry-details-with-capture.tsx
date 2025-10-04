@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, Calendar, Clock, User, Phone, Instagram, Users, Heart } from "lucide-react"
 import { toast } from "sonner"
+import Image from "next/image"
 
 interface InquiryDetailsWithCaptureProps {
   inquiry: any
@@ -287,11 +288,13 @@ export function InquiryDetailsWithCapture({
                 {photos.length > 0 ? (
                   <div className="grid grid-cols-3 gap-2">
                     {photos.slice(0, 9).map((photo) => (
-                      <div key={photo.id} className="aspect-square overflow-hidden rounded">
-                        <img
+                      <div key={photo.id} className="relative aspect-square overflow-hidden rounded">
+                        <Image
                           src={photo.storage_url || "/placeholder.svg"}
                           alt=""
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 33vw, 20vw"
                         />
                       </div>
                     ))}

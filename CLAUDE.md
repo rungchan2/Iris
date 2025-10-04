@@ -269,7 +269,6 @@ NEXT_PUBLIC_APP_URL=
 - **Database Management**: Use Supabase MCP tools for schema modifications
 - **Embedding Operations**: OpenAI API integration for text-embedding-3-small
 - **Performance Monitoring**: pgvector query performance and matching analytics
-- **A/B Testing**: Weight experiment framework for matching optimization
 
 ## Key Database Changes (2025.09.16)
 

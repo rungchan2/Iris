@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Category } from "@/types/inquiry.types"
+import Image from "next/image"
 
 interface RecursiveCategoryNodeProps {
   category: Category
@@ -118,12 +119,14 @@ export function RecursiveCategoryNode({
 
         {/* Representative Image */}
         {category.representative_image_url || (category.representative_image && typeof category.representative_image === 'string') ? (
-          <div className="relative">
-            <img
+          <div className="relative w-8 h-8">
+            <Image
               src={category.representative_image_url || (typeof category.representative_image === 'string' ? category.representative_image : '') || ""}
               alt={`${category.name} representative`}
-              className="h-8 w-8 rounded object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+              fill
+              className="rounded object-cover border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => setIsImageDialogOpen(true)}
+              sizes="32px"
             />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
           </div>
@@ -189,11 +192,14 @@ export function RecursiveCategoryNode({
           <DialogHeader>
             <DialogTitle>{category.name} 대표이미지</DialogTitle>
           </DialogHeader>
-          <div className="flex justify-center">
-            <img
+          <div className="flex justify-center relative" style={{ maxHeight: '400px' }}>
+            <Image
               src={category.representative_image_url || (typeof category.representative_image === 'string' ? category.representative_image : '') || ""}
               alt={`${category.name} representative`}
+              width={600}
+              height={400}
               className="max-w-full max-h-[400px] object-contain rounded-lg"
+              style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '400px' }}
             />
           </div>
         </DialogContent>

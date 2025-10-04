@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 import { Search, ChevronLeft, ChevronRight } from "lucide-react"
+import Image from "next/image"
 
 interface Photo {
   id: string
@@ -143,10 +144,12 @@ export function ImageSelectorModal({ isOpen, onClose, onSelect }: ImageSelectorM
                   }`}
                   onClick={() => setSelectedPhoto(photo)}
                 >
-                  <img
+                  <Image
                     src={photo.thumbnail_url || photo.storage_url}
                     alt={photo.filename}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
                   />
                 </div>
               ))

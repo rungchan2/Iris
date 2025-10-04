@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { User, Youtube, Camera, Palette, Users, Focus, Trash2, Upload, Phone, Globe, Instagram, MapPin, DollarSign, Award, Briefcase, FileText } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
+import Image from "next/image"
 
 interface PhotographerProfile {
   id: string
@@ -263,11 +264,13 @@ export function PhotographerProfileSection({ photographer }: PhotographerProfile
           <div className="flex items-center gap-6">
             <div className="flex-shrink-0">
               {formData.profile_image_url ? (
-                <div className="relative">
-                  <img
+                <div className="relative w-24 h-24">
+                  <Image
                     src={formData.profile_image_url}
                     alt="Profile"
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                    fill
+                    className="rounded-full object-cover border-4 border-white shadow-lg"
+                    sizes="96px"
                   />
                   <Button
                     type="button"

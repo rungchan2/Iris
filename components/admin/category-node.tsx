@@ -11,6 +11,7 @@ import { GripVertical, ChevronDown, ChevronRight, Edit, Eye, EyeOff, Trash, Imag
 import { cn } from "@/lib/utils"
 import { CategoryTree } from "@/components/admin/category-tree"
 import type { Category } from "@/types/inquiry.types"
+import Image from "next/image"
 
 interface CategoryNodeProps {
   category: Category
@@ -136,11 +137,15 @@ export function CategoryNode({
 
         {/* Representative Image */}
         {category.representative_image && typeof category.representative_image === 'string' && (
-          <img
-            src={category.representative_image || "/placeholder.svg"}
-            alt={`${category.name} representative`}
-            className="h-8 w-8 rounded object-cover"
-          />
+          <div className="relative h-8 w-8">
+            <Image
+              src={category.representative_image || "/placeholder.svg"}
+              alt={`${category.name} representative`}
+              fill
+              className="rounded object-cover"
+              sizes="32px"
+            />
+          </div>
         )}
 
         {/* Actions */}

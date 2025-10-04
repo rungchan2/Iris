@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
+import Image from "next/image"
 
 interface Photo {
   id: string
@@ -116,11 +117,16 @@ export function PhotoContextMenu({ photo, children, onDelete }: PhotoContextMenu
         <DialogContent className="max-w-4xl">
           <DialogTitle className="sr-only">사진 보기 - {photo.filename}</DialogTitle>
           <div className="relative">
-            <img
-              src={photo.storage_url || "/placeholder.svg"}
-              alt={photo.filename}
-              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-            />
+            <div className="relative w-full" style={{ maxHeight: '80vh' }}>
+              <Image
+                src={photo.storage_url || "/placeholder.svg"}
+                alt={photo.filename}
+                width={photo.width || 1200}
+                height={photo.height || 800}
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
             <div className="mt-4 space-y-3">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>

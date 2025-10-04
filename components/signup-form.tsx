@@ -28,6 +28,7 @@ import { createPhotographerProfile, uploadPortfolioImages } from "@/lib/actions/
 import { useState, useCallback } from "react"
 import { Eye, EyeOff, Upload, X, ChevronRight, ChevronLeft, Camera, User, MapPin, DollarSign, FileImage, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { toast, Toaster } from 'sonner';
 import {
   AlertDialog,
@@ -782,11 +783,13 @@ export function SignupForm({
               {portfolioPreviews.length > 0 && (
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   {portfolioPreviews.map((preview, index) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={preview} 
-                        alt={`Portfolio ${index + 1}`} 
-                        className="w-full h-32 object-cover rounded-lg"
+                    <div key={index} className="relative w-full h-32">
+                      <Image
+                        src={preview}
+                        alt={`Portfolio ${index + 1}`}
+                        fill
+                        className="object-cover rounded-lg"
+                        sizes="(max-width: 768px) 33vw, 25vw"
                       />
                       <button
                         type="button"

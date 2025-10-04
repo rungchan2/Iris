@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { UserProfile, Permission } from './types'
+import { createClient } from '@/lib/supabase/client'
+import { UserProfile, Permission, UserRole } from './types'
 import { 
   userHasPermission, 
   userHasAnyPermission, 
@@ -20,7 +20,7 @@ export function useUserProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  const supabase = createClientComponentClient()
+  const supabase = createClient()
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -45,7 +45,8 @@ export function useUserProfile() {
         if (adminData) {
           setUser({
             ...adminData,
-            userType: 'admin'
+            userType: 'admin',
+            role: adminData.role as UserRole,
           })
           return
         }
