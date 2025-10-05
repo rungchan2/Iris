@@ -1,29 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUserCookie } from '@/lib/auth/cookie';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Calendar, MessageSquare, Star, TrendingUp } from "lucide-react";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function PhotographersDashboard() {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
+  const user = await getUserCookie();
 
   // Get photographer data (layout already handles approval check)
-  const { data: photographer, error } = await supabase
+  const { data: photographer } = await supabase
     .from('photographers')
     .select('*')
-    .eq('id', session.user.id)
+    .eq('id', user!.id)
     .single();
-
-  if (error || !photographer) {
-    redirect("/login");
-  }
 
   // Get real statistics
   const currentDate = new Date();
@@ -34,13 +24,13 @@ export default async function PhotographersDashboard() {
   const { data: thisMonthInquiries } = await supabase
     .from('inquiries')
     .select('id, created_at')
-    .eq('photographer_id', photographer.id)
+    .eq('photographer_id', user!.id)
     .gte('created_at', currentMonth.toISOString());
 
   const { data: lastMonthInquiries } = await supabase
     .from('inquiries')
     .select('id, created_at')
-    .eq('photographer_id', photographer.id)
+    .eq('photographer_id', user!.id)
     .gte('created_at', lastMonth.toISOString())
     .lt('created_at', currentMonth.toISOString());
 
@@ -48,20 +38,20 @@ export default async function PhotographersDashboard() {
   const { data: reviews } = await supabase
     .from('reviews')
     .select('rating, inquiries!inner(photographer_id)')
-    .eq('inquiries.photographer_id', photographer.id)
+    .eq('inquiries.photographer_id', user!.id)
     .eq('is_submitted', true);
 
   // Get portfolio stats
   const { data: portfolioPhotos } = await supabase
     .from('photos')
     .select('id, created_at')
-    .eq('uploaded_by', photographer.id);
+    .eq('uploaded_by', user!.id);
 
   // Get recent inquiries for response calculation
   const { data: recentInquiries } = await supabase
     .from('inquiries')
     .select('id, created_at, updated_at')
-    .eq('photographer_id', photographer.id)
+    .eq('photographer_id', user!.id)
     .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Last 30 days
 
   // Calculate stats
@@ -152,7 +142,7 @@ export default async function PhotographersDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>환영합니다, {photographer.name}님!</CardTitle>
+            <CardTitle>환영합니다, {photographer?.name}님!</CardTitle>
             <CardDescription>
               작가 대시보드에서 예약 현황과 포트폴리오를 관리하세요.
             </CardDescription>

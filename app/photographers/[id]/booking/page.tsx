@@ -15,16 +15,16 @@ export async function generateMetadata({ params }: BookingPageProps): Promise<Me
   
   if (result.error || !result.data) {
     return {
-      title: '예약할 수 없습니다 | Iris'
+      title: '예약할 수 없습니다 | kindt'
     }
   }
 
   const photographer = result.data
   return {
-    title: `${photographer.name} 작가 예약 | Iris`,
+    title: `${photographer.name} 작가 예약 | kindt`,
     description: `${photographer.name} 작가와 함께하는 특별한 촬영을 예약하세요.`,
     openGraph: {
-      title: `${photographer.name} 작가 예약 | Iris`,
+      title: `${photographer.name} 작가 예약 | kindt`,
       description: `${photographer.name} 작가와 함께하는 특별한 촬영을 예약하세요.`,
     },
   }

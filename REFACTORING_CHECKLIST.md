@@ -1,4 +1,4 @@
-# Iris Platform Refactoring Checklist
+# kindt Platform Refactoring Checklist
 
 **Quick reference checklist for tracking refactoring progress**
 

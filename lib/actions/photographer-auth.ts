@@ -7,13 +7,13 @@ import { redirect } from 'next/navigation'
 export async function checkPhotographerApprovalStatus() {
   try {
     const supabase = await createClient()
-    
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    authLogger.info('Checking photographer approval status for user:', session?.user?.id)
-    
-    if (!session) {
-      authLogger.info('No session found')
+
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    authLogger.info('Checking photographer approval status for user:', authUser?.id)
+
+    if (!authUser) {
+      authLogger.info('No user found')
       return { error: 'Not authenticated' }
     }
 
@@ -30,7 +30,7 @@ export async function checkPhotographerApprovalStatus() {
         rejection_reason,
         profile_completed
       `)
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     authLogger.info('Photographer query result:', { photographer, error })

@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { MatchingAnalyticsDashboard } from "@/components/admin/analytics/matching-analytics-dashboard";
 
 export const metadata: Metadata = {
-  title: "매칭 성능 분석 - Iris 관리자",
+  title: "매칭 성능 분석 - kindt 관리자",
   description: "10문항 매칭 시스템의 성능, 사용자 행동, 작가별 성과를 분석합니다.",
 };
 

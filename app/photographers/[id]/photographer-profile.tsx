@@ -48,7 +48,7 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
   const [isModalOpen, setIsModalOpen] = useState(false)
   
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
-  const shareTitle = `${photographer.name} 작가님의 프로필 | Iris`
+  const shareTitle = `${photographer.name} 작가님의 프로필 | kindt`
   const shareDescription = `${photographer.name} 작가님의 멋진 포트폴리오를 확인해보세요!`
 
   const handleCopyLink = () => {

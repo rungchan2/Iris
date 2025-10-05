@@ -1,36 +1,26 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getUserCookie } from '@/lib/auth/cookie'
 import { AccountSettings, AdminUser } from "@/components/admin/account-settings"
 import { PhotographerProfileSection } from "@/components/admin/photographer-profile"
 
 export default async function MyAccountPage() {
   const supabase = await createClient()
 
-  // Get current user session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
+  // Get current user
+  const user = await getUserCookie()
 
   // Get photographer info with extended fields
-  const { data: photographer, error: userError } = await supabase
+  const { data: photographer } = await supabase
     .from("photographers")
     .select("*")
-    .eq("id", session.user.id)
+    .eq("id", user!.id)
     .single()
-
-  if (userError || !photographer) {
-    redirect("/unauthorized")
-  }
 
   // Get photo statistics
   const { data: photoStats } = await supabase
     .from("photos")
     .select("id, size_kb, created_at")
-    .eq("uploaded_by", session.user.id)
+    .eq("uploaded_by", user!.id)
 
   // Calculate statistics
   const totalPhotos = photoStats?.length || 0
@@ -60,11 +50,13 @@ export default async function MyAccountPage() {
       </div>
 
       {/* Show extended profile for photographers */}
-      <PhotographerProfileSection photographer={{
-        ...photographer,
-        email: photographer.email || session.user.email || '',
-        name: photographer.name || session.user.user_metadata?.name || 'User'
-      }} />
+      {photographer && (
+        <PhotographerProfileSection photographer={{
+          ...photographer,
+          email: photographer.email || user!.email || '',
+          name: photographer.name || user!.name || 'User'
+        }} />
+      )}
       
       {/* Original account settings with statistics */}
       <AccountSettings adminUser={photographer as AdminUser} statistics={statistics} />

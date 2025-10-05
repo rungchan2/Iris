@@ -39,9 +39,9 @@ export function LandingHeroSection() {
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100">
 
-      {/* Iris Logo */}
+      {/* kindt Logo */}
       <div className="absolute top-8 left-8 z-20">
-        <span className="text-2xl font-bold text-orange-600">Iris</span>
+        <span className="text-2xl font-bold text-orange-600">kindt</span>
       </div>
 
       {/* Navigation Links */}

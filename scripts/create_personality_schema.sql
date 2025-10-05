@@ -1,4 +1,4 @@
--- Iris Personality System Database Schema
+-- kindt Personality System Database Schema
 -- This script creates all necessary tables for the personality assessment system
 
 -- Drop existing tables if they exist (for development)

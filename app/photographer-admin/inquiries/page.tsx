@@ -2,7 +2,7 @@ import { InquiryTable } from "@/components/admin/inquiry-table"
 import { AdminFilters } from "@/components/admin/admin-filters"
 import { Pagination } from "@/components/admin/pagination"
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getUserCookie } from '@/lib/auth/cookie'
 import { bookingLogger } from "@/lib/logger"
 
 export default async function AdminPage({
@@ -20,12 +20,9 @@ export default async function AdminPage({
   }>
 }) {
   const supabase = await createClient()
-  
+
   // Get current photographer
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect("/login")
-  }
+  const user = await getUserCookie()
 
   const params = await searchParams
   const page = Number.parseInt(params.page || "1")
@@ -63,7 +60,7 @@ export default async function AdminPage({
     `,
     { count: "exact" },
   )
-  .eq("photographer_id", user.id) // Much faster direct FK filtering
+  .eq("photographer_id", user!.id) // Much faster direct FK filtering
 
   // Apply status filter
   if (status !== "all") {

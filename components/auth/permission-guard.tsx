@@ -24,15 +24,15 @@ export function PermissionGuard({
   useEffect(() => {
     const checkPermission = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (!session) {
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+
+        if (!authUser) {
           router.push('/login')
           return
         }
 
         // Check user type from raw_user_meta_data
-        const userType = session.user.user_metadata?.user_type
+        const userType = authUser.user_metadata?.user_type
         const isAdmin = userType === 'admin'
         const isPhotographer = userType === 'photographer'
 

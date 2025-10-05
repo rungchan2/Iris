@@ -1,26 +1,13 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getUserCookie } from '@/lib/auth/cookie'
 import { ScheduleManager } from "@/components/admin/schedule-manager"
 import type { AvailableSlot } from "@/types/schedule.types"
 
 export default async function SchedulePage() {
   const supabase = await createClient()
 
-  // Get current user session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  // Check if user is admin
-  const { data: adminUser } = await supabase.from("photographers").select("*").eq("id", session.user.id).single()
-
-  if (!adminUser) {
-    redirect("/unauthorized")
-  }
+  // Get current user
+  const user = await getUserCookie()
 
   // Get current month's slots
   const currentDate = new Date()
@@ -30,7 +17,7 @@ export default async function SchedulePage() {
   const { data: slots } = await supabase
     .from("available_slots")
     .select("*")
-    .eq("admin_id", session.user.id)
+    .eq("admin_id", user!.id)
     .gte("date", startOfMonth.toISOString().split("T")[0])
     .lte("date", endOfMonth.toISOString().split("T")[0])
     .order("date", { ascending: true })
@@ -43,7 +30,7 @@ export default async function SchedulePage() {
         <p className="text-muted-foreground">사진 촬영 예약을 위한 가능한 시간대를 관리하세요</p>
       </div>
 
-      <ScheduleManager initialSlots={slots as AvailableSlot[]} adminId={session.user.id} />
+      <ScheduleManager initialSlots={slots as AvailableSlot[]} adminId={user!.id} />
     </div>
   )
 }

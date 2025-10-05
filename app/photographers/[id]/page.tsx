@@ -15,16 +15,16 @@ export async function generateMetadata({ params }: PhotographerPageProps): Promi
   
   if (result.error || !result.data) {
     return {
-      title: '작가를 찾을 수 없습니다 | Iris'
+      title: '작가를 찾을 수 없습니다 | kindt'
     }
   }
 
   const photographer = result.data
   return {
-    title: `${photographer.name} | Iris`,
+    title: `${photographer.name} | kindt`,
     description: `${photographer.name} 작가의 프로필과 포트폴리오를 확인하고 예약하세요.`,
     openGraph: {
-      title: `${photographer.name} | Iris`,
+      title: `${photographer.name} | kindt`,
       description: `${photographer.name} 작가의 프로필과 포트폴리오를 확인하고 예약하세요.`,
     },
   }

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { setUserCookie } from '@/lib/auth/cookie'
+import { authLogger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -15,9 +17,38 @@ export async function GET(request: Request) {
       // Check if user profile is complete
       const { data: userData } = await supabase
         .from('users')
-        .select('phone, role')
+        .select('id, email, name, phone, role')
         .eq('id', data.session.user.id)
         .single()
+
+      if (userData) {
+        // Get photographer info if applicable
+        let photographerData = null
+        if (userData.role === 'photographer') {
+          const { data } = await supabase
+            .from('photographers')
+            .select('approval_status, profile_image_url')
+            .eq('id', userData.id)
+            .single()
+
+          photographerData = data
+        }
+
+        // Set user cookie for new auth system
+        try {
+          await setUserCookie({
+            id: userData.id,
+            email: userData.email,
+            name: userData.name,
+            role: userData.role as 'user' | 'photographer' | 'admin',
+            approvalStatus: photographerData?.approval_status,
+            profileImageUrl: photographerData?.profile_image_url || undefined,
+          })
+          authLogger.info('User cookie set after OAuth login', { userId: userData.id })
+        } catch (cookieError) {
+          authLogger.error('Failed to set user cookie', { error: cookieError })
+        }
+      }
 
       const forwardedHost = request.headers.get('x-forwarded-host')
       const isLocalEnv = process.env.NODE_ENV === 'development'

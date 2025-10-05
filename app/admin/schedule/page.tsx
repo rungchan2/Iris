@@ -1,24 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
 import { AdminScheduleOverview } from "@/components/admin/admin-schedule-overview"
 
 export default async function AdminSchedulePage() {
   const supabase = await createClient()
-
-  // Get current user session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  // Check if user is admin
-  const isAdmin = session.user.user_metadata?.user_type === 'admin'
-  if (!isAdmin) {
-    redirect("/unauthorized")
-  }
 
   // Get all photographers
   const { data: photographers } = await supabase

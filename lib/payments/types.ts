@@ -1,7 +1,7 @@
 /**
  * 멀티 PG 결제 시스템을 위한 TypeScript 타입 정의
  * 
- * 이 파일은 Iris 프로젝트의 PG 중립적 결제 시스템에서 사용되는
+ * 이 파일은 kindt 프로젝트의 PG 중립적 결제 시스템에서 사용되는
  * 모든 타입을 정의합니다. (지원: Toss, Eximbay, Adyen, Stripe)
  */
 

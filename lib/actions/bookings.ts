@@ -281,7 +281,7 @@ export async function createBooking(data: BookingData): Promise<BookingResult> {
     `
 
     // Send email notification (don't await - fire and forget)
-    sendEmail(EMAIL_TO, "[Iris] 새로운 문의가 접수되었습니다.", emailBody).catch(err => {
+    sendEmail(EMAIL_TO, "[kindt] 새로운 문의가 접수되었습니다.", emailBody).catch(err => {
       console.error('Error sending email:', err)
     })
 

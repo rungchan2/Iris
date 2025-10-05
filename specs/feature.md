@@ -1,4 +1,4 @@
-# Features & Migration Strategy - Iris
+# Features & Migration Strategy - kindt
 
 ## 🔄 기존 sunset-cinema 프로젝트 활용 전략
 

@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { usePermissions } from "@/lib/rbac"
+import { useUserStore } from "@/stores/useUserStore"
+import { logout } from "@/app/actions/auth"
 
 // 권한별 네비게이션 아이템 정의
 const navigationItems = [
@@ -79,11 +80,13 @@ export function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
-  const { user, hasAnyPermission, isAdmin, signOut } = usePermissions()
+  const user = useUserStore(state => state.user)
+  const isAdmin = useUserStore(state => state.isAdmin())
 
   const handleSignOut = async () => {
-    await signOut()
+    await logout()
     router.push("/login")
+    router.refresh()
   }
 
   // 권한 기반 네비게이션 필터링
@@ -93,15 +96,15 @@ export function Sidebar() {
     return navigationItems.filter(item => {
       // 권한이 없으면 모든 사용자 접근 가능
       if (!item.permissions || item.permissions.length === 0) return true
-      
+
       // 특정 역할 제한이 있는 경우
       if (item.roles && !item.roles.includes(user.role)) return false
-      
-      // 특정 사용자 타입 제한이 있는 경우
-      if (item.userTypes && !item.userTypes.includes(user.userType)) return false
-      
-      // 권한 확인
-      return hasAnyPermission(item.permissions as any[])
+
+      // Admin은 모든 메뉴 접근 가능
+      if (isAdmin) return true
+
+      // 그 외에는 권한이 없는 메뉴만 표시
+      return item.permissions.length === 0
     })
   }
 
@@ -126,13 +129,10 @@ export function Sidebar() {
           <div className="p-4 border-b">
             <h2 className="text-xl font-bold">Photo Admin</h2>
             {user && (
-              <div className="mt-2 text-sm text-gray-600">
+              <div className="mt-2 text-gray-600 dark:text-gray-300">
                 <p className="font-medium">{user.name}</p>
                 <p className="text-xs">
-                  {user.userType === 'admin' 
-                    ? (user.role === 'admin' ? '관리자' : '작가')
-                    : '작가'
-                  }
+                  {user.role === 'admin' ? '관리자' : user.role === 'photographer' ? '작가' : '사용자'}
                 </p>
               </div>
             )}

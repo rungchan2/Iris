@@ -19,10 +19,10 @@ export interface UserPermissions {
 
 export async function getCurrentUserPermissions(): Promise<UserPermissions> {
   const supabase = await createClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
+
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  if (!authUser) {
     return {
       userType: null,
       canAccessUsers: false,
@@ -38,13 +38,13 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions> {
   }
 
   // Check if user is admin (stored in auth.users metadata)
-  const isAdmin = session.user.user_metadata?.user_type === 'admin'
-  
+  const isAdmin = authUser.user_metadata?.user_type === 'admin'
+
   // Check if user is photographer (exists in photographers table)
   const { data: photographer } = await supabase
     .from('photographers')
     .select('id')
-    .eq('id', session.user.id)
+    .eq('id', authUser.id)
     .single()
 
   const isPhotographer = !!photographer

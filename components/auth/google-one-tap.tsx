@@ -71,13 +71,13 @@ export function GoogleOneTap({
       }
 
       try {
-        const { data, error } = await supabase.auth.getSession()
+        const { data, error } = await supabase.auth.getUser()
 
         if (error) {
-          adminLogger.error('Error getting session:', error)
+          adminLogger.error('Error getting user:', error)
         }
 
-        if (data.session) {
+        if (data.user) {
           router.push(redirectTo)
           return
         }
@@ -119,7 +119,8 @@ export function GoogleOneTap({
 
         window.google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            adminLogger.info('One Tap not displayed or skipped')
+            // Silently handle cases where One Tap is not displayed
+            // This includes FedCM AbortError which is expected in development
           }
         })
       } catch (error) {

@@ -1,8 +1,16 @@
 "use client"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
+import { UserProvider } from './providers/UserProvider'
+import type { UserCookie } from '@/lib/auth/cookie'
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  serverUser,
+}: {
+  children: React.ReactNode
+  serverUser?: UserCookie | null
+}) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -15,7 +23,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <UserProvider serverUser={serverUser || null}>
+        {children}
+      </UserProvider>
     </QueryClientProvider>
   )
 }

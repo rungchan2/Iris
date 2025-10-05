@@ -130,7 +130,7 @@ export function ShareResult({ personalityType, sessionId }: ShareResultProps) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `Iris-result-${personalityType}-${Date.now()}.png`;
+          link.download = `kindt-result-${personalityType}-${Date.now()}.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -278,7 +278,7 @@ export function ShareResult({ personalityType, sessionId }: ShareResultProps) {
 
           <div className="text-center pt-8 border-t border-gray-200">
             <p className="text-gray-500 mb-2">나만의 사진 성향을 알아보세요</p>
-            <p className="text-2xl font-bold text-orange-600">Iris</p>
+            <p className="text-2xl font-bold text-orange-600">kindt</p>
           </div>
         </div>
       </div>

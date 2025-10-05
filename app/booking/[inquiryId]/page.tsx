@@ -12,7 +12,7 @@ interface BookingConfirmationPageProps {
 export async function generateMetadata({ params }: BookingConfirmationPageProps): Promise<Metadata> {
   const { inquiryId } = await params;
   return {
-    title: `예약 확인 #${inquiryId} - Iris`,
+    title: `예약 확인 #${inquiryId} - kindt`,
     description: "예약 상세 정보를 확인하고 촬영 준비 사항을 안내받으세요.",
   };
 }

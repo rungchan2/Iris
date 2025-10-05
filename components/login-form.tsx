@@ -12,9 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { loginWithUserType } from "@/lib/login";
+import { loginWithRole } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -31,18 +32,28 @@ export function LoginForm({
     setIsLoading(true);
     setError("");
 
-    const result = await loginWithUserType(email, password);
-    
-    if (result.error) {
-      setError(result.error.message || "로그인에 실패했습니다. 다시 시도해주세요.");
-      setIsLoading(false);
-      return;
-    }
+    try {
+      const result = await loginWithRole(email, password);
 
-    if (result.data?.user && result.redirectPath) {
-      router.push(result.redirectPath);
-    } else {
-      setError("로그인 후 이동할 페이지를 찾을 수 없습니다.");
+      if (!result.success) {
+        setError(result.error || "로그인에 실패했습니다. 다시 시도해주세요.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 로그인 성공
+      toast.success("로그인 성공!");
+
+      // 리다이렉트
+      if (result.redirectPath) {
+        router.push(result.redirectPath);
+        router.refresh(); // 서버 컴포넌트 새로고침
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err) {
+      setError("로그인 중 오류가 발생했습니다.");
       setIsLoading(false);
     }
   };

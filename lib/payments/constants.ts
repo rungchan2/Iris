@@ -442,7 +442,7 @@ export const PAYMENT_LOG_EVENTS = {
 /**
  * 주문번호 생성 패턴
  */
-export const ORDER_ID_PATTERN = /^IRIS_\d{8}_\d{6}_[A-Z0-9]{6}$/
+export const ORDER_ID_PATTERN = /^kindt_\d{8}_\d{6}_[A-Z0-9]{6}$/
 
 /**
  * 전화번호 검증 패턴

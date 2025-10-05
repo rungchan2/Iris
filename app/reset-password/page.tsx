@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 export const metadata: Metadata = {
-  title: "비밀번호 재설정 - Iris",
+  title: "비밀번호 재설정 - kindt",
   description: "비밀번호를 재설정하여 계정에 다시 접근하세요.",
 };
 

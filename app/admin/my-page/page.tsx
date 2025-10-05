@@ -1,30 +1,18 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { getUserCookie } from '@/lib/auth/cookie'
 import { AdminProfileSettings } from "@/components/admin/admin-profile-settings"
 
 export default async function AdminMyAccountPage() {
   const supabase = await createClient()
 
-  // Get current user session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  // Check if user is admin
-  const isAdmin = session.user.user_metadata?.user_type === 'admin'
-  if (!isAdmin) {
-    redirect("/unauthorized")
-  }
+  // Get current user
+  const user = await getUserCookie()
 
   // Get user record (admin)
   const { data: admin } = await supabase
     .from("users")
     .select("*")
-    .eq("id", session.user.id)
+    .eq("id", user!.id)
     .eq("role", "admin")
     .single()
 

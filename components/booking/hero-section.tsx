@@ -50,14 +50,14 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-black/10 z-10" />
         <Image
           src="/og-image.jpg"
-          alt="Iris"
+          alt="kindt"
           className="w-full h-full object-cover hidden md:block"
           width={1920}
           height={1080}
         />
         <Image
           src="/hero-mobile-image.jpg"
-          alt="Iris"
+          alt="kindt"
           className="w-full h-full object-cover object-top block md:hidden"
           width={1920}
           height={1920}
@@ -74,7 +74,7 @@ export function HeroSection() {
         >
           <Image
             src="/font2.svg"
-            alt="Iris"
+            alt="kindt"
             width={450}
             height={110}
           />
@@ -88,7 +88,7 @@ export function HeroSection() {
         >
           <Image
             src="/side-font.svg"
-            alt="Iris"
+            alt="kindt"
             width={350}
             height={110}
           />

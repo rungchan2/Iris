@@ -252,7 +252,7 @@ export function ReviewManagement({ inquiries, reviews }: ReviewManagementProps) 
                         <div className="flex gap-2">
                           <Button
                             onClick={() => {
-                              const message = `안녕하세요! Iris에서 촬영해주셔서 감사합니다. 촬영 후기를 남겨주시면 큰 도움이 됩니다. 링크: ${hasGeneratedLink}`;
+                              const message = `안녕하세요! kindt에서 촬영해주셔서 감사합니다. 촬영 후기를 남겨주시면 큰 도움이 됩니다. 링크: ${hasGeneratedLink}`;
                               window.open(`sms:${inquiry.phone}?body=${encodeURIComponent(message)}`, '_blank');
                             }}
                             size="sm"
@@ -264,8 +264,8 @@ export function ReviewManagement({ inquiries, reviews }: ReviewManagementProps) 
                           </Button>
                           <Button
                             onClick={() => {
-                              const subject = "Iris 촬영 후기 부탁드립니다";
-                              const body = `안녕하세요, ${inquiry.name}님!\n\nIris에서 촬영해주셔서 감사합니다.\n촬영은 만족스러우셨나요?\n\n아래 링크를 통해 간단한 후기를 남겨주시면 다른 고객들에게 큰 도움이 됩니다.\n\n후기 작성하기: ${hasGeneratedLink}\n\n감사합니다!`;
+                              const subject = "kindt 촬영 후기 부탁드립니다";
+                              const body = `안녕하세요, ${inquiry.name}님!\n\nkindt에서 촬영해주셔서 감사합니다.\n촬영은 만족스러우셨나요?\n\n아래 링크를 통해 간단한 후기를 남겨주시면 다른 고객들에게 큰 도움이 됩니다.\n\n후기 작성하기: ${hasGeneratedLink}\n\n감사합니다!`;
                               window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
                             }}
                             size="sm"

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signUpNewUser } from "@/lib/login"
+import { signUpNewUser } from "@/app/actions/auth"
 import { authLogger } from "@/lib/logger"
 
 type UserSignupFormData = {

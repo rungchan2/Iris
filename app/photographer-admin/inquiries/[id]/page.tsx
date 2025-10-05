@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { getUserCookie } from '@/lib/auth/cookie';
+import { notFound } from "next/navigation";
 import { photographerLogger } from '@/lib/logger';
 import { Inquiry } from "@/types/inquiry.types";
 import { InquiryDetailClient } from "@/components/admin/inquiry-detail-client";
@@ -10,11 +11,7 @@ export default async function PhotographerInquiryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await getUserCookie();
 
   // Get inquiry (categories removed), only if it belongs to this photographer
   const { data: inquiry, error } = await supabase
@@ -31,7 +28,7 @@ export default async function PhotographerInquiryDetailPage({
     `
     )
     .eq("id", (await params).id)
-    .eq("photographer_id", user.id) // Much faster direct FK filtering
+    .eq("photographer_id", user!.id) // Much faster direct FK filtering
     .single();
 
   photographerLogger.info("photographer inquiry", inquiry);

@@ -1,5 +1,4 @@
 import type React from "react";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import {
@@ -12,10 +11,11 @@ import { QueryProvider } from "@/components/query-provider";
 import { DynamicBreadcrumb } from "@/components/admin/dynamic-breadcrumb";
 import { Metadata } from "next";
 import { Toaster } from "sonner";
+import { getUserCookie } from "@/lib/auth/cookie";
 
 export const metadata: Metadata = {
-  title: "어드민 페이지 | Iris",
-  description: "Iris 어드민 페이지 입니다. 사용자 관리, 통계, 설정 등을 관리할 수 있습니다.",
+  title: "어드민 페이지 | kindt",
+  description: "kindt 어드민 페이지 입니다. 사용자 관리, 통계, 설정 등을 관리할 수 있습니다.",
 };
 
 export default async function AdminLayout({
@@ -23,26 +23,18 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const cookieUser = await getUserCookie();
 
-  if (!session) {
+  // Middleware가 이미 체크했지만 이중 확인
+  if (!cookieUser || cookieUser.role !== 'admin') {
     redirect("/login");
   }
 
-  // Check if user is admin (새 시스템에서는 user_metadata만 확인)
-  const isAdmin = session.user.user_metadata?.user_type === 'admin'
-  if (!isAdmin) {
-    redirect("/login");
-  }
-
-  // Admin 정보는 auth.users의 metadata에서 가져옴 (admins 테이블 불필요)
+  // Admin 정보
   const user = {
-    id: session.user.id,
-    email: session.user.email || '',
-    name: session.user.user_metadata?.name || 'Admin User',
+    id: cookieUser.id,
+    email: cookieUser.email,
+    name: cookieUser.name || 'Admin User',
     user_type: 'admin'
   };
 

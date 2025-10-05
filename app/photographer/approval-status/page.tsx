@@ -6,7 +6,7 @@ import { Clock, AlertCircle, CheckCircle2, XCircle, Mail, LogOut } from "lucide-
 import { checkPhotographerApprovalStatus } from "@/lib/actions/photographer-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { logout } from "@/lib/login"
+import { logout } from "@/app/actions/auth"
 
 export default async function ApprovalStatusPage() {
   const result = await checkPhotographerApprovalStatus()

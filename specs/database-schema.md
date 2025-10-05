@@ -1,4 +1,4 @@
-# Database Schema - Iris (2025년 10월 최신)
+# Database Schema - kindt (2025년 10월 최신)
 
 ## 🏗️ 전체 DB 구조 개요
 

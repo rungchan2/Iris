@@ -26,19 +26,19 @@ export interface PhotographerApplicationData {
  */
 async function waitForSession(maxRetries = 10, delay = 500): Promise<boolean> {
   const supabase = createClient()
-  
+
   for (let i = 0; i < maxRetries; i++) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user) {
-      photographerLogger.info(`Session found after ${i + 1} attempts`)
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (authUser) {
+      photographerLogger.info(`User found after ${i + 1} attempts`)
       return true
     }
-    
-    photographerLogger.info(`Waiting for session, attempt ${i + 1}/${maxRetries}`)
+
+    photographerLogger.info(`Waiting for user, attempt ${i + 1}/${maxRetries}`)
     await new Promise(resolve => setTimeout(resolve, delay))
   }
-  
-  photographerLogger.error('Session not found after maximum retries')
+
+  photographerLogger.error('User not found after maximum retries')
   return false
 }
 
@@ -50,16 +50,16 @@ export async function createPhotographerProfile(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = createClient()
-    
+
     // 세션이 완전히 설정될 때까지 기다림
     const sessionReady = await waitForSession()
     if (!sessionReady) {
       return { success: false, error: '세션 설정 대기 시간 초과' }
     }
 
-    // 현재 세션 다시 확인
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user || session.user.id !== data.userId) {
+    // 현재 사용자 다시 확인
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser || authUser.id !== data.userId) {
       return { success: false, error: '사용자 인증 실패' }
     }
 
@@ -100,9 +100,9 @@ export async function createPhotographerProfile(
 
   } catch (error: any) {
     photographerLogger.error('Photographer profile creation error:', error)
-    return { 
-      success: false, 
-      error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.' 
+    return {
+      success: false,
+      error: error.message || '작가 프로필 생성 중 오류가 발생했습니다.'
     }
   }
 }

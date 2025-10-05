@@ -28,8 +28,8 @@ export async function getCurrentAdmin() {
   try {
     const supabase = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
@@ -37,7 +37,7 @@ export async function getCurrentAdmin() {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (error || !user) {
@@ -63,8 +63,8 @@ export async function updateAdminProfile(data: Partial<UserUpdate>) {
   try {
     const supabase = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
@@ -78,7 +78,7 @@ export async function updateAdminProfile(data: Partial<UserUpdate>) {
         ...updateData,
         updated_at: new Date().toISOString()
       })
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .select()
       .single()
 
@@ -112,15 +112,15 @@ export async function createAdmin(params: {
     const supabase = await createClient()
 
     // Check if current user is admin
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
     const { data: currentUser } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (!currentUser || currentUser.role !== 'admin') {
@@ -184,15 +184,15 @@ export async function getAllAdmins() {
     const supabase = await createClient()
 
     // Check if current user is admin
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
     const { data: currentUser } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (!currentUser || currentUser.role !== 'admin') {
@@ -224,15 +224,15 @@ export async function updateAdmin(adminId: string, data: Partial<UserUpdate>) {
     const supabase = await createClient()
 
     // Check if current user is admin
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
     const { data: currentUser } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (!currentUser || currentUser.role !== 'admin') {
@@ -278,15 +278,15 @@ export async function deleteAdmin(adminId: string) {
     const supabase = await createClient()
 
     // Check if current user is admin
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
     const { data: currentUser } = await supabase
       .from('users')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (!currentUser || currentUser.role !== 'admin') {
@@ -294,7 +294,7 @@ export async function deleteAdmin(adminId: string) {
     }
 
     // Prevent deleting self
-    if (adminId === session.user.id) {
+    if (adminId === authUser.id) {
       return { error: '자신의 계정은 삭제할 수 없습니다.' }
     }
 
@@ -324,8 +324,8 @@ export async function updateLastLogin() {
   try {
     const supabase = await createClient()
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) {
       return { error: '인증되지 않은 사용자입니다.' }
     }
 
@@ -334,7 +334,7 @@ export async function updateLastLogin() {
       .update({
         updated_at: new Date().toISOString()
       })
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
 
     if (error) {
       console.error('Update last login error:', error)

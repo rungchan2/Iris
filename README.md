@@ -1,9 +1,9 @@
-# Project Basic Information - Iris
+# Project Basic Information - kindt
 
 ## 🎯 프로젝트 개요
 
 ### 제품명
-**아이리즈(Iris)** - AI 기반 작가 매칭 & 예약 플랫폼
+**아이리즈(kindt)** - AI 기반 작가 매칭 & 예약 플랫폼
 
 ### 핵심 목적
 10문항 설문을 통한 4차원 프로필 매칭으로 사용자에게 최적의 작가를 추천하고, 원활한 예약과 결제까지 연결하는 AI 매칭 기반 사진 플랫폼

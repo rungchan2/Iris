@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Iris (Iris)** is a photographer matching and booking platform built on Next.js. The system combines AI-powered photographer matching with streamlined booking and payment processing:
+**kindt (kindt)** is a photographer matching and booking platform built on Next.js. The system combines AI-powered photographer matching with streamlined booking and payment processing:
 
 1. **10-Question Matching System**: Advanced embedding-based photographer matching using pgvector
 2. **Direct Booking System**: Simplified appointment scheduling and management

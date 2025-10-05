@@ -52,20 +52,20 @@ export default function PhotographerProfilePage() {
   const checkAuthAndLoadProfile = async () => {
     try {
       // Check authentication
-      const { data: { session }, error: authError } = await supabase.auth.getSession()
-      
-      if (authError || !session) {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+
+      if (authError || !authUser) {
         router.push('/login')
         return
       }
 
-      setUser(session.user)
+      setUser(authUser)
 
       // Check if user is a photographer
       const { data: photographerData, error: photographerError } = await supabase
         .from('photographers')
         .select('*')
-        .eq('email', session.user.email!)
+        .eq('email', authUser.email!)
         .single()
 
       if (photographerError || !photographerData) {

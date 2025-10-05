@@ -8,15 +8,15 @@ import { redirect } from 'next/navigation'
  */
 export async function redirectUserByType() {
   const supabase = await createClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
+
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  if (!authUser) {
     redirect('/login')
   }
 
   // Check user type from auth metadata
-  const userType = session.user.user_metadata?.user_type
+  const userType = authUser.user_metadata?.user_type
 
   if (userType === 'admin') {
     // Admin user - redirect to admin dashboard
@@ -26,7 +26,7 @@ export async function redirectUserByType() {
     const { data: photographer } = await supabase
       .from('photographers')
       .select('id')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     if (photographer) {
@@ -45,15 +45,15 @@ export async function redirectUserByType() {
 export async function getUserType() {
   try {
     const supabase = await createClient()
-    
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
+
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
       return { userType: null }
     }
 
     // Check user type from auth metadata
-    const userType = session.user.user_metadata?.user_type
+    const userType = authUser.user_metadata?.user_type
 
     if (userType === 'admin') {
       return { userType: 'admin' }
@@ -62,7 +62,7 @@ export async function getUserType() {
       const { data: photographer } = await supabase
         .from('photographers')
         .select('id')
-        .eq('id', session.user.id)
+        .eq('id', authUser.id)
         .single()
 
       if (photographer) {
@@ -83,14 +83,14 @@ export async function getUserType() {
 export async function checkAdminAccess() {
   try {
     const supabase = await createClient()
-    
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
+
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
       return { hasAccess: false }
     }
 
-    const userType = session.user.user_metadata?.user_type
+    const userType = authUser.user_metadata?.user_type
     return { hasAccess: userType === 'admin' }
   } catch (error) {
     console.error('Check admin access error:', error)
@@ -104,17 +104,17 @@ export async function checkAdminAccess() {
 export async function checkPhotographerAccess() {
   try {
     const supabase = await createClient()
-    
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session) {
+
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    if (!authUser) {
       return { hasAccess: false }
     }
 
     const { data: photographer } = await supabase
       .from('photographers')
       .select('id')
-      .eq('id', session.user.id)
+      .eq('id', authUser.id)
       .single()
 
     return { hasAccess: !!photographer }

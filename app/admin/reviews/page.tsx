@@ -1,22 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { AdminAllReviewsManagement } from "@/components/admin/admin-all-reviews-management";
 
 export default async function AdminReviewsPage() {
   const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  // Check if user is admin
-  const isAdmin = session.user.user_metadata?.user_type === 'admin'
-  if (!isAdmin) {
-    redirect("/unauthorized");
-  }
 
   // Get all photographers
   const { data: photographers } = await supabase

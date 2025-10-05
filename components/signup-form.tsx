@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { signUpNewUser, login } from "@/lib/login"
+import { signUpNewUser, login } from "@/app/actions/auth"
 import { validateInvitationCode } from "@/lib/actions/code"
 import { useForm, Controller } from "react-hook-form"
 import { createPhotographerProfile, uploadPortfolioImages } from "@/lib/actions/photographer-client"
@@ -964,7 +964,7 @@ export function SignupForm({
         <CardHeader>
           <CardTitle className="text-2xl">작가 회원가입</CardTitle>
           <CardDescription>
-            Iris 플랫폼에 작가로 등록하여 고객들과 만나보세요.
+            kindt 플랫폼에 작가로 등록하여 고객들과 만나보세요.
           </CardDescription>
           
           {/* 진행바 */}

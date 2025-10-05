@@ -13,13 +13,6 @@ import {
 } from "lucide-react";
 
 async function getInquiriesWithReviews() {
-  // Check authentication
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    redirect("/login");
-  }
-
   // Use the new server action to get photographer-specific inquiries with reviews
   const result = await getPhotographerInquiries();
   if (result.error) {
@@ -219,6 +212,6 @@ export default function ReviewsPage() {
 }
 
 export const metadata = {
-  title: "리뷰 관리 - Iris Admin",
+  title: "리뷰 관리 - kindt Admin",
   description: "고객 리뷰를 관리하고 새로운 리뷰 링크를 생성하세요.",
 };

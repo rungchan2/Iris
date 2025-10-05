@@ -19,7 +19,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useRouter, usePathname } from "next/navigation"
-import { usePermissions } from "@/lib/rbac/hooks"
+import { logout } from "@/app/actions/auth"
 
 interface MenuItem {
   title: string
@@ -79,15 +79,15 @@ export function PhotographerSidebar({ user, ...props }: React.ComponentProps<typ
   const router = useRouter()
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
-  const { signOut } = usePermissions()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleSignOut = async () => {
-    await signOut()
+    await logout()
     router.push("/login")
+    router.refresh()
   }
 
   return (

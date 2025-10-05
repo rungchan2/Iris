@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
+import { getUserCookie } from '@/lib/auth/cookie'
 import PhotoManager from "@/components/admin/photo-manager"
+
 export default async function PhotosPage({
   searchParams,
 }: {
@@ -9,12 +11,10 @@ export default async function PhotosPage({
   const params = await searchParams
 
   // Get user for upload permissions
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getUserCookie()
 
-  // Check if user is admin (has user_metadata.user_type === 'admin')
-  const isAdmin = user?.user_metadata?.user_type === 'admin'
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin'
 
   // Fetch categories for filter
   const { data: categories } = await supabase.from("categories").select("*").order("path")

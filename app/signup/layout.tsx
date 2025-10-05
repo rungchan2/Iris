@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getUserCookie } from "@/lib/auth/cookie";
 import { redirect } from "next/navigation";
 
 export default async function SignupLayout({
@@ -6,11 +6,10 @@ export default async function SignupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const user = await getUserCookie();
 
   // If user is already logged in, redirect to home
-  if (session) {
+  if (user) {
     redirect("/");
   }
 

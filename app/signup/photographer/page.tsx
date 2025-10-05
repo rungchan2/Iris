@@ -3,8 +3,8 @@ import { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "작가 회원가입 | Iris",
-  description: "Iris 작가 회원가입 페이지입니다.",
+  title: "작가 회원가입 | kindt",
+  description: "kindt 작가 회원가입 페이지입니다.",
 };
 
 export default function PhotographerSignupPage() {

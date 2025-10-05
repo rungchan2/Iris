@@ -8,10 +8,10 @@ import { redirect } from 'next/navigation'
  */
 export async function requireApprovedPhotographer() {
   const supabase = await createClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
+
+  const { data: { user: authUser } } = await supabase.auth.getUser()
+
+  if (!authUser) {
     redirect('/login')
   }
 
@@ -19,12 +19,12 @@ export async function requireApprovedPhotographer() {
   const { data: photographer, error } = await supabase
     .from('photographers')
     .select('id, approval_status, name, email')
-    .eq('id', session.user.id)
+    .eq('id', authUser.id)
     .single()
 
   if (error || !photographer) {
     // User is not a photographer
-    const userType = session.user.user_metadata?.user_type
+    const userType = authUser.user_metadata?.user_type
     if (userType === 'admin') {
       redirect('/admin')
     } else {
