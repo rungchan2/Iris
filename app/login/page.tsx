@@ -1,11 +1,10 @@
 import { LoginForm } from "@/components/login-form";
-import { SignupForm } from "@/components/signup-form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Toaster } from "sonner";
 import { authLogger } from "@/lib/logger";
+import { GoogleSignInButton, GoogleOneTap } from "@/components/auth";
 
 export const metadata: Metadata = {
   title: "로그인 | Iris",
@@ -43,22 +42,41 @@ export default async function Page() {
       }
     }
   }
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+
   return (
     <>
+      {/* Google One Tap - auto-prompt for quick sign-in */}
+      {googleClientId && (
+        <GoogleOneTap
+          clientId={googleClientId}
+          autoSelect={true}
+          cancelOnTapOutside={true}
+        />
+      )}
+
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-sm">
-          <Tabs defaultValue="account" className="w-[400px]">
-            <TabsList>
-              <TabsTrigger value="account">로그인</TabsTrigger>
-              <TabsTrigger value="password">회원가입</TabsTrigger>
-            </TabsList>
-            <TabsContent value="account">
-              <LoginForm />
-            </TabsContent>
-            <TabsContent value="password">
-              <SignupForm />
-            </TabsContent>
-          </Tabs>
+        <div className="w-full max-w-sm space-y-4">
+          <LoginForm />
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Google Sign In Button */}
+          <GoogleSignInButton
+            mode="signin"
+            fullWidth={true}
+            variant="outline"
+          />
         </div>
       </div>
       <Toaster richColors position="top-right" />

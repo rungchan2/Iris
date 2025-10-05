@@ -2,6 +2,7 @@ import { InquiryTable } from "@/components/admin/inquiry-table"
 import { AdminFilters } from "@/components/admin/admin-filters"
 import { Pagination } from "@/components/admin/pagination"
 import { createClient } from "@/lib/supabase/server"
+import { bookingLogger } from "@/lib/logger"
 
 export default async function AdminPage({
   searchParams,
@@ -36,16 +37,21 @@ export default async function AdminPage({
   let query = supabase.from("inquiries").select(
     `
       *,
-      categories (
-        id,
-        name,
-        path
-      ),
-      selected_slot_id (
+      selected_slot_id:available_slots!inquiries_selected_slot_id_fkey (
         id,
         date,
         start_time,
         end_time
+      ),
+      photographers:photographer_id (
+        id,
+        name,
+        email
+      ),
+      products:product_id (
+        id,
+        name,
+        price
       )
     `,
     { count: "exact" },
@@ -95,7 +101,7 @@ export default async function AdminPage({
   const { data: inquiries, count, error } = await query
 
   if (error) {
-    console.error("Error fetching inquiries:", error.message)
+    bookingLogger.error("Error fetching inquiries:", error)
   }
 
   const totalPages = count ? Math.ceil(count / pageSize) : 0

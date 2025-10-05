@@ -6,6 +6,7 @@ import { signInWithGoogle, signUpWithGoogle } from '@/lib/auth/google'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import googleLogo from '@/public/google-logo.svg'
+import { authLogger } from '@/lib/logger'
 
 interface GoogleSignInButtonProps {
   mode?: 'signin' | 'signup'
@@ -43,10 +44,10 @@ export function GoogleSignInButton({
           prompt: 'consent',
         },
       })
-      
+
       onSuccess?.()
     } catch (error) {
-      console.error('Google auth error:', error)
+      authLogger.error('Google auth error:', error)
       onError?.(error as Error)
     } finally {
       setIsLoading(false)

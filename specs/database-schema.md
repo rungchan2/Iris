@@ -1,4 +1,4 @@
-# Database Schema - Iris (2025년 9월 최신)
+# Database Schema - Iris (2025년 10월 최신)
 
 ## 🏗️ 전체 DB 구조 개요
 
@@ -7,37 +7,95 @@
 - **Project ID**: `kypwcsgwjtnkiiwjedcn`
 - **Region**: ap-northeast-2
 
+### 최근 업데이트
+- **2025.10.05**: 사용자 테이블 통합 (admins, photographers, users → users + photographers)
+- **2025.09.16**: 매칭 시스템 추가 (10-question photographer matching)
+
 ## 📊 핵심 테이블 구조
 
-### 1. 사용자 관리 시스템 (기존 유지)
+### 1. 사용자 관리 시스템 (2025.10.05 업데이트)
 
-#### `admins` - 시스템 관리자
+#### `users` - 통합 사용자 테이블
 ```sql
-CREATE TABLE admins (
-  id UUID PRIMARY KEY,
+CREATE TABLE users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'admin',
+  role user_role NOT NULL DEFAULT 'user', -- enum: 'user' | 'photographer' | 'admin'
+  phone TEXT,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Enum 정의
+CREATE TYPE user_role AS ENUM ('user', 'photographer', 'admin');
 ```
 
-#### `photographers` - 작가 정보
+**변경 사항 (2025.10.05):**
+- ❌ **삭제**: `admins`, `users_old` 테이블 제거
+- ✅ **통합**: 모든 사용자를 `users` 테이블로 통합
+- ✅ **Role Enum**: `user_role` enum으로 역할 구분
+
+#### `photographers` - 사진작가 상세 정보
 ```sql
 CREATE TABLE photographers (
-  id UUID PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  name TEXT NOT NULL,
-  approval_status TEXT DEFAULT 'approved',
+  id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  email TEXT,
+  name TEXT,
+  phone TEXT,
   bio TEXT,
-  price_range_min INT,
-  price_range_max INT,
+  profile_image_url TEXT,
+  instagram_handle TEXT,
+  website_url TEXT,
+  youtube_intro_url TEXT,
+
+  -- 프로필 정보
+  years_experience INTEGER,
+  birth_year INTEGER,
+  gender TEXT,
+  age_range TEXT,
+  specialties TEXT[],
+  equipment_info TEXT,
+  directing_style TEXT,
+  photography_approach TEXT,
+  personality_type TEXT,
+  studio_location TEXT,
+
+  -- 가격 정보
+  price_range_min INTEGER,
+  price_range_max INTEGER,
+  price_description TEXT,
+
+  -- 승인 관련
+  approval_status approval_status DEFAULT 'pending', -- enum: 'pending' | 'approved' | 'rejected'
+  application_status TEXT,
+  approved_at TIMESTAMPTZ,
+  approved_by UUID REFERENCES users(id),
+  rejection_reason TEXT,
+  portfolio_submitted_at TIMESTAMPTZ,
   profile_completed BOOLEAN DEFAULT false,
+
+  -- 정산 정보
+  bank_name TEXT,
+  bank_account TEXT,
+  account_holder TEXT,
+  settlement_ratio NUMERIC(5,2) DEFAULT 70.00,
+  settlement_day INTEGER DEFAULT 10,
+  tax_rate NUMERIC(5,2) DEFAULT 3.30,
+
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Enum 정의
+CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected');
 ```
+
+**변경 사항 (2025.10.05):**
+- ✅ **FK 변경**: `id` → `users(id)` 참조
+- ✅ **Approval Enum**: `approval_status` enum 적용
+- ✅ **용도**: 사진작가 전용 상세 정보 저장
 
 ### 2. 매칭 시스템 (2025.09.16 신규)
 

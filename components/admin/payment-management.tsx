@@ -33,7 +33,7 @@ interface Payment {
   buyer_tel: string
   created_at: string
   paid_at?: string
-  users?: {
+  user?: {
     name: string
     email: string
   }
@@ -50,7 +50,7 @@ interface Payment {
     status: string
     special_request?: string
   }
-  products?: {
+  product?: {
     id: string
     name: string
     description?: string
@@ -685,7 +685,7 @@ function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
         )}
 
         {/* 상품 정보 */}
-        {payment.products && (
+        {payment.product && (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">상품 정보</CardTitle>
@@ -693,7 +693,7 @@ function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">상품명:</span>
-                <span className="font-medium">{payment.products.name}</span>
+                <span className="font-medium">{payment.product.name}</span>
               </div>
             </CardContent>
           </Card>

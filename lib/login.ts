@@ -3,16 +3,24 @@ import { createClient } from "@/lib/supabase/client";
 export async function signUpNewUser(
   email: string,
   password: string,
+  name?: string,
+  userType: 'user' | 'photographer' | 'admin' = 'user',
 ) {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signUp({
     email: email,
     password: password,
+    options: {
+      data: {
+        name: name,
+        user_type: userType,
+      },
+    },
   });
   if (error) {
-    throw error;
+    return { success: false, error: error.message };
   }
-  return {data, error};
+  return { success: true, data, error: null };
 }
 
 export async function login(

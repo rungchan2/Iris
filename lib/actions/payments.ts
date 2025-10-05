@@ -222,18 +222,18 @@ export async function getPayments(
           phone,
           status
         ),
-        photographer:photographers(
+        photographer:photographers!payments_photographer_id_fkey(
           id,
           name,
           email,
           phone
         ),
-        users(
+        user:users!payments_user_id_fkey(
           id,
           name,
           email
         ),
-        products(
+        product:products!payments_product_id_fkey(
           id,
           name
         )
@@ -307,19 +307,19 @@ export async function getPayment(paymentId: string): Promise<ApiResponse<Payment
           status,
           special_request
         ),
-        photographer:photographers(
+        photographer:photographers!payments_photographer_id_fkey(
           id,
           name,
           email,
           phone
         ),
-        users(
+        user:users!payments_user_id_fkey(
           id,
           name,
           email,
           phone
         ),
-        products(
+        product:products!payments_product_id_fkey(
           id,
           name,
           description,

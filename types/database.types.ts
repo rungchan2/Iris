@@ -905,7 +905,7 @@ export type Database = {
           account_holder: string | null
           age_range: string | null
           application_status: string | null
-          approval_status: string | null
+          approval_status: Database["public"]["Enums"]["approval_status"]
           approved_at: string | null
           approved_by: string | null
           bank_account: string | null
@@ -944,7 +944,7 @@ export type Database = {
           account_holder?: string | null
           age_range?: string | null
           application_status?: string | null
-          approval_status?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           approved_at?: string | null
           approved_by?: string | null
           bank_account?: string | null
@@ -983,7 +983,7 @@ export type Database = {
           account_holder?: string | null
           age_range?: string | null
           application_status?: string | null
-          approval_status?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
           approved_at?: string | null
           approved_by?: string | null
           bank_account?: string | null
@@ -2069,6 +2069,7 @@ export type Database = {
       }
     }
     Enums: {
+      approval_status: "pending" | "approved" | "rejected"
       user_role: "user" | "photographer" | "admin"
     }
     CompositeTypes: {
@@ -2200,6 +2201,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      approval_status: ["pending", "approved", "rejected"],
       user_role: ["user", "photographer", "admin"],
     },
   },

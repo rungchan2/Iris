@@ -92,6 +92,15 @@ export function LoginForm({
               <Button type="submit" className="w-full">
                 {isLoading ? "로그인 중..." : "로그인"}
               </Button>
+              <div className="text-center text-sm">
+                계정이 없으신가요?{" "}
+                <Link
+                  href="/signup"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  회원가입
+                </Link>
+              </div>
             </div>
           </form>
         </CardContent>

@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
 };
 
-const GA_ID = process.env.GA_ID || "";
+const GA_ID = process.env.GA_ID || "G-05DFZQYX6N";
 
 export default function RootLayout({
   children,

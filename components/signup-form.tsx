@@ -322,18 +322,33 @@ export function SignupForm({
       }
 
       // 2. Supabase 회원가입
-      const { data: signupData, error: signupError } = await signUpNewUser(data.step1_email, data.step1_password);
-      
-      if (signupError) {
-        console.error("회원가입 오류:", signupError);
+      const signupResult = await signUpNewUser(
+        data.step1_email,
+        data.step1_password,
+        data.step1_name,
+        'photographer'
+      );
+
+      if (!signupResult.success || signupResult.error) {
+        console.error("회원가입 오류:", signupResult.error);
         toast.error("회원가입에 실패했습니다. 다시 시도해주세요.");
         setIsLoading(false);
         setSubmissionStep('idle');
         return;
       }
 
-      if (!signupData?.user) {
+      if (!signupResult.data?.user) {
         toast.error("회원가입 데이터를 받아올 수 없습니다.");
+        setIsLoading(false);
+        setSubmissionStep('idle');
+        return;
+      }
+
+      const signupData = signupResult.data;
+      const userId = signupData.user?.id;
+
+      if (!userId) {
+        toast.error("사용자 ID를 가져올 수 없습니다.");
         setIsLoading(false);
         setSubmissionStep('idle');
         return;
@@ -346,7 +361,7 @@ export function SignupForm({
       // 4. 로그인 수행
       setSubmissionMessage('로그인을 수행하고 있습니다...');
       const { data: loginData, error: loginError } = await login(data.step1_email, data.step1_password);
-      
+
       if (loginError || !loginData?.user) {
         console.error("로그인 오류:", loginError);
         toast.error("자동 로그인에 실패했습니다. 수동으로 로그인해주세요.");
@@ -360,9 +375,9 @@ export function SignupForm({
 
       // 5. 작가 프로필 생성 (로그인 후 실행)
       setSubmissionMessage('작가 프로필을 생성하고 있습니다...');
-      
+
       const profileResult = await createPhotographerProfile({
-        userId: signupData.user.id,
+        userId,
         email: data.step1_email,
         name: data.step1_name,
         phone: data.step2_phone,
