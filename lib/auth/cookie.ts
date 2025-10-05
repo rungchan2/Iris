@@ -13,6 +13,7 @@ export interface UserCookie {
   id: string
   email: string
   name: string | null
+  phone?: string | null
   role: 'user' | 'photographer' | 'admin'
   approvalStatus?: 'pending' | 'approved' | 'rejected'
   profileImageUrl?: string

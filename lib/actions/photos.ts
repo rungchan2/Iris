@@ -236,3 +236,84 @@ export async function updatePhoto(id: string, metadata: PhotoMetadata) {
     return { success: false, error: 'Failed to update photo' }
   }
 }
+
+/**
+ * Assign categories to photos
+ */
+export async function assignCategories(photoIds: string[], categoryIds: string[]) {
+  try {
+    const supabase = await createClient()
+
+    // Delete existing assignments for these photos
+    await supabase.from('photo_categories').delete().in('photo_id', photoIds)
+
+    // Insert new assignments
+    if (categoryIds.length > 0) {
+      const assignments = photoIds.flatMap((photoId) =>
+        categoryIds.map((categoryId) => ({
+          photo_id: photoId,
+          category_id: categoryId,
+        }))
+      )
+
+      const { error } = await supabase.from('photo_categories').insert(assignments)
+
+      if (error) {
+        logger.error('Failed to assign categories', { error })
+        return { success: false, error: 'Failed to assign categories' }
+      }
+    }
+
+    revalidatePath('/admin/photos')
+    return { success: true }
+  } catch (error) {
+    logger.error('Unexpected error assigning categories', { error })
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}
+
+/**
+ * Delete multiple photos at once
+ */
+export async function bulkDeletePhotos(photoIds: string[]) {
+  try {
+    const supabase = await createClient()
+
+    // Get photo info for storage deletion
+    const { data: photos } = await supabase.from('photos').select('storage_url').in('id', photoIds)
+
+    // Extract storage paths from URLs
+    const paths = photos
+      ?.map((photo: any) => {
+        const url = new URL(photo.storage_url)
+        const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
+        return pathMatch ? pathMatch[1] : null
+      })
+      .filter((path: string | null): path is string => path !== null) || []
+
+    // Delete from storage
+    if (paths.length > 0) {
+      const { error: storageError } = await supabase.storage.from('photos').remove(paths)
+      if (storageError) {
+        logger.error('Failed to delete photos from storage', { error: storageError })
+      }
+    }
+
+    // Delete photo categories first (foreign key constraint)
+    await supabase.from('photo_categories').delete().in('photo_id', photoIds)
+
+    // Delete from database
+    const { error: dbError } = await supabase.from('photos').delete().in('id', photoIds)
+
+    if (dbError) {
+      logger.error('Failed to delete photos from database', { error: dbError })
+      return { success: false, error: 'Failed to delete photos' }
+    }
+
+    revalidatePath('/admin/photos')
+    return { success: true }
+  } catch (error) {
+    logger.error('Unexpected error deleting photos', { error })
+    return { success: false, error: 'An unexpected error occurred' }
+  }
+}

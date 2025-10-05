@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signUpNewUser } from "@/app/actions/auth"
+import { signUpNewUser, updateProfile } from "@/app/actions/auth"
 import { authLogger } from "@/lib/logger"
 
 type UserSignupFormData = {
@@ -67,18 +67,12 @@ export function UserSignupForm({ className, ...props }: React.ComponentPropsWith
       }
 
       // Update user profile with additional info
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
+      try {
+        await updateProfile({
           phone: data.phone,
         })
-        .eq('email', data.email)
-
-      if (updateError) {
-        authLogger.error('Error updating user profile:', updateError)
+      } catch (error) {
+        authLogger.error('Error updating user profile:', error)
       }
 
       toast.success("회원가입이 완료되었습니다!")

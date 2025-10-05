@@ -14,9 +14,9 @@ import { Label } from '@/components/ui/label'
 import { CalendarIcon, Search, Filter, Eye, RefreshCw, Download, CreditCard, TrendingUp, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { getPayments, getPayment, getPaymentStatistics } from '@/lib/actions/payments'
 import { createClient } from '@/lib/supabase/client'
 import { PaymentModel, PaymentStatus } from '@/lib/payments/types'
+import { usePayments, usePayment, usePaymentStatistics } from '@/lib/hooks/use-payments'
 
 interface Payment {
   id: string
@@ -66,99 +66,59 @@ interface PaymentFilters {
 }
 
 export default function PhotographerPaymentManagement() {
-  const [payments, setPayments] = useState<Payment[]>([])
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [filters, setFilters] = useState<PaymentFilters>({})
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
-  const [loading, setLoading] = useState(true)
   const [photographerId, setPhotographerId] = useState<string | null>(null)
-  const [statistics, setStatistics] = useState<any>(null)
   const [sortField, setSortField] = useState<'created_at' | 'amount' | 'status'>('created_at')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
 
+  // Get current photographer ID
   useEffect(() => {
+    const getCurrentPhotographer = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setPhotographerId(user.id)
+      }
+    }
     getCurrentPhotographer()
   }, [])
 
+  // Fetch payments using React Query hook
+  const { data: payments = [], isLoading, refetch } = usePayments({
+    photographerId: photographerId || undefined,
+    status: filters.status as any,
+    startDate: filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
+    endDate: filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined,
+    limit: 20,
+    offset: (currentPage - 1) * 20
+  })
+
+  // Fetch statistics using React Query hook
+  const { data: statistics } = usePaymentStatistics(
+    photographerId || undefined,
+    filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
+    filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined
+  )
+
+  // Apply filters whenever payments or filters change
   useEffect(() => {
-    if (photographerId) {
-      loadPayments()
-      loadStatistics()
-    }
-  }, [photographerId, currentPage, sortField, sortDirection])
-
-  useEffect(() => {
-    applyFilters()
-  }, [payments, filters])
-
-  const getCurrentPhotographer = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      setPhotographerId(user.id)
-    }
-  }
-
-  const loadPayments = async () => {
-    if (!photographerId) return
-    
-    setLoading(true)
-    try {
-      const result = await getPayments({
-        photographerId: photographerId,
-        status: filters.status as any,
-        startDate: filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
-        endDate: filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined,
-        limit: 20,
-        offset: (currentPage - 1) * 20
-      })
-
-      if (result.success && result.data) {
-        setPayments(result.data as any)
-      } else {
-        adminLogger.error('Failed to load payments:', (result as any).error || 'Unknown error')
-      }
-    } catch (error) {
-      adminLogger.error('Error loading payments:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadStatistics = async () => {
-    if (!photographerId) return
-    
-    try {
-      const result = await getPaymentStatistics(
-        photographerId,
-        filters.dateRange?.start ? format(filters.dateRange.start, 'yyyy-MM-dd') : undefined,
-        filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined
-      )
-      
-      if (result.success && result.data) {
-        setStatistics(result.data)
-      }
-    } catch (error) {
-      adminLogger.error('Error loading statistics:', error)
-    }
-  }
-
-  const applyFilters = () => {
     let filtered = [...payments]
 
     // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
-      filtered = filtered.filter(payment => 
+      filtered = filtered.filter((payment: any) =>
         payment.order_id.toLowerCase().includes(searchLower) ||
         payment.buyer_name?.toLowerCase().includes(searchLower) ||
         payment.buyer_email?.toLowerCase().includes(searchLower)
       )
     }
 
-    setFilteredPayments(filtered)
-  }
+    setFilteredPayments(filtered as Payment[])
+  }, [payments, filters])
 
   const handleSort = (field: typeof sortField) => {
     if (field === sortField) {
@@ -206,15 +166,19 @@ export default function PhotographerPaymentManagement() {
     }).format(amount)
   }
 
-  const handleViewDetails = async (paymentId: string) => {
-    try {
-      const result = await getPayment(paymentId)
-      if (result.success && result.data) {
-        setSelectedPayment(result.data as any)
-      }
-    } catch (error) {
-      adminLogger.error('Error loading payment details:', error)
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
+
+  // Fetch selected payment details using React Query hook
+  const { data: selectedPaymentData } = usePayment(selectedPaymentId || '')
+
+  useEffect(() => {
+    if (selectedPaymentData) {
+      setSelectedPayment(selectedPaymentData as any)
     }
+  }, [selectedPaymentData])
+
+  const handleViewDetails = (paymentId: string) => {
+    setSelectedPaymentId(paymentId)
   }
 
   return (
@@ -223,7 +187,7 @@ export default function PhotographerPaymentManagement() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">내 결제 내역</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadPayments} disabled={loading}>
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             새로고침
           </Button>
@@ -351,7 +315,7 @@ export default function PhotographerPaymentManagement() {
             </div>
           </div>
 
-          <Button onClick={loadPayments} disabled={loading} className="w-full md:w-auto">
+          <Button onClick={() => refetch()} disabled={isLoading} className="w-full md:w-auto">
             조회
           </Button>
         </CardContent>
@@ -394,7 +358,7 @@ export default function PhotographerPaymentManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
+                {isLoading ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                       로딩중...

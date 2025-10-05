@@ -9,10 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Edit, Trash2, Clock } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
 import { format, addMinutes, parse } from "date-fns"
+import { toast } from "sonner"
 import type { AvailableSlot } from "@/types/schedule.types"
+import { useCreateSlot, useDeleteSlot, useToggleSlotAvailability } from "@/lib/hooks/use-slots"
 
 interface SlotManagerProps {
   date: string
@@ -28,7 +28,20 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
     startTime: "09:00",
     durationMinutes: 45,
   })
-  const supabase = createClient()
+
+  const createSlotMutation = useCreateSlot(() => {
+    setNewSlot({ startTime: "09:00", durationMinutes: 45 })
+    setIsAdding(false)
+    onSlotsChange()
+  })
+
+  const deleteSlotMutation = useDeleteSlot(() => {
+    onSlotsChange()
+  })
+
+  const toggleAvailabilityMutation = useToggleSlotAvailability(() => {
+    onSlotsChange()
+  })
 
   // Generate time options (15-minute intervals)
   const generateTimeOptions = () => {
@@ -56,81 +69,51 @@ export function SlotManager({ date, slots, adminId, onSlotsChange }: SlotManager
     }
   }
 
-  const handleAddSlot = async () => {
+  const handleAddSlot = () => {
     adminLogger.info('Adding new slot', newSlot)
-    try {
-      // Calculate end time based on custom duration
-      const endTime = calculateEndTime(newSlot.startTime, newSlot.durationMinutes)
 
-      // Validate times
-      if (newSlot.startTime >= endTime) {
-        toast.error("Invalid time calculation")
-        return
-      }
+    // Calculate end time based on custom duration
+    const endTime = calculateEndTime(newSlot.startTime, newSlot.durationMinutes)
 
-      // Check for overlapping slots
-      const hasOverlap = slots.some((slot) => {
-        return (
-          (newSlot.startTime >= slot.start_time && newSlot.startTime < slot.end_time) ||
-          (endTime > slot.start_time && endTime <= slot.end_time) ||
-          (newSlot.startTime <= slot.start_time && endTime >= slot.end_time)
-        )
-      })
-
-      if (hasOverlap) {
-        toast.error("이 시간대는 기존 슬롯과 겹칩니다")
-        return
-      }
-
-      const { error } = await supabase.from("available_slots").insert({
-        date,
-        start_time: newSlot.startTime,
-        end_time: endTime,
-        duration_minutes: newSlot.durationMinutes,
-        is_available: true,
-        admin_id: adminId,
-      })
-
-      if (error) throw error
-
-      setNewSlot({ startTime: "09:00", durationMinutes: 45 })
-      setIsAdding(false)
-      onSlotsChange()
-      toast.success("시간 슬롯이 성공적으로 추가되었습니다")
-    } catch (error) {
-      adminLogger.error("Error adding slot:", error)
-      toast.error("시간 슬롯 추가에 실패했습니다")
+    // Validate times
+    if (newSlot.startTime >= endTime) {
+      toast.error("Invalid time calculation")
+      return
     }
+
+    // Check for overlapping slots
+    const hasOverlap = slots.some((slot) => {
+      return (
+        (newSlot.startTime >= slot.start_time && newSlot.startTime < slot.end_time) ||
+        (endTime > slot.start_time && endTime <= slot.end_time) ||
+        (newSlot.startTime <= slot.start_time && endTime >= slot.end_time)
+      )
+    })
+
+    if (hasOverlap) {
+      toast.error("이 시간대는 기존 슬롯과 겹칩니다")
+      return
+    }
+
+    createSlotMutation.mutate({
+      adminId,
+      date,
+      startTime: newSlot.startTime,
+      endTime,
+      durationMinutes: newSlot.durationMinutes,
+    })
   }
 
-  const handleDeleteSlot = async (slotId: string) => {
+  const handleDeleteSlot = (slotId: string) => {
     if (!confirm("이 시간 슬롯을 삭제하시겠습니까?")) return
-
-    try {
-      const { error } = await supabase.from("available_slots").delete().eq("id", slotId)
-
-      if (error) throw error
-
-      onSlotsChange()
-      toast.success("시간 슬롯이 삭제되었습니다")
-    } catch (error) {
-      adminLogger.error("Error deleting slot:", error)
-      toast.error("시간 슬롯 삭제에 실패했습니다")
-    }
+    deleteSlotMutation.mutate(slotId)
   }
 
-  const handleToggleAvailability = async (slotId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase.from("available_slots").update({ is_available: !currentStatus }).eq("id", slotId)
-
-      if (error) throw error
-
-      onSlotsChange()
-      toast.success(`슬롯이 ${!currentStatus ? "예약 가능" : "예약 불가"}으로 변경되었습니다`)
-    } catch (error) {
-      adminLogger.error("Error updating slot:", error)
-      toast.error("슬롯 상태 변경에 실패했습니다")
-    }
+  const handleToggleAvailability = (slotId: string, currentStatus: boolean) => {
+    toggleAvailabilityMutation.mutate({
+      slotId,
+      isAvailable: !currentStatus,
+    })
   }
 
   const formatTime = (time: string) => {

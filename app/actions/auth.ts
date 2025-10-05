@@ -60,6 +60,7 @@ export const getCurrentUser = unstable_cache(
       id: completeUser.id,
       email: completeUser.email,
       name: completeUser.name,
+      phone: completeUser.phone,
       role: completeUser.role as 'user' | 'photographer' | 'admin',
       approvalStatus: completeUser.approvalStatus,
       profileImageUrl: completeUser.profileImageUrl || undefined,
@@ -120,6 +121,61 @@ export async function updateProfile(updates: { name?: string; phone?: string }) 
 
   // 최신 정보 반환 (자동으로 쿠키 업데이트됨)
   return await getCurrentUser()
+}
+
+/**
+ * 프로필 완성 (신규 사용자용)
+ */
+export async function completeProfile(userId: string, data: { name: string; phone: string }) {
+  const supabase = await createClient()
+
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      name: data.name,
+      phone: data.phone,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId)
+
+  if (updateError) {
+    authLogger.error('Profile completion failed', { userId, error: updateError })
+    return {
+      success: false,
+      error: updateError.message || '프로필 업데이트에 실패했습니다',
+    }
+  }
+
+  // Get updated user info
+  const { data: userData } = await supabase
+    .from('users')
+    .select('id, email, name, role, phone')
+    .eq('id', userId)
+    .single()
+
+  if (!userData) {
+    authLogger.error('User not found after profile update', { userId })
+    return {
+      success: false,
+      error: '사용자 정보를 찾을 수 없습니다',
+    }
+  }
+
+  // Update cookie with new phone info
+  await setUserCookie({
+    id: userData.id,
+    email: userData.email,
+    name: userData.name,
+    phone: userData.phone,
+    role: userData.role as 'user' | 'photographer' | 'admin',
+  })
+
+  authLogger.info('Profile completed successfully', { userId })
+
+  return {
+    success: true,
+    data: userData,
+  }
 }
 
 /**
@@ -230,6 +286,7 @@ export async function loginWithRole(email: string, password: string) {
       id: userData.id,
       email: userData.email,
       name: userData.name,
+      phone: userData.phone,
       role: userData.role as 'user' | 'photographer' | 'admin',
       approvalStatus: photographerData?.approval_status,
       profileImageUrl: photographerData?.profile_image_url || undefined,

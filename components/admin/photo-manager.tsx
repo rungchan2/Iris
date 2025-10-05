@@ -10,6 +10,7 @@ import { CategoryAssignModal } from "@/components/admin/category-assign-modal"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
+import { assignCategories as assignCategoriesAction, bulkDeletePhotos } from "@/lib/actions/photos"
 
 const PHOTOS_PER_PAGE = 500
 
@@ -155,20 +156,9 @@ export default function PhotoManager({ categories, userId, isAdmin, initialPage,
   // Mutation for category assignment
   const assignCategories = useMutation({
     mutationFn: async ({ photoIds, categoryIds }: { photoIds: string[]; categoryIds: string[] }) => {
-      // Delete existing assignments for these photos
-      await supabase.from("photo_categories").delete().in("photo_id", photoIds)
-
-      // Insert new assignments
-      const assignments = photoIds.flatMap((photoId) =>
-        categoryIds.map((categoryId) => ({
-          photo_id: photoId,
-          category_id: categoryId,
-        })),
-      )
-
-      if (assignments.length > 0) {
-        const { error } = await supabase.from("photo_categories").insert(assignments)
-        if (error) throw error
+      const result = await assignCategoriesAction(photoIds, categoryIds)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to assign categories')
       }
     },
     onSuccess: () => {
@@ -176,52 +166,26 @@ export default function PhotoManager({ categories, userId, isAdmin, initialPage,
       setSelectedPhotos(new Set())
       toast.success("Categories assigned successfully")
     },
-    onError: (error) => {
-      console.error("Error assigning categories:", error)
-      toast.error("Failed to assign categories")
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to assign categories")
     },
   })
 
   // Mutation for bulk delete
   const deletePhotos = useMutation({
     mutationFn: async (photoIds: string[]) => {
-      const supabase = createClient()
-
-      // Get photo info for storage deletion
-      const { data: photos } = await supabase.from("photos").select("storage_url").in("id", photoIds)
-
-      // Extract storage paths from URLs
-      const paths = photos
-        ?.map((photo) => {
-          const url = new URL(photo.storage_url)
-          const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/photos\/(.+)/)
-          return pathMatch ? pathMatch[1] : null
-        })
-        .filter((path): path is string => path !== null) || []
-
-      // Delete from storage
-      if (paths.length > 0) {
-        const { error: storageError } = await supabase.storage.from("photos").remove(paths)
-
-        if (storageError) throw storageError
+      const result = await bulkDeletePhotos(photoIds)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete photos')
       }
-
-      // Delete photo categories first (foreign key constraint)
-      await supabase.from("photo_categories").delete().in("photo_id", photoIds)
-
-      // Delete from database
-      const { error: dbError } = await supabase.from("photos").delete().in("id", photoIds)
-
-      if (dbError) throw dbError
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["photos"] })
       setSelectedPhotos(new Set())
       toast.success("Photos deleted successfully")
     },
-    onError: (error) => {
-      toast.error("Failed to delete photos")
-      console.error(error)
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete photos")
     },
   })
 

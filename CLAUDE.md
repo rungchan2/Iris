@@ -527,21 +527,21 @@ export function ProductsManagementClient({
 
 **Use Database Types:**
 ```typescript
-import { Database } from '@/types/database.types'
+import type { Database, Tables, TablesInsert, TablesUpdate } from '@/types'
 
-// Good - Use generated types
-type Product = Database['public']['Tables']['products']['Row']
-type ProductInsert = Database['public']['Tables']['products']['Insert']
-type ProductUpdate = Database['public']['Tables']['products']['Update']
+// ✅ Good - Use generated types
+type Product = Tables<'products'>
+type ProductInsert = TablesInsert<'products'>
+type ProductUpdate = TablesUpdate<'products'>
 
-// Good - Create domain-specific types
+// ✅ Good - Create domain-specific types
 type MatchingResultUpdate = {
   viewed_at?: string | null
   clicked_at?: string | null
   contacted_at?: string | null
 }
 
-// Good - Union types with type guards
+// ✅ Good - Union types with type guards
 type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: string }
@@ -556,8 +556,45 @@ if (result.success) {
   console.log(result.error)
 }
 
-// Bad
-function doSomething(data: any) { }  // ❌ Avoid
+// ❌ Bad
+function doSomething(data: any) { }  // Avoid
+```
+
+**Use Enums (MANDATORY):**
+```typescript
+import { APPROVAL_STATUS, USER_ROLE, type ApprovalStatus, type UserRole } from '@/types'
+
+// ✅ Good - Use enum constants
+const status: ApprovalStatus = APPROVAL_STATUS.APPROVED
+const role: UserRole = USER_ROLE.PHOTOGRAPHER
+
+// ✅ Good - Type-safe function parameters
+function updatePhotographerStatus(
+  photographerId: string,
+  status: ApprovalStatus  // Only 'pending' | 'approved' | 'rejected'
+) {
+  // ...
+}
+
+// ✅ Good - Runtime validation with type guards
+import { isApprovalStatus, isUserRole } from '@/types'
+
+function handleStatus(value: unknown) {
+  if (isApprovalStatus(value)) {
+    // TypeScript knows value is ApprovalStatus
+    updatePhotographerStatus(id, value)
+  }
+}
+
+// ✅ Good - Display labels for UI
+import { APPROVAL_STATUS_LABELS, USER_ROLE_LABELS } from '@/types'
+
+const statusLabel = APPROVAL_STATUS_LABELS[status]  // '승인됨'
+const roleLabel = USER_ROLE_LABELS[role]            // '사진작가'
+
+// ❌ Bad - String literals
+const status = 'approved'  // No type safety
+if (value === 'approved' || value === 'pending')  // Manual checking
 ```
 
 **Supabase Client Typing:**
@@ -678,6 +715,7 @@ if (error) {
 /lib/hooks/use-products.ts
 /components/admin/products/product-create-dialog.tsx
 /components/admin/products/products-management-client.tsx
+/types/inquiry.types.ts
 
 ❌ Bad:
 /lib/actions/product.ts  (singular)
@@ -685,7 +723,93 @@ if (error) {
 /components/admin/ProductCreateDialog.tsx  (PascalCase file name)
 ```
 
-#### 9. Database Query Optimization
+#### 9. Zod Schema and Form Validation (MANDATORY)
+
+**NEVER define Zod schemas inline in components or functions.**
+
+All Zod schemas must be defined in `/types/` folder with database type checks.
+
+**Required Structure:**
+```typescript
+// /types/payment.types.ts
+import { z } from 'zod'
+import type { Tables, TablesInsert, TablesUpdate } from './database.types'
+
+// 1. Define Zod schema
+export const paymentFormSchema = z.object({
+  amount: z.number().min(0),
+  buyer_name: z.string().min(1),
+  buyer_email: z.string().email(),
+})
+
+export type PaymentFormData = z.infer<typeof paymentFormSchema>
+
+// 2. Define database types
+export type Payment = Tables<'payments'>
+export type PaymentInsert = TablesInsert<'payments'>
+export type PaymentUpdate = TablesUpdate<'payments'>
+
+// 3. Add build-time type checks (MANDATORY)
+type _PaymentFormDataCheck = {
+  amount: PaymentFormData['amount'] extends PaymentInsert['amount'] ? true : 'amount type mismatch'
+  buyer_name: PaymentFormData['buyer_name'] extends PaymentInsert['buyer_name'] ? true : 'buyer_name type mismatch'
+  buyer_email: PaymentFormData['buyer_email'] extends PaymentInsert['buyer_email'] ? true : 'buyer_email type mismatch'
+}
+```
+
+**Export from `/types/index.ts`:**
+```typescript
+export {
+  paymentFormSchema,
+  type PaymentFormData,
+  type Payment,
+  type PaymentInsert,
+  type PaymentUpdate,
+} from './payment.types'
+```
+
+**Usage in Components:**
+```typescript
+// ✅ Good - Import from types
+import { paymentFormSchema, type PaymentFormData } from '@/types'
+
+export function PaymentForm() {
+  const form = useForm<PaymentFormData>({
+    resolver: zodResolver(paymentFormSchema),
+  })
+  // ...
+}
+
+// ❌ Bad - Defining schema in component
+import { z } from 'zod'
+
+export function PaymentForm() {
+  const schema = z.object({ ... })  // NEVER do this!
+}
+```
+
+**Type Check Benefits:**
+- When database schema changes (e.g., field becomes required), build will fail
+- TypeScript error forces Zod schema update to match database
+- Prevents runtime errors from schema/database mismatch
+
+**Handling Type Conversions:**
+Some fields may differ between form and database (e.g., Date vs string):
+
+```typescript
+// Document conversions in comments
+export const inquiryFormSchema = z.object({
+  desired_date: z.date(),  // Date in form, string in DB
+})
+
+// Skip converted fields in type check
+type _InquiryFormValuesCheck = {
+  // desired_date: handled in conversion layer
+  name: InquiryFormValues['name'] extends InquiryInsert['name'] ? true : 'name type mismatch'
+}
+```
+
+#### 10. Database Query Optimization
 
 **NEVER use loops to fetch related data (N+1 queries).**
 

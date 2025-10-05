@@ -369,3 +369,54 @@ export async function copySlotsToDate(
     return { data: null, error: 'Failed to copy slots' }
   }
 }
+
+/**
+ * Get slot counts for multiple dates (used by booking calendar)
+ */
+export async function getSlotCountsByDates(
+  availableDates: string[],
+  photographerId?: string
+): Promise<{
+  data: Record<string, { total: number; available: number }> | null
+  error: string | null
+}> {
+  try {
+    const supabase = await createClient()
+
+    if (availableDates.length === 0) {
+      return { data: {}, error: null }
+    }
+
+    let query = supabase
+      .from('available_slots')
+      .select('date, is_available')
+      .in('date', availableDates)
+
+    // Filter by photographer ID if provided
+    if (photographerId) {
+      query = query.eq('admin_id', photographerId)
+    }
+
+    const { data: slots, error } = await query
+
+    if (error) {
+      console.error('Error fetching slot counts:', error)
+      return { data: null, error: error.message }
+    }
+
+    const counts: Record<string, { total: number; available: number }> = {}
+
+    for (const date of availableDates) {
+      const dateSlots = slots?.filter((slot) => slot.date === date) || []
+      counts[date] = {
+        total: dateSlots.length,
+        available: dateSlots.filter((slot) => slot.is_available).length,
+      }
+    }
+
+    return { data: counts, error: null }
+  } catch (error) {
+    console.error('Error in getSlotCountsByDates:', error)
+    return { data: null, error: 'Failed to get slot counts' }
+  }
+}

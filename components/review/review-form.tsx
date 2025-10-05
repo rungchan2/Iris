@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,22 +20,7 @@ import { StarRating } from "./star-rating";
 import { submitReview } from "@/lib/actions/reviews";
 import { Camera, Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const reviewSchema = z.object({
-  reviewer_name: z.string().optional(),
-  rating: z.number().min(1, "평점을 선택해주세요").max(5),
-  comment: z.string().optional(),
-  is_public: z.boolean(),
-  is_anonymous: z.boolean(),
-});
-
-type ReviewFormData = {
-  reviewer_name?: string;
-  rating: number;
-  comment?: string;
-  is_public: boolean;
-  is_anonymous: boolean;
-};
+import { reviewSchema, type ReviewFormData } from "@/types/review.types";
 
 interface ReviewFormProps {
   token: string;

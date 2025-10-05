@@ -5,8 +5,29 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star, ArrowRight, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FeaturedPhotographer } from '@/lib/actions/photographers';
 
-const photographers = [
+interface PhotographerDisplay {
+  id: string | number;
+  name: string;
+  title: string;
+  description: string;
+  images: string[];
+  rating: number;
+  reviews: number;
+  specialties: string[];
+  yearsOfExperience: number;
+  profileUrl: string;
+  bookingUrl: string;
+}
+
+interface PhotographerCarouselProps {
+  photographers?: FeaturedPhotographer[];
+}
+
+const PLACEHOLDER_IMAGE = 'https://picsum.photos/seed/placeholder/800/1200';
+
+const dummyPhotographers: PhotographerDisplay[] = [
   {
     id: 1,
     name: '김민수',
@@ -63,18 +84,63 @@ const photographers = [
   },
 ];
 
-export function PhotographerCarousel() {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const [imageIndex, setImageIndex] = useState<{[key: number]: number}>({});
+/**
+ * Transform database photographer to display format
+ */
+function transformPhotographer(photographer: FeaturedPhotographer): PhotographerDisplay {
+  // Get first 4 photos or fill with placeholders
+  const photoUrls = photographer.photos?.map(p => p.storage_url) || [];
+  const images: string[] = [];
 
-  const nextImage = (photographerId: number, totalImages: number) => {
+  for (let i = 0; i < 4; i++) {
+    if (i < photoUrls.length) {
+      images.push(photoUrls[i]);
+    } else {
+      images.push(PLACEHOLDER_IMAGE);
+    }
+  }
+
+  // Use specialties array from DB or provide default
+  const specialties = photographer.specialties && photographer.specialties.length > 0
+    ? photographer.specialties
+    : ['전문 촬영'];
+
+  // Use first specialty as title, or provide default
+  const title = specialties[0] || '전문 사진작가';
+
+  return {
+    id: photographer.id,
+    name: photographer.name,
+    title,
+    description: photographer.bio || '전문적인 촬영 서비스를 제공합니다.',
+    images,
+    rating: photographer.rating || 0,
+    reviews: photographer.review_count || 0,
+    specialties,
+    yearsOfExperience: photographer.years_experience || 0,
+    profileUrl: `/photographers/${photographer.id}`,
+    bookingUrl: `/photographers/${photographer.id}/booking`,
+  };
+}
+
+export function PhotographerCarousel({ photographers: dbPhotographers }: PhotographerCarouselProps) {
+  const [hoveredId, setHoveredId] = useState<string | number | null>(null);
+  const [imageIndex, setImageIndex] = useState<{[key: string | number]: number}>({});
+
+  // Transform DB photographers to display format, or use dummy data
+  const photographers: PhotographerDisplay[] =
+    dbPhotographers && dbPhotographers.length > 0
+      ? dbPhotographers.map(transformPhotographer)
+      : dummyPhotographers;
+
+  const nextImage = (photographerId: string | number, totalImages: number) => {
     setImageIndex(prev => ({
       ...prev,
       [photographerId]: ((prev[photographerId] || 0) + 1) % totalImages
     }));
   };
 
-  const prevImage = (photographerId: number, totalImages: number) => {
+  const prevImage = (photographerId: string | number, totalImages: number) => {
     setImageIndex(prev => ({
       ...prev,
       [photographerId]: ((prev[photographerId] || 0) - 1 + totalImages) % totalImages

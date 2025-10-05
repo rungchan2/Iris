@@ -186,3 +186,190 @@ export async function getPersonalityTypes() {
     return { error: 'Failed to fetch personality types' }
   }
 }
+
+export interface FeaturedPhotographer {
+  id: string
+  name: string
+  email: string
+  bio: string | null
+  specialties: string[] | null
+  profile_image_url: string | null
+  years_experience: number | null
+  rating: number
+  review_count: number
+  photos: Array<{
+    id: string
+    storage_url: string
+  }>
+}
+
+/**
+ * Get featured photographers for homepage (approved photographers with photos)
+ */
+export async function getFeaturedPhotographers(limit: number = 3) {
+  try {
+    const supabase = await createClient()
+
+    // Get approved photographers with their photos
+    const { data: photographers, error } = await supabase
+      .from('photographers')
+      .select(`
+        id,
+        name,
+        email,
+        bio,
+        specialties,
+        profile_image_url,
+        approval_status,
+        years_experience,
+        photos!uploaded_by (
+          id,
+          storage_url
+        )
+      `)
+      .eq('approval_status', 'approved')
+      .not('photos', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      photographerLogger.error('Error fetching featured photographers:', error)
+      return { success: false, error: error.message, data: [] }
+    }
+
+    if (!photographers || photographers.length === 0) {
+      photographerLogger.warn('No approved photographers found')
+      return { success: true, data: [] }
+    }
+
+    // Calculate rating and review count for each photographer
+    const photographersWithStats = await Promise.all(
+      photographers.map(async (photographer) => {
+        // Get reviews for this photographer
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('rating')
+          .eq('photographer_id', photographer.id)
+          .eq('status', 'published')
+
+        const reviewCount = reviews?.length || 0
+        const averageRating =
+          reviewCount > 0
+            ? reviews!.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
+            : 0
+
+        return {
+          ...photographer,
+          rating: Number(averageRating.toFixed(1)),
+          review_count: reviewCount,
+          photos: photographer.photos || [],
+        } as FeaturedPhotographer
+      })
+    )
+
+    photographerLogger.info(`Fetched ${photographersWithStats.length} featured photographers`)
+
+    return {
+      success: true,
+      data: photographersWithStats,
+    }
+  } catch (error) {
+    photographerLogger.error('Unexpected error fetching featured photographers:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      data: [],
+    }
+  }
+}
+
+/**
+ * Get current photographer's profile with photographer_profiles data
+ * @returns Current photographer data with profile or null if not found/authenticated
+ */
+export async function getCurrentPhotographerProfile() {
+  try {
+    const supabase = await createClient()
+
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'Not authenticated',
+      }
+    }
+
+    // Get photographer data
+    const { data: photographer, error: photographerError } = await supabase
+      .from('photographers')
+      .select('*')
+      .eq('email', user.email!)
+      .single()
+
+    if (photographerError || !photographer) {
+      photographerLogger.error('Photographer not found', { email: user.email, error: photographerError })
+      return {
+        success: false,
+        error: 'Photographer not found',
+      }
+    }
+
+    // Get photographer profile (or create if doesn't exist)
+    const profileResult = await supabase
+      .from('photographer_profiles')
+      .select('*')
+      .eq('photographer_id', photographer.id)
+      .single()
+
+    let profile = profileResult.data
+
+    // If profile doesn't exist, create it
+    if (profileResult.error && profileResult.error.code === 'PGRST116') {
+      const { data: newProfile, error: createError } = await supabase
+        .from('photographer_profiles')
+        .insert({
+          photographer_id: photographer.id,
+          service_regions: [],
+          price_min: 100000,
+          price_max: 500000,
+          companion_types: [],
+          profile_completed: false
+        })
+        .select()
+        .single()
+
+      if (createError) {
+        photographerLogger.error('Error creating profile', createError)
+        return {
+          success: false,
+          error: 'Failed to create profile',
+        }
+      }
+
+      profile = newProfile
+    } else if (profileResult.error) {
+      photographerLogger.error('Error loading profile', profileResult.error)
+      return {
+        success: false,
+        error: 'Failed to load profile',
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        photographer,
+        profile,
+        user
+      },
+    }
+  } catch (error) {
+    photographerLogger.error('Error in getCurrentPhotographerProfile', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unexpected error',
+    }
+  }
+}

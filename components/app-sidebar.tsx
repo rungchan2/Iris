@@ -19,7 +19,9 @@ import {
   Camera,
   Settings,
   TrendingUp,
-  Package
+  Package,
+  Ticket,
+  Heart
 } from "lucide-react"
 
 import {
@@ -138,6 +140,28 @@ const navItems: NavItem[] = [
     title: "결제 관리",
     url: "/admin/payments",
     icon: CreditCard,
+    requiredPermission: "canAccessAnalytics",
+  },
+  {
+    title: "쿠폰 관리",
+    url: "/admin/coupons",
+    icon: Ticket,
+    requiredPermission: "canAccessAnalytics",
+    items: [
+      {
+        title: "쿠폰 발급",
+        url: "/admin/coupons",
+      },
+      {
+        title: "템플릿 관리",
+        url: "/admin/coupon-templates",
+      },
+    ],
+  },
+  {
+    title: "사연 관리",
+    url: "/admin/stories",
+    icon: Heart,
     requiredPermission: "canAccessAnalytics",
   },
   {

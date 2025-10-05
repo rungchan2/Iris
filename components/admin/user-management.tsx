@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Plus, Users, Shield, Trash2, Eye, EyeOff, Info } from 'lucide-react'
@@ -19,62 +18,34 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { toast } from 'sonner'
 
-import { createAdminUser, createPhotographerUser, getAdminUsers, getPhotographerUsers, deleteUser } from '@/lib/actions/user-management'
-
-const createAdminSchema = z.object({
-  email: z.string().email('올바른 이메일 주소를 입력해주세요'),
-  password: z.string().min(8, '비밀번호는 최소 8자 이상이어야 합니다'),
-  name: z.string().min(1, '이름을 입력해주세요'),
-})
-
-const createPhotographerSchema = z.object({
-  email: z.string().email('올바른 이메일 주소를 입력해주세요'),
-  password: z.string().min(8, '비밀번호는 최소 8자 이상이어야 합니다'),
-  name: z.string().min(1, '이름을 입력해주세요'),
-  phone: z.string().optional(),
-  website_url: z.string().url().optional().or(z.literal('')),
-  instagram_handle: z.string().optional(),
-  bio: z.string().optional(),
-})
-
-type CreateAdminFormData = z.infer<typeof createAdminSchema>
-type CreatePhotographerFormData = z.infer<typeof createPhotographerSchema>
-
-interface AdminUser {
-  id: string
-  email: string
-  name: string
-  role: string
-  created_at: string | null
-  is_active: boolean | null
-}
-
-interface PhotographerUser {
-  id: string
-  email: string
-  name: string
-  phone: string | null
-  website_url: string | null
-  instagram_handle: string | null
-  bio: string | null
-  created_at: string
-  approval_status: string
-}
+import {
+  createAdminSchema,
+  createPhotographerSchema,
+  type CreateAdminFormData,
+  type CreatePhotographerFormData,
+  type AdminUser,
+  type PhotographerUser
+} from '@/types/user-management.types'
+import {
+  useAdminUsers,
+  usePhotographerUsers,
+  useCreateAdminUser,
+  useCreatePhotographerUser,
+  useDeleteUser,
+} from '@/lib/hooks/use-user-management'
 
 export function UserManagement() {
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
-  const [photographerUsers, setPhotographerUsers] = useState<PhotographerUser[]>([])
-  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true)
-  const [isLoadingPhotographers, setIsLoadingPhotographers] = useState(true)
-  const [isCreating, setIsCreating] = useState(false)
   const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false)
   const [isPhotographerDialogOpen, setIsPhotographerDialogOpen] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<AdminUser | PhotographerUser | null>(null)
   const [selectedUserType, setSelectedUserType] = useState<'admin' | 'photographer' | null>(null)
+
+  // Fetch users using React Query hooks
+  const { data: adminUsers = [], isLoading: isLoadingAdmins } = useAdminUsers()
+  const { data: photographerUsers = [], isLoading: isLoadingPhotographers } = usePhotographerUsers()
 
   const adminForm = useForm<CreateAdminFormData>({
     resolver: zodResolver(createAdminSchema),
@@ -84,107 +55,29 @@ export function UserManagement() {
     resolver: zodResolver(createPhotographerSchema),
   })
 
-  const loadAdminUsers = async () => {
-    setIsLoadingAdmins(true)
-    try {
-      const result = await getAdminUsers()
-      if (result.success && result.data) {
-        setAdminUsers(result.data)
-      } else if (result.error) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error('관리자 목록을 불러오는 중 오류가 발생했습니다.')
-    } finally {
-      setIsLoadingAdmins(false)
-    }
+  // Mutation hooks
+  const createAdminMutation = useCreateAdminUser(() => {
+    setIsAdminDialogOpen(false)
+    adminForm.reset()
+  })
+
+  const createPhotographerMutation = useCreatePhotographerUser(() => {
+    setIsPhotographerDialogOpen(false)
+    photographerForm.reset()
+  })
+
+  const deleteUserMutation = useDeleteUser()
+
+  const onCreateAdmin = (data: CreateAdminFormData) => {
+    createAdminMutation.mutate(data)
   }
 
-  const loadPhotographerUsers = async () => {
-    setIsLoadingPhotographers(true)
-    try {
-      const result = await getPhotographerUsers()
-      if (result.success && result.data) {
-        setPhotographerUsers(result.data.map((user: any) => ({
-          id: user.id,
-          email: user.email || '',
-          name: user.name || '',
-          phone: user.phone,
-          website_url: user.photographers?.[0]?.website_url || null,
-          instagram_handle: user.photographers?.[0]?.instagram_handle || null,
-          bio: user.photographers?.[0]?.bio || null,
-          created_at: user.created_at || new Date().toISOString(),
-          approval_status: user.photographers?.[0]?.approval_status || 'pending'
-        })))
-      } else if (result.error) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error('작가 목록을 불러오는 중 오류가 발생했습니다.')
-    } finally {
-      setIsLoadingPhotographers(false)
-    }
+  const onCreatePhotographer = (data: CreatePhotographerFormData) => {
+    createPhotographerMutation.mutate(data)
   }
 
-  useEffect(() => {
-    loadAdminUsers()
-    loadPhotographerUsers()
-  }, [])
-
-  const onCreateAdmin = async (data: CreateAdminFormData) => {
-    setIsCreating(true)
-    try {
-      const result = await createAdminUser(data)
-      if (result.success) {
-        toast.success(result.message)
-        setIsAdminDialogOpen(false)
-        adminForm.reset()
-        loadAdminUsers()
-      } else if (result.error) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error('관리자 생성 중 오류가 발생했습니다.')
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  const onCreatePhotographer = async (data: CreatePhotographerFormData) => {
-    setIsCreating(true)
-    try {
-      const result = await createPhotographerUser(data)
-      if (result.success) {
-        toast.success(result.message)
-        setIsPhotographerDialogOpen(false)
-        photographerForm.reset()
-        loadPhotographerUsers()
-      } else if (result.error) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error('작가 생성 중 오류가 발생했습니다.')
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  const handleDeleteUser = async (userId: string, userType: 'admin' | 'photographer') => {
-    try {
-      const result = await deleteUser(userId, userType)
-      if (result.success) {
-        toast.success(result.message)
-        if (userType === 'admin') {
-          loadAdminUsers()
-        } else {
-          loadPhotographerUsers()
-        }
-      } else if (result.error) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error('사용자 삭제 중 오류가 발생했습니다.')
-    }
+  const handleDeleteUser = (userId: string, userType: 'admin' | 'photographer') => {
+    deleteUserMutation.mutate({ userId, userType })
   }
 
   const handleViewUser = (user: AdminUser | PhotographerUser, userType: 'admin' | 'photographer') => {
@@ -357,12 +250,12 @@ export function UserManagement() {
                               type="button"
                               variant="outline"
                               onClick={() => setIsAdminDialogOpen(false)}
-                              disabled={isCreating}
+                              disabled={createAdminMutation.isPending}
                             >
                               취소
                             </Button>
-                            <Button type="submit" disabled={isCreating}>
-                              {isCreating ? '생성 중...' : '생성'}
+                            <Button type="submit" disabled={createAdminMutation.isPending}>
+                              {createAdminMutation.isPending ? '생성 중...' : '생성'}
                             </Button>
                           </div>
                         </form>
@@ -601,12 +494,12 @@ export function UserManagement() {
                             type="button"
                             variant="outline"
                             onClick={() => setIsPhotographerDialogOpen(false)}
-                            disabled={isCreating}
+                            disabled={createPhotographerMutation.isPending}
                           >
                             취소
                           </Button>
-                          <Button type="submit" disabled={isCreating}>
-                            {isCreating ? '생성 중...' : '생성'}
+                          <Button type="submit" disabled={createPhotographerMutation.isPending}>
+                            {createPhotographerMutation.isPending ? '생성 중...' : '생성'}
                           </Button>
                         </div>
                       </form>

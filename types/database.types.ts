@@ -1963,6 +1963,10 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown

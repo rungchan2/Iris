@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useSlotCounts } from "@/lib/hooks/use-slots";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -56,10 +56,9 @@ export function PersonalInfoForm({
   const [activeSection, setActiveSection] = useState<
     "personal" | "additional" | "final_questions" | "payment"
   >("personal");
-  const [dateSlotCounts, setDateSlotCounts] = useState<
-    Record<string, { total: number; available: number }>
-  >({});
-  const supabase = createClient();
+
+  // Fetch slot counts using React Query hook
+  const { data: dateSlotCounts = {} } = useSlotCounts(availableDates, photographerId);
 
   const form = useForm<InquiryFormValues>({
     resolver: zodResolver(inquiryFormSchema),
@@ -80,7 +79,6 @@ export function PersonalInfoForm({
       shooting_meaning: "",
     },
   });
-
 
   // Add this after the form initialization
   useEffect(() => {
@@ -118,44 +116,6 @@ export function PersonalInfoForm({
     });
     return () => subscription.unsubscribe();
   }, [form]);
-
-  // Fetch slot counts for available dates
-  useEffect(() => {
-    const fetchSlotCounts = async () => {
-      if (availableDates.length === 0) return;
-
-      let query = supabase
-        .from("available_slots")
-        .select("date, is_available")
-        .in("date", availableDates);
-
-      // Filter by photographer ID if provided
-      if (photographerId) {
-        query = query.eq("admin_id", photographerId);
-      }
-
-      const { data: slots, error } = await query;
-
-      if (error) {
-        console.error("Error fetching slot counts:", error);
-        return;
-      }
-
-      const counts: Record<string, { total: number; available: number }> = {};
-
-      for (const date of availableDates) {
-        const dateSlots = slots?.filter((slot) => slot.date === date) || [];
-        counts[date] = {
-          total: dateSlots.length,
-          available: dateSlots.filter((slot) => slot.is_available).length,
-        };
-      }
-
-      setDateSlotCounts(counts);
-    };
-
-    fetchSlotCounts();
-  }, [availableDates, supabase, photographerId]);
 
   // Removed mood keywords filtering - no longer using keywords
 

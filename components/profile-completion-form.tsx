@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authLogger } from "@/lib/logger"
+import { completeProfile } from "@/app/actions/auth"
 
 type ProfileCompletionFormData = {
   name: string
@@ -56,22 +57,14 @@ export function ProfileCompletionForm({
     try {
       setIsLoading(true)
 
-      // Update user profile
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
+      // Complete user profile using Server Action
+      const result = await completeProfile(userId, {
+        name: data.name,
+        phone: data.phone,
+      })
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          name: data.name,
-          phone: data.phone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId)
-
-      if (updateError) {
-        authLogger.error('Error updating user profile:', updateError)
-        toast.error("프로필 업데이트에 실패했습니다")
+      if (!result.success) {
+        toast.error(result.error || "프로필 업데이트에 실패했습니다")
         return
       }
 

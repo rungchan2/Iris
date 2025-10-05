@@ -40,6 +40,7 @@ export async function GET(request: Request) {
             id: userData.id,
             email: userData.email,
             name: userData.name,
+            phone: userData.phone,
             role: userData.role as 'user' | 'photographer' | 'admin',
             approvalStatus: photographerData?.approval_status,
             profileImageUrl: photographerData?.profile_image_url || undefined,

@@ -60,6 +60,16 @@ export async function middleware(request: NextRequest) {
   const cookieDuration = performance.now() - cookieStartTime
   console.log(`[Middleware Performance] Cookie parsing: ${cookieDuration.toFixed(2)}ms`)
 
+  // Profile completion check (for regular users only)
+  if (user && user.role === 'user' && !user.phone && pathname !== '/profile/complete') {
+    // Exclude public routes from profile completion check
+    if (!isPublicRoute) {
+      console.log('[Middleware] User profile incomplete, redirecting to /profile/complete')
+      url.pathname = '/profile/complete'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // If user is logged in and tries to access login/signup, redirect to appropriate page
   if (user && (pathname === '/login' || pathname === '/signup')) {
     if (user.role === 'admin') {
@@ -124,29 +134,6 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Profile completion check (legacy - keep for backwards compatibility)
-    if (!isPublicRoute) {
-      const dbCheckStartTime = performance.now()
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser()
-
-      if (authUser) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('phone, role')
-          .eq('id', authUser.id)
-          .single()
-
-        const dbCheckDuration = performance.now() - dbCheckStartTime
-        console.log(`[Middleware Performance] DB check: ${dbCheckDuration.toFixed(2)}ms`)
-
-        if (!userData?.phone && userData?.role === 'user') {
-          url.pathname = '/profile/complete'
-          return NextResponse.redirect(url)
-        }
-      }
-    }
   }
 
   const middlewareDuration = performance.now() - middlewareStartTime
