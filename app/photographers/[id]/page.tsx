@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getPhotographerById } from '@/lib/actions/photographers'
 import { PhotographerProfile } from './photographer-profile'
 import { Skeleton } from '@/components/ui/skeleton'
+import { generatePhotographerMetadata } from '@/lib/seo/metadata'
 
 interface PhotographerPageProps {
   params: Promise<{ id: string }>
@@ -12,22 +13,14 @@ interface PhotographerPageProps {
 export async function generateMetadata({ params }: PhotographerPageProps): Promise<Metadata> {
   const { id } = await params
   const result = await getPhotographerById(id)
-  
+
   if (result.error || !result.data) {
     return {
       title: '작가를 찾을 수 없습니다 | kindt'
     }
   }
 
-  const photographer = result.data
-  return {
-    title: `${photographer.name} | kindt`,
-    description: `${photographer.name} 작가의 프로필과 포트폴리오를 확인하고 예약하세요.`,
-    openGraph: {
-      title: `${photographer.name} | kindt`,
-      description: `${photographer.name} 작가의 프로필과 포트폴리오를 확인하고 예약하세요.`,
-    },
-  }
+  return generatePhotographerMetadata(result.data)
 }
 
 function PhotographerProfileSkeleton() {

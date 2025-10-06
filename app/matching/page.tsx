@@ -6,6 +6,7 @@ import { getSurveyQuestions, createMatchingSession } from '@/lib/matching'
 import { SurveyQuestion, SurveyResponses } from '@/types/matching.types'
 import { Loader2, CheckCircle } from 'lucide-react'
 import QuestionCard from '@/components/matching/QuestionCard'
+import { MatchingStructuredData } from '@/components/seo/matching-structured-data'
 
 export default function MatchingPage() {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
@@ -249,8 +250,10 @@ export default function MatchingPage() {
   const progressPercentage = (answeredCount / totalCount) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Header */}
+    <>
+      <MatchingStructuredData />
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="text-center mb-4">
@@ -400,6 +403,7 @@ export default function MatchingPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

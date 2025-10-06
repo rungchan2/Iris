@@ -10,13 +10,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { 
-  Star, 
-  MapPin, 
-  Camera, 
-  Calendar, 
-  Phone, 
-  Mail, 
+import {
+  Star,
+  MapPin,
+  Camera,
+  Calendar,
+  Phone,
+  Mail,
   ArrowLeft,
   Share2,
   Copy,
@@ -36,6 +36,12 @@ import {
   WhatsappIcon,
 } from 'react-share'
 import { YouTubeModal } from '@/components/ui/youtube-modal'
+import { JsonLd } from '@/components/seo/json-ld'
+import {
+  generatePhotographerSchema,
+  generatePhotographerServiceSchema,
+  generateBreadcrumbSchema
+} from '@/lib/seo/structured-data'
 
 interface PhotographerProfileProps {
   photographer: any
@@ -98,9 +104,24 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
   const rating = portfolioPhotos.length > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined
   const reviewCount = portfolioPhotos.length > 0 ? Math.floor((photographer.id.charCodeAt(1) % 20)) + 5 : 0
 
+  // Generate structured data
+  const photographerSchema = generatePhotographerSchema(photographer)
+  const serviceSchema = generatePhotographerServiceSchema(photographer)
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: '홈', url: '/' },
+    { name: '작가 목록', url: '/photographers' },
+    { name: photographer.name, url: `/photographers/${photographer.id}` },
+  ])
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <>
+      {/* Structured Data */}
+      <JsonLd data={photographerSchema} />
+      <JsonLd data={serviceSchema} />
+      <JsonLd data={breadcrumbSchema} />
+
+      <div className="min-h-screen bg-background">
+        {/* Header */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-b">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
@@ -327,9 +348,9 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* Image Modal */}
+        {/* Image Modal */}
       {selectedImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
@@ -355,16 +376,17 @@ export function PhotographerProfile({ photographer }: PhotographerProfileProps) 
         </div>
       )}
 
-      {/* YouTube Modal */}
-      <YouTubeModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedVideo({ id: null, title: '' })
-        }}
-        videoId={selectedVideo.id}
-        title={selectedVideo.title}
-      />
-    </div>
+        {/* YouTube Modal */}
+        <YouTubeModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedVideo({ id: null, title: '' })
+          }}
+          videoId={selectedVideo.id}
+          title={selectedVideo.title}
+        />
+      </div>
+    </>
   )
 }

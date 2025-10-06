@@ -3,15 +3,9 @@ import { Metadata } from 'next'
 import { PhotographersClient } from './photographers-client'
 import { getPhotographers, getPersonalityTypes } from '@/lib/actions/photographers'
 import { Skeleton } from '@/components/ui/skeleton'
+import { generatePhotographersListMetadata } from '@/lib/seo/metadata'
 
-export const metadata: Metadata = {
-  title: '작가 목록 | kindt',
-  description: '나에게 맞는 사진작가를 찾아보세요. 성격유형별 맞춤 작가 추천.',
-  openGraph: {
-    title: '작가 목록 | kindt',
-    description: '나에게 맞는 사진작가를 찾아보세요. 성격유형별 맞춤 작가 추천.',
-  },
-}
+export const metadata: Metadata = generatePhotographersListMetadata()
 
 function PhotographerCardSkeleton() {
   return (
