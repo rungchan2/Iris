@@ -43,6 +43,16 @@ function DynamicBreadcrumbContent() {
         return "성격유형 매칭"
       case "personality-management":
         return "성향 진단 관리"
+      case "products":
+        return "상품 관리"
+      case "payments":
+        return "결제 관리"
+      case "coupons":
+        return "쿠폰 발급"
+      case "coupon-templates":
+        return "쿠폰 템플릿"
+      case "stories":
+        return "사연 관리"
       default:
         return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)
     }

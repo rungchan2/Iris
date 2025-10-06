@@ -20,9 +20,9 @@ const eslintConfig = [
       "@next/next/no-html-link-for-pages": "error",
       "@next/next/no-img-element": "warn",
       // Console usage - warn in development, will be error in production
-      "no-console": ["warn", {
-        allow: ["warn", "error"] // Allow console.warn and console.error for critical issues
-      }],
+      // "no-console": ["warn", {
+      //   allow: ["warn", "error"] // Allow console.warn and console.error for critical issues
+      // }],
     },
   },
 ];

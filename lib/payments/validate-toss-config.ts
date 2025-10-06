@@ -37,9 +37,9 @@ export function validateTossConfig(): { isValid: boolean; errors: string[] } {
   }
   
   // APP URL 확인 (선택사항이지만 권장)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_BASE_URL;
   if (!appUrl) {
-    errors.push('NEXT_PUBLIC_APP_URL 환경 변수가 설정되지 않았습니다. 결제 리디렉션에 문제가 발생할 수 있습니다.');
+    errors.push('NEXT_PUBLIC_BASE_URL 환경 변수가 설정되지 않았습니다. 결제 리디렉션에 문제가 발생할 수 있습니다.');
   }
   
   return {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { useCreateProduct } from '@/lib/hooks/use-products'
+import { useProducts } from '@/lib/hooks/use-products'
 import type { Database } from '@/types/database.types'
 
 interface Photographer {
@@ -57,7 +57,38 @@ export function ProductCreateDialog({ open, onClose, photographers }: ProductCre
     photographer_id: ''
   })
 
-  const createMutation = useCreateProduct()
+  const { create, isCreating } = useProducts()
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: '',
+        description: '',
+        product_code: '',
+        price: 0,
+        weekend_surcharge: 0,
+        holiday_surcharge: 0,
+        shooting_duration: 60,
+        photo_count_min: 10,
+        photo_count_max: null,
+        retouched_count: 0,
+        max_participants: 1,
+        includes_makeup: false,
+        includes_styling: false,
+        includes_props: false,
+        location_type: 'studio',
+        category: '',
+        photographer_id: ''
+      })
+    }
+  }, [open])
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isCreating) {
+      onClose()
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,7 +106,7 @@ export function ProductCreateDialog({ open, onClose, photographers }: ProductCre
       display_order: 0
     }
 
-    createMutation.mutate(productData, {
+    create(productData, {
       onSuccess: () => {
         onClose()
       }
@@ -83,7 +114,7 @@ export function ProductCreateDialog({ open, onClose, photographers }: ProductCre
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>새 상품 추가</DialogTitle>
@@ -202,8 +233,8 @@ export function ProductCreateDialog({ open, onClose, photographers }: ProductCre
             <Button type="button" variant="outline" onClick={onClose}>
               취소
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? '저장 중...' : '저장'}
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? '저장 중...' : '저장'}
             </Button>
           </div>
         </form>

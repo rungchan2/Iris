@@ -27,10 +27,14 @@ const routeMap: Record<string, BreadcrumbRoute> = {
   '/admin/matching/photographers': { label: '작가 프로필 관리' },
   '/admin/matching/analytics': { label: '성능 분석' },
   '/admin/matching/settings': { label: '시스템 설정' },
+  '/admin/products': { label: '상품 관리' },
   '/admin/analytics': { label: '통계 및 분석' },
   '/admin/reviews': { label: '리뷰 관리' },
   '/admin/settlements': { label: '정산 관리' },
   '/admin/payments': { label: '결제 관리' },
+  '/admin/coupons': { label: '쿠폰 발급' },
+  '/admin/coupon-templates': { label: '쿠폰 템플릿' },
+  '/admin/stories': { label: '사연 관리' },
   '/admin/my-page': { label: '내 계정' },
 }
 

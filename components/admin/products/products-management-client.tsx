@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,14 +36,7 @@ import {
   Users, Camera, MapPin, Calendar,
   Check, X, MoreVertical
 } from 'lucide-react'
-import {
-  useProducts,
-  useApprovedPhotographers,
-  useProductStats,
-  useApproveProduct,
-  useRejectProduct,
-  useDeleteProduct,
-} from '@/lib/hooks/use-products'
+import { useProducts } from '@/lib/hooks/use-products'
 import { ProductCreateDialog } from './product-create-dialog'
 import { ProductEditDialog } from './product-edit-dialog'
 import type { Database } from '@/types/database.types'
@@ -75,14 +68,21 @@ export default function ProductsManagementClient({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
 
-  // React Query hooks
-  const { data: products = initialProducts, isPending } = useProducts()
-  const { data: photographers = initialPhotographers } = useApprovedPhotographers()
-  const stats = useProductStats(products)
-  const approveMutation = useApproveProduct()
-  const rejectMutation = useRejectProduct()
-  const deleteMutation = useDeleteProduct()
+  // 🎯 단일 훅으로 모든 기능 사용
+  const { 
+    products, 
+    photographers, 
+    stats, 
+    isLoading,
+    approve, 
+    reject, 
+    delete: deleteProduct,
+    isApproving,
+    isRejecting,
+    isDeleting,
+  } = useProducts()
 
   // Helper functions
   const getStatusBadge = (status: string | null) => {
@@ -127,25 +127,60 @@ export default function ProductsManagementClient({
     return new Intl.NumberFormat('ko-KR').format(price) + '원'
   }
 
+  // Portal animation timing constants
+  const PORTAL_ANIMATION_DURATION = 200 // Radix UI default animation duration
+  const PORTAL_SAFETY_MARGIN = 100 // Extra time for Portal cleanup
+  const PORTAL_TRANSITION_DELAY = PORTAL_ANIMATION_DURATION + PORTAL_SAFETY_MARGIN
+
+  // Async state management refs
+  const timeoutsRef = useRef<{
+    editDialog: NodeJS.Timeout | null
+    closeDialog: NodeJS.Timeout | null
+  }>({ editDialog: null, closeDialog: null })
+
+  // Cleanup all pending timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutsRef.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout)
+      })
+    }
+  }, [])
+
   // Event handlers
   const handleEditProduct = (product: Product) => {
+    // Clear pending edit timeout
+    if (timeoutsRef.current.editDialog) {
+      clearTimeout(timeoutsRef.current.editDialog)
+    }
+
+    // Close DropdownMenu and set selected product
+    setOpenDropdownId(null)
     setSelectedProduct(product)
-    setShowEditDialog(true)
+
+    // Wait for DropdownMenu Portal to fully unmount before opening Dialog
+    timeoutsRef.current.editDialog = setTimeout(() => {
+      setShowEditDialog(true)
+      timeoutsRef.current.editDialog = null
+    }, PORTAL_TRANSITION_DELAY)
   }
 
-  const handleApproveProduct = (productId: string) => {
-    approveMutation.mutate(productId)
+  const handleCloseEditDialog = () => {
+    // Clear pending close timeout
+    if (timeoutsRef.current.closeDialog) {
+      clearTimeout(timeoutsRef.current.closeDialog)
+    }
+
+    setShowEditDialog(false)
+
+    // Wait for Dialog Portal to fully unmount before resetting state
+    timeoutsRef.current.closeDialog = setTimeout(() => {
+      setSelectedProduct(null)
+      timeoutsRef.current.closeDialog = null
+    }, PORTAL_TRANSITION_DELAY)
   }
 
-  const handleRejectProduct = (productId: string) => {
-    rejectMutation.mutate({ productId })
-  }
-
-  const handleDeleteProduct = (productId: string) => {
-    deleteMutation.mutate(productId)
-  }
-
-  // Filtered products using useMemo for performance
+  // Filtered products
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +194,7 @@ export default function ProductsManagementClient({
     })
   }, [products, searchTerm, filterStatus, filterPhotographer])
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="text-center py-8">
         <div className="inline-flex items-center gap-2">
@@ -194,7 +229,7 @@ export default function ProductsManagementClient({
               <Package className="h-4 w-4 text-muted-foreground" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-muted-foreground">전체 상품</p>
-                <p className="text-2xl font-bold">{stats.totalProducts}</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -206,7 +241,7 @@ export default function ProductsManagementClient({
               <Clock className="h-4 w-4 text-yellow-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-muted-foreground">승인 대기</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pendingProducts}</p>
+                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
             </div>
           </CardContent>
@@ -218,7 +253,7 @@ export default function ProductsManagementClient({
               <CheckCircle className="h-4 w-4 text-green-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-muted-foreground">승인됨</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approvedProducts}</p>
+                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
             </div>
           </CardContent>
@@ -230,7 +265,7 @@ export default function ProductsManagementClient({
               <XCircle className="h-4 w-4 text-red-600" />
               <div className="ml-2">
                 <p className="text-sm font-medium text-muted-foreground">거부됨</p>
-                <p className="text-2xl font-bold text-red-600">{stats.rejectedProducts}</p>
+                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
               </div>
             </div>
           </CardContent>
@@ -393,32 +428,42 @@ export default function ProductsManagementClient({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleApproveProduct(product.id)}
+                          onClick={() => approve(product.id)}
+                          disabled={isApproving}
                           className="text-green-600 border-green-600 hover:bg-green-50"
                         >
                           <Check className="h-4 w-4" />
-                          승인
+                          {isApproving ? '처리 중...' : '승인'}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRejectProduct(product.id)}
+                          onClick={() => reject({ productId: product.id })}
+                          disabled={isRejecting}
                           className="text-red-600 border-red-600 hover:bg-red-50"
                         >
                           <X className="h-4 w-4" />
-                          거부
+                          {isRejecting ? '처리 중...' : '거부'}
                         </Button>
                       </>
                     )}
 
-                    <DropdownMenu>
+                    <DropdownMenu
+                      open={openDropdownId === product.id}
+                      onOpenChange={(open) => setOpenDropdownId(open ? product.id : null)}
+                    >
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditProduct(product)}>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            handleEditProduct(product)
+                          }}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           편집
                         </DropdownMenuItem>
@@ -443,10 +488,11 @@ export default function ProductsManagementClient({
                             <AlertDialogFooter>
                               <AlertDialogCancel>취소</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDeleteProduct(product.id)}
+                                onClick={() => deleteProduct(product.id)}
+                                disabled={isDeleting}
                                 className="bg-red-600 hover:bg-red-700"
                               >
-                                삭제
+                                {isDeleting ? '삭제 중...' : '삭제'}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -471,10 +517,7 @@ export default function ProductsManagementClient({
       {selectedProduct && (
         <ProductEditDialog
           open={showEditDialog}
-          onClose={() => {
-            setShowEditDialog(false)
-            setSelectedProduct(null)
-          }}
+          onClose={handleCloseEditDialog}
           product={selectedProduct}
           photographers={photographers}
         />

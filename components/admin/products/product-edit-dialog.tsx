@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useUpdateProduct } from '@/lib/hooks/use-products'
+import { useProducts } from '@/lib/hooks/use-products'
 import type { Database } from '@/types/database.types'
 
 type Product = Database['public']['Tables']['products']['Row'] & {
@@ -64,14 +64,45 @@ export function ProductEditDialog({ open, onClose, product, photographers }: Pro
     is_featured: product.is_featured ?? false
   })
 
-  const updateMutation = useUpdateProduct()
+  const { update, isUpdating } = useProducts()
+
+  // Reset form when product changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: product.name ?? '',
+        description: product.description ?? '',
+        price: product.price ?? 0,
+        weekend_surcharge: product.weekend_surcharge ?? 0,
+        holiday_surcharge: product.holiday_surcharge ?? 0,
+        shooting_duration: product.shooting_duration ?? 60,
+        photo_count_min: product.photo_count_min ?? 10,
+        photo_count_max: product.photo_count_max ?? null,
+        retouched_count: product.retouched_count ?? 0,
+        max_participants: product.max_participants ?? 1,
+        includes_makeup: product.includes_makeup ?? false,
+        includes_styling: product.includes_styling ?? false,
+        includes_props: product.includes_props ?? false,
+        location_type: (product.location_type as 'studio' | 'outdoor' | 'both') ?? 'studio',
+        category: product.category ?? '',
+        photographer_id: product.photographer_id ?? '',
+        is_featured: product.is_featured ?? false
+      })
+    }
+  }, [open, product])
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && !isUpdating) {
+      onClose()
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const updateData: ProductUpdate = formData
 
-    updateMutation.mutate(
+    update(
       { id: product.id, data: updateData },
       {
         onSuccess: () => {
@@ -82,7 +113,7 @@ export function ProductEditDialog({ open, onClose, product, photographers }: Pro
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>상품 편집</DialogTitle>
@@ -156,8 +187,8 @@ export function ProductEditDialog({ open, onClose, product, photographers }: Pro
             <Button type="button" variant="outline" onClick={onClose}>
               취소
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? '저장 중...' : '저장'}
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? '저장 중...' : '저장'}
             </Button>
           </div>
         </form>

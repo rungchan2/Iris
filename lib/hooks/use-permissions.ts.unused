@@ -37,15 +37,18 @@ export function usePermissions() {
 
         // Check if user is admin (stored in auth.users metadata)
         const isAdmin = session.user.user_metadata?.user_type === 'admin'
-        
-        // Check if user is photographer (exists in photographers table)
-        const { data: photographer, error: photographerError } = await supabase
-          .from('photographers')
-          .select('id')
-          .eq('id', session.user.id)
-          .single()
 
-        const isPhotographer = !!photographer
+        // Only check photographer table if NOT admin (avoids unnecessary query)
+        let isPhotographer = false
+        if (!isAdmin) {
+          const { data: photographer } = await supabase
+            .from('photographers')
+            .select('id')
+            .eq('id', session.user.id)
+            .maybeSingle()  // Use maybeSingle to avoid error when no rows
+
+          isPhotographer = !!photographer
+        }
 
         // Admin has access to everything
         if (isAdmin) {

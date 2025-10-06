@@ -38,7 +38,7 @@ export async function getProducts(): Promise<ApiResponse<Product[]>> {
       .from('products')
       .select(`
         *,
-        photographer:photographers(name, email)
+        photographer:photographers!products_photographer_id_fkey(name, email)
       `)
       .order('created_at', { ascending: false })
 
@@ -111,7 +111,7 @@ export async function createProduct(productData: ProductInsert): Promise<ApiResp
       })
       .select(`
         *,
-        photographer:photographers(name, email)
+        photographer:photographers!products_photographer_id_fkey(name, email)
       `)
       .single()
 
@@ -147,7 +147,7 @@ export async function updateProduct(
       .eq('id', productId)
       .select(`
         *,
-        photographer:photographers(name, email)
+        photographer:photographers!products_photographer_id_fkey(name, email)
       `)
       .single()
 

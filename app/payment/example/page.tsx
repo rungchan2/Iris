@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { TossPaymentWidget } from '@/components/payment/toss-payment-widget';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { generateOrderId } from '@/lib/payments/toss-client';
-import { paymentLogger } from '@/lib/logger';
+import { useState } from "react";
+import { TossPaymentWidget } from "@/components/payment/toss-payment-widget";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { generateOrderId } from "@/lib/payments/toss-client";
+import { paymentLogger } from "@/lib/logger";
 
 /**
  * TossPayments 결제 위젯 통합 예제 페이지
- * 
+ *
  * 이 페이지는 TossPaymentWidget 컴포넌트의 사용법을 보여줍니다.
  * 실제 프로덕션에서는 이 페이지를 삭제하고, 예약 플로우에 통합하세요.
  */
@@ -19,33 +19,35 @@ export default function PaymentExamplePage() {
 
   // 예시 데이터
   const mockInquiry = {
-    id: 'inquiry_123',
-    name: '김고객',
-    phone: '010-1234-5678',
-    email: 'customer@example.com'
+    id: "inquiry_123",
+    name: "김고객",
+    phone: "010-1234-5678",
+    email: "customer@example.com",
   };
 
   const mockProduct = {
-    id: 'product_456',
-    name: '프리미엄 프로필 촬영',
+    id: "product_456",
+    name: "프리미엄 프로필 촬영",
     price: 150000,
-    photographer_id: 'photographer_789'
+    photographer_id: "photographer_789",
   };
 
   const mockPhotographer = {
-    id: 'photographer_789',
-    name: '박작가'
+    id: "photographer_789",
+    name: "박작가",
   };
 
   const customerKey = `customer_${mockInquiry.id}`;
 
   const handlePaymentComplete = (paymentKey: string, orderId: string) => {
-    paymentLogger.info('결제 완료:', { paymentKey, orderId });
-    alert(`결제가 완료되었습니다!\n주문번호: ${orderId}\n결제키: ${paymentKey}`);
+    paymentLogger.info("결제 완료:", { paymentKey, orderId });
+    alert(
+      `결제가 완료되었습니다!\n주문번호: ${orderId}\n결제키: ${paymentKey}`
+    );
   };
 
   const handlePaymentError = (error: string) => {
-    paymentLogger.error('결제 오류:', error);
+    paymentLogger.error("결제 오류:", error);
     alert(`결제 중 오류가 발생했습니다: ${error}`);
   };
 
@@ -92,14 +94,14 @@ export default function PaymentExamplePage() {
                 <div className="col-span-2">
                   <span className="text-gray-500">결제금액</span>
                   <p className="font-medium text-lg text-blue-600">
-                    {mockProduct.price.toLocaleString('ko-KR')}원
+                    {mockProduct.price.toLocaleString("ko-KR")}원
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="pt-4 border-t">
-              <Button 
+              <Button
                 onClick={() => setShowPayment(true)}
                 className="w-full"
                 size="lg"
@@ -119,14 +121,14 @@ export default function PaymentExamplePage() {
             <div>
               <h4 className="font-medium mb-2">1. 컴포넌트 import</h4>
               <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
-{`import { TossPaymentWidget } from '@/components/payment/toss-payment-widget';`}
+                {`import { TossPaymentWidget } from '@/components/payment/toss-payment-widget';`}
               </pre>
             </div>
 
             <div>
               <h4 className="font-medium mb-2">2. 컴포넌트 사용</h4>
               <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
-{`<TossPaymentWidget
+                {`<TossPaymentWidget
   inquiry={inquiry}
   product={product} 
   photographer={photographer}
@@ -144,9 +146,9 @@ export default function PaymentExamplePage() {
             <div>
               <h4 className="font-medium mb-2">3. 필수 환경변수</h4>
               <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
-{`NEXT_PUBLIC_TOSS_CLIENT_KEY=test_gck_docs_...
+                {`NEXT_PUBLIC_TOSS_CLIENT_KEY=test_gck_docs_...
 TOSS_SECRET_KEY=test_gsk_docs_...
-NEXT_PUBLIC_APP_URL=http://localhost:3000`}
+NEXT_PUBLIC_BASE_URL=http://localhost:3000`}
               </pre>
             </div>
           </CardContent>
@@ -159,8 +161,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="mb-6 text-center">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setShowPayment(false)}
             className="mb-4"
           >
@@ -185,10 +187,18 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
         <div className="mt-8 p-4 bg-blue-50 rounded-lg max-w-2xl mx-auto">
           <h3 className="font-medium text-blue-900 mb-2">개발자 정보</h3>
           <div className="text-sm text-blue-800 space-y-1">
-            <p><strong>Customer Key:</strong> {customerKey}</p>
-            <p><strong>Order ID 형식:</strong> ORDER_[timestamp]_[random]</p>
-            <p><strong>결제 성공 URL:</strong> /payment/success</p>
-            <p><strong>결제 실패 URL:</strong> /payment/fail</p>
+            <p>
+              <strong>Customer Key:</strong> {customerKey}
+            </p>
+            <p>
+              <strong>Order ID 형식:</strong> ORDER_[timestamp]_[random]
+            </p>
+            <p>
+              <strong>결제 성공 URL:</strong> /payment/success
+            </p>
+            <p>
+              <strong>결제 실패 URL:</strong> /payment/fail
+            </p>
           </div>
         </div>
       </div>

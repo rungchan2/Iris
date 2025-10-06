@@ -36,8 +36,10 @@ import {
 } from "@/components/ui/sidebar"
 import { NavMain } from "@/components/nav-main"
 import { useRouter } from "next/navigation"
-import { type UserPermissions } from "@/lib/auth/permissions"
-import { usePermissions } from "@/lib/hooks/use-permissions"
+import { type UserPermissions } from "@/lib/auth/client-permissions"
+import { useUserStore } from "@/stores/useUserStore"
+import { getUserPermissions } from "@/lib/auth/client-permissions"
+import { logout } from "@/app/actions/auth"
 
 interface NavItem {
   title: string
@@ -183,14 +185,15 @@ interface AdminUser {
 export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user: AdminUser }) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const { permissions, signOut } = usePermissions()
+  const currentUser = useUserStore(state => state.user)
+  const permissions = getUserPermissions(currentUser)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleSignOut = async () => {
-    await signOut()
+    await logout()
     router.push("/login")
   }
 

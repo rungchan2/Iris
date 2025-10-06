@@ -1,6 +1,7 @@
-'use server'
+// lib/auth/client-permissions.ts
+'use client'
 
-import { getUserCookie } from './cookie'
+import type { UserCookie } from './cookie'
 
 export type UserType = 'admin' | 'photographer' | 'user' | null
 
@@ -17,9 +18,10 @@ export interface UserPermissions {
   canAccessPersonalityMapping: boolean
 }
 
-export async function getCurrentUserPermissions(): Promise<UserPermissions> {
-  const user = await getUserCookie()
-
+/**
+ * Get user permissions from UserCookie (client-side)
+ */
+export function getUserPermissions(user: UserCookie | null): UserPermissions {
   if (!user) {
     return {
       userType: null,
@@ -82,33 +84,5 @@ export async function getCurrentUserPermissions(): Promise<UserPermissions> {
     canAccessMyPage: true,
     canAccessReviews: false,
     canAccessPersonalityMapping: false,
-  }
-}
-
-export async function checkPagePermission(page: string): Promise<boolean> {
-  const permissions = await getCurrentUserPermissions()
-  
-  switch (page) {
-    case 'users':
-      return permissions.canAccessUsers
-    case 'photos':
-      return permissions.canAccessPhotos
-    case 'category':
-      return permissions.canAccessCategories
-    case 'inquiries':
-    case '': // dashboard
-      return permissions.canAccessInquiries
-    case 'schedule':
-      return permissions.canAccessSchedule
-    case 'analytics':
-      return permissions.canAccessAnalytics
-    case 'my-page':
-      return permissions.canAccessMyPage
-    case 'reviews':
-      return permissions.canAccessReviews
-    case 'personality-mapping':
-      return permissions.canAccessPersonalityMapping
-    default:
-      return false
   }
 }

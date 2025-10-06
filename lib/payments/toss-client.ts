@@ -90,7 +90,7 @@ export const isTestMode = (): boolean => {
  * 토스페이먼츠가 자동으로 orderId, paymentKey, amount를 쿼리 파라미터로 추가합니다
  */
 export const getSuccessUrl = (orderId?: string): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
   return `${baseUrl}/payment/success`;
 };
 
@@ -99,6 +99,6 @@ export const getSuccessUrl = (orderId?: string): string => {
  * 토스페이먼츠가 자동으로 code, message, orderId를 쿼리 파라미터로 추가합니다
  */
 export const getFailUrl = (orderId?: string): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
   return `${baseUrl}/payment/fail`;
 };

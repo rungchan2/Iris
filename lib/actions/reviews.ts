@@ -54,7 +54,7 @@ export async function generateReviewLink(inquiryId: string) {
         return { 
           data: { 
             review_token: existingReview.review_token,
-            review_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/review/${existingReview.review_token}`,
+            review_url: `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/review/${existingReview.review_token}`,
             customer_name: inquiry.name,
             customer_phone: inquiry.phone
           }
@@ -84,7 +84,7 @@ export async function generateReviewLink(inquiryId: string) {
       return { error: 'Failed to create review link' }
     }
 
-    const reviewUrl = `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/review/${review.review_token}`
+    const reviewUrl = `${process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/review/${review.review_token}`
 
     return { 
       data: { 

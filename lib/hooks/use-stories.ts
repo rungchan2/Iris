@@ -43,10 +43,8 @@ export function useStories(page: number = 1, limit: number = 20, filters?: Story
         throw new Error('No data returned')
       }
 
-      return {
-        data: result.data,
-        pagination: result.pagination,
-      }
+      // Return the full result including data and pagination
+      return result
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
