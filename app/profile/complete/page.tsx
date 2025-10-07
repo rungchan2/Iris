@@ -12,18 +12,22 @@ export const metadata: Metadata = {
 
 export default async function ProfileCompletePage() {
   const supabase = await createClient();
-  const user = await getUserCookie();
+
+  // Check Supabase session (not kindt-user cookie)
+  const { data: { session }, error } = await supabase.auth.getSession();
 
   // Not logged in - redirect to login
-  if (!user) {
+  if (!session?.user || error) {
     redirect("/login");
   }
+
+  const authUser = session.user;
 
   // Check if profile is already complete
   const { data: userData } = await supabase
     .from('users')
     .select('name, phone')
-    .eq('id', user.id)
+    .eq('id', authUser.id)
     .single();
 
   // Profile already complete - redirect to home
@@ -36,9 +40,9 @@ export default async function ProfileCompletePage() {
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-sm">
           <ProfileCompletionForm
-            userId={user.id}
-            currentEmail={user.email}
-            currentName={user.name || userData?.name}
+            userId={authUser.id}
+            currentEmail={authUser.email || ''}
+            currentName={authUser.user_metadata?.name || userData?.name}
           />
         </div>
       </div>

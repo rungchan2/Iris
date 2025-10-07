@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex when working with code in this repository.
 
 ## Project Overview
 
@@ -32,12 +30,6 @@ npm run lint
 npm run gen-types
 ```
 
-### Database Management
-```bash
-# Generate TypeScript types from Supabase
-npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/database.types.ts
-```
-
 ## Architecture Overview
 
 ### Tech Stack
@@ -56,6 +48,7 @@ npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/data
   - `matching/` - 10-question matching flow and results
   - `gallery/` - Public photo gallery
   - `login/` - Authentication pages
+- `hooks/` - Custom React hooks
 - `components/` - Reusable UI components
   - `admin/` - Admin-specific components (including matching system controls)
   - `matching/` - Matching flow components (questionnaire, results)
@@ -64,7 +57,6 @@ npx supabase gen types typescript --project-id kypwcsgwjtnkiiwjedcn > types/data
 - `lib/` - Utility functions and configurations
   - `actions/` - Server actions (including matching algorithms)
   - `supabase/` - Database client configurations
-  - `hooks/` - Custom React hooks
   - `matching/` - Matching algorithms and embedding utilities
 - `types/` - TypeScript type definitions
 - `specs/` - Detailed project documentation
@@ -209,6 +201,73 @@ NEXT_PUBLIC_APP_URL=
 
 ## Recent Updates
 
+### 2025.10.05 - Code Quality & Architecture Refactoring
+**MAJOR REFACTORING**: Systematic code quality improvements and architectural cleanup
+
+#### Console Logging System (98.9% Complete)
+- ✅ **Logger Infrastructure**: Context-based logging system with 10+ domain loggers
+- ✅ **449 Console Removals**: Cleaned up 98.9% of console statements (454 → 5)
+- ✅ **ESLint Enforcement**: `no-console` rule set to error level
+- ✅ **Production Ready**: All logging now goes through centralized logger with environment controls
+
+#### Products Page Refactoring (97.5% Code Reduction)
+- ✅ **Server Component Migration**: 977 lines → 24 lines in main page
+- ✅ **Server Actions**: Created 7 Server Actions in `/lib/actions/products.ts` (273 lines)
+- ✅ **React Query Hooks**: Created 8 hooks in `/lib/hooks/use-products.ts` (178 lines)
+- ✅ **Component Extraction**: Split into 3 focused client components
+- ✅ **Optimistic Updates**: Full React Query cache management with rollback
+
+#### TypeScript Type Safety
+- ✅ **'any' Type Removal**: Fixed 4 critical files with proper typing
+- ✅ **Database Types**: Leveraged Supabase-generated types extensively
+- ✅ **Union Type Guards**: Implemented ApiResponse pattern across Server Actions
+- ✅ **Type Utilities**: Created domain-specific types (MatchingResultUpdate, PaymentUpdate)
+
+#### Performance Optimization
+- ✅ **N+1 Query Fix**: Matching results now use JOIN queries (11x improvement)
+- ✅ **Query Optimization**: Single query instead of 1 + N queries for related data
+- ✅ **React Query Caching**: 5-minute staleTime for efficient data fetching
+
+#### Architecture Patterns Established
+- ✅ **Server Action Pattern**: Component → React Query Hook → Server Action → Supabase
+- ✅ **Query Key Factory**: Standardized cache key management
+- ✅ **Error Handling**: Consistent ApiResponse<T> pattern with proper error propagation
+- ✅ **File Naming**: Established conventions (kebab-case, domain-plural, use-prefix)
+
+#### Documentation
+- ✅ **REFACTORING_PLAN.md**: Comprehensive 3-month refactoring roadmap
+- ✅ **REFACTORING_CHECKLIST.md**: Detailed progress tracking with completion status
+- ✅ **MIGRATION_REPORT.md**: Session-by-session migration documentation
+- ✅ **CLAUDE.md**: Updated with mandatory coding standards and patterns
+
+#### Impact Metrics
+- Console statements: 454 → 5 (98.9% reduction)
+- Products page: 977 → 24 lines (97.5% reduction)
+- N+1 queries: 11 queries → 1 query (11x faster)
+- TypeScript 'any': 44 → 40 files (4 files cleaned)
+- React Query hooks: 2 → 3+ domains
+- New files created: 26 (Server Actions, hooks, components, docs)
+
+### 2025.09.29 - AI Image Generation System Removal
+**MAJOR CLEANUP**: Complete removal of AI image generation feature
+
+#### Database Changes
+- ✅ **Table Removal**: Dropped `ai_image_generations` table entirely
+- ✅ **Column Cleanup**: Removed `ai_generation_id` from inquiries table
+- ✅ **Constraint Cleanup**: Dropped foreign key constraints linking to AI generation
+- ✅ **Type Regeneration**: Updated TypeScript types to reflect schema changes
+
+#### Code Cleanup
+- ✅ **Component Removal**: Moved AI generation components to .unused files
+- ✅ **Function Cleanup**: Removed AI generation server actions and analytics
+- ✅ **Dashboard Update**: Cleaned up admin analytics dashboard AI references
+- ✅ **Build Verification**: Confirmed successful compilation without AI code
+
+#### System Simplification
+- ✅ **Focused Analytics**: Analytics now focus on matching and booking metrics only
+- ✅ **Cleaner Schema**: Simplified inquiries table without AI-related complexity
+- ✅ **Reduced Dependencies**: No longer requires OpenAI DALL-E API integration
+
 ### 2025.09.16 - Matching System Implementation
 **MAJOR FEATURE**: Complete 10-question photographer matching system
 
@@ -238,6 +297,573 @@ NEXT_PUBLIC_APP_URL=
 
 ## Development Guidelines
 
+### Code Quality Standards (Updated 2025-10-05)
+
+#### 1. Logging System (MANDATORY)
+**NEVER use console.log/error/warn directly in production code.**
+
+Use context-specific loggers from `/lib/logger.ts`:
+```typescript
+import { adminLogger, paymentLogger, matchingLogger } from '@/lib/logger'
+
+// Good
+adminLogger.info('User approved', { userId, approvedBy })
+paymentLogger.error('Payment failed', { orderId, error })
+
+// Bad
+console.log('User approved', userId)  // ❌ Will fail ESLint
+```
+
+**Available Context Loggers:**
+- `matchingLogger` - Matching algorithm and results
+- `paymentLogger` - Payment processing and settlements
+- `authLogger` - Authentication and authorization
+- `photographerLogger` - Photographer operations
+- `bookingLogger` - Booking and inquiries
+- `uploadLogger` - File uploads
+- `webhookLogger` - Webhook handlers
+- `embeddingLogger` - AI embeddings
+- `adminLogger` - Admin operations
+- `reviewLogger` - Review system
+- `settlementLogger` - Settlement processing
+
+**ESLint Configuration:**
+- `no-console` rule is set to `error` level
+- Build will fail if console.* is used
+- Only exception: `/lib/logger.ts` implementation
+
+#### 2. Server Actions Pattern (MANDATORY)
+**NEVER use direct Supabase client calls in components.**
+
+**Architecture:**
+```
+Component (Client)
+  ↓ calls
+React Query Hook (/lib/hooks/use-*.ts)
+  ↓ calls
+Server Action (/lib/actions/*.ts)
+  ↓ uses
+Supabase Client
+```
+
+**Example Implementation:**
+```typescript
+// ✅ GOOD: /lib/actions/products.ts
+'use server'
+
+export async function getProducts(): Promise<ApiResponse<Product[]>> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, photographer:photographers(name, email)')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      adminLogger.error('Error fetching products:', error)
+      return { success: false, error: error.message }
+    }
+    return { success: true, data: data as unknown as Product[] }
+  } catch (error) {
+    adminLogger.error('Unexpected error in getProducts:', error)
+    return { success: false, error: 'Failed to fetch products' }
+  }
+}
+
+// ✅ GOOD: /lib/hooks/use-products.ts
+export const productKeys = {
+  all: ['products'] as const,
+  lists: () => [...productKeys.all, 'list'] as const,
+}
+
+export function useProducts() {
+  return useQuery({
+    queryKey: productKeys.lists(),
+    queryFn: async () => {
+      const result = await getProducts()
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch products')
+      }
+      return result.data
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+// ✅ GOOD: Component
+'use client'
+import { useProducts } from '@/lib/hooks/use-products'
+
+export function ProductsList() {
+  const { data: products, isLoading, error } = useProducts()
+  // ...
+}
+
+// ❌ BAD: Direct Supabase in component
+'use client'
+import { createClient } from '@/lib/supabase/client'
+
+export function ProductsList() {
+  const [products, setProducts] = useState([])
+
+  useEffect(() => {
+    const supabase = createClient()  // ❌ WRONG
+    supabase.from('products').select('*')  // ❌ WRONG
+  }, [])
+}
+```
+
+#### 3. React Query Hooks Pattern (MANDATORY)
+
+**Query Key Factory:**
+```typescript
+// Define query keys for cache management
+export const productKeys = {
+  all: ['products'] as const,
+  lists: () => [...productKeys.all, 'list'] as const,
+  list: (filters?: Record<string, unknown>) => [...productKeys.lists(), filters] as const,
+  detail: (id: string) => [...productKeys.all, 'detail', id] as const,
+}
+```
+
+**Mutation Hooks with Optimistic Updates:**
+```typescript
+export function useDeleteProduct() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteProduct(id),
+    onMutate: async (id) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: productKeys.lists() })
+
+      // Snapshot previous value
+      const previousProducts = queryClient.getQueryData(productKeys.lists())
+
+      // Optimistically update
+      queryClient.setQueryData(productKeys.lists(), (old: Product[] = []) =>
+        old.filter(p => p.id !== id)
+      )
+
+      return { previousProducts }
+    },
+    onError: (err, id, context) => {
+      // Rollback on error
+      if (context?.previousProducts) {
+        queryClient.setQueryData(productKeys.lists(), context.previousProducts)
+      }
+      toast.error('Failed to delete product')
+    },
+    onSuccess: () => {
+      toast.success('Product deleted successfully')
+    },
+  })
+}
+```
+
+**Cache Configuration:**
+- `staleTime: 1000 * 60 * 5` (5 minutes) for lists
+- `staleTime: 1000 * 60 * 10` (10 minutes) for detail views
+- Always use Optimistic Updates for Create/Update/Delete
+
+#### 4. Server/Client Component Boundaries
+
+**Server Components (Default):**
+```typescript
+// app/admin/products/page.tsx
+export default async function ProductsPage() {
+  // Fetch data on server
+  const [productsResult, photographersResult] = await Promise.all([
+    getProducts(),
+    getApprovedPhotographers(),
+  ])
+
+  const initialProducts = productsResult.success ? productsResult.data || [] : []
+  const initialPhotographers = photographersResult.success ? photographersResult.data || [] : []
+
+  // Pass to client component
+  return (
+    <ProductsManagementClient
+      initialProducts={initialProducts}
+      initialPhotographers={initialPhotographers}
+    />
+  )
+}
+```
+
+**Client Components (Minimal):**
+```typescript
+// components/admin/products/products-management-client.tsx
+'use client'
+
+export function ProductsManagementClient({
+  initialProducts,
+  initialPhotographers
+}: Props) {
+  // Client interactions only
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const { data: products = initialProducts } = useProducts()
+
+  return (
+    // UI with interactions
+  )
+}
+```
+
+**Rules:**
+- Pages should be Server Components by default
+- Only add 'use client' for components with:
+  - `useState`, `useEffect`, event handlers
+  - Browser APIs (localStorage, window, etc.)
+  - Third-party client-only libraries
+- Extract minimal client components from large pages
+- Keep business logic in Server Actions
+
+#### 5. TypeScript Type Safety
+
+**NEVER use 'any' type unless absolutely necessary.**
+
+**Use Database Types:**
+```typescript
+import type { Database, Tables, TablesInsert, TablesUpdate } from '@/types'
+
+// ✅ Good - Use generated types
+type Product = Tables<'products'>
+type ProductInsert = TablesInsert<'products'>
+type ProductUpdate = TablesUpdate<'products'>
+
+// ✅ Good - Create domain-specific types
+type MatchingResultUpdate = {
+  viewed_at?: string | null
+  clicked_at?: string | null
+  contacted_at?: string | null
+}
+
+// ✅ Good - Union types with type guards
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
+// Usage with type guard
+const result = await getProducts()
+if (result.success) {
+  // TypeScript knows result.data exists
+  console.log(result.data)
+} else {
+  // TypeScript knows result.error exists
+  console.log(result.error)
+}
+
+// ❌ Bad
+function doSomething(data: any) { }  // Avoid
+```
+
+**Use Enums (MANDATORY):**
+```typescript
+import { APPROVAL_STATUS, USER_ROLE, type ApprovalStatus, type UserRole } from '@/types'
+
+// ✅ Good - Use enum constants
+const status: ApprovalStatus = APPROVAL_STATUS.APPROVED
+const role: UserRole = USER_ROLE.PHOTOGRAPHER
+
+// ✅ Good - Type-safe function parameters
+function updatePhotographerStatus(
+  photographerId: string,
+  status: ApprovalStatus  // Only 'pending' | 'approved' | 'rejected'
+) {
+  // ...
+}
+
+// ✅ Good - Runtime validation with type guards
+import { isApprovalStatus, isUserRole } from '@/types'
+
+function handleStatus(value: unknown) {
+  if (isApprovalStatus(value)) {
+    // TypeScript knows value is ApprovalStatus
+    updatePhotographerStatus(id, value)
+  }
+}
+
+// ✅ Good - Display labels for UI
+import { APPROVAL_STATUS_LABELS, USER_ROLE_LABELS } from '@/types'
+
+const statusLabel = APPROVAL_STATUS_LABELS[status]  // '승인됨'
+const roleLabel = USER_ROLE_LABELS[role]            // '사진작가'
+
+// ❌ Bad - String literals
+const status = 'approved'  // No type safety
+if (value === 'approved' || value === 'pending')  // Manual checking
+```
+
+**Supabase Client Typing:**
+```typescript
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "@/types/database.types"
+
+async function updateDescendantPaths(
+  supabase: SupabaseClient<Database>,  // ✅ Typed client
+  categories: Category[],
+  categoryId: string
+) {
+  // ...
+}
+```
+
+#### 6. Component Size Limits
+
+**Maximum Lines:**
+- Page Components: 50 lines (Server Component wrapper)
+- Feature Components: 300 lines
+- Utility Components: 200 lines
+
+**If component exceeds limit:**
+1. Extract sub-components
+2. Move business logic to custom hooks
+3. Move data fetching to Server Actions
+4. Split into domain-specific files
+
+**Example Refactoring:**
+```typescript
+// Before: 977 lines ❌
+'use client'
+export default function ProductsPage() {
+  // All logic, UI, data fetching in one file
+}
+
+// After: 24 lines ✅
+export default async function ProductsPage() {
+  const data = await getProducts()
+  return <ProductsManagementClient initialProducts={data} />
+}
+
+// + products-management-client.tsx (200 lines)
+// + product-create-dialog.tsx (100 lines)
+// + product-edit-dialog.tsx (100 lines)
+```
+
+#### 7. Error Handling Standards
+
+**Server Actions:**
+```typescript
+export async function createProduct(data: ProductInsert): Promise<ApiResponse<Product>> {
+  try {
+    const supabase = await createClient()
+
+    const { data: product, error } = await supabase
+      .from('products')
+      .insert(data)
+      .select()
+      .single()
+
+    if (error) {
+      adminLogger.error('Error creating product:', error)
+      return { success: false, error: error.message }
+    }
+
+    adminLogger.info('Product created', { productId: product.id })
+    return { success: true, data: product }
+  } catch (error) {
+    adminLogger.error('Unexpected error in createProduct:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
+}
+```
+
+**React Query Error Handling:**
+```typescript
+export function useProducts() {
+  return useQuery({
+    queryKey: productKeys.lists(),
+    queryFn: async () => {
+      const result = await getProducts()
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to fetch products')
+      }
+      return result.data
+    },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  })
+}
+
+// Component usage
+const { data, isLoading, error } = useProducts()
+
+if (error) {
+  return <ErrorBoundary error={error} />
+}
+```
+
+#### 8. File Naming Conventions
+
+**Consistency Rules:**
+- Server Actions: `/lib/actions/[domain-plural].ts` (e.g., `products.ts`, `photographers.ts`)
+- React Query Hooks: `/lib/hooks/use-[domain-plural].ts` (e.g., `use-products.ts`)
+- Components: `kebab-case.tsx` (e.g., `product-create-dialog.tsx`)
+- Client Components: `[name]-client.tsx` suffix for clarity
+- Types: `[domain].types.ts` (e.g., `product.types.ts`)
+
+**Examples:**
+```
+✅ Good:
+/lib/actions/products.ts
+/lib/hooks/use-products.ts
+/components/admin/products/product-create-dialog.tsx
+/components/admin/products/products-management-client.tsx
+/types/inquiry.types.ts
+
+❌ Bad:
+/lib/actions/product.ts  (singular)
+/lib/hooks/products.ts  (missing 'use-' prefix)
+/components/admin/ProductCreateDialog.tsx  (PascalCase file name)
+```
+
+#### 9. Zod Schema and Form Validation (MANDATORY)
+
+**NEVER define Zod schemas inline in components or functions.**
+
+All Zod schemas must be defined in `/types/` folder with database type checks.
+
+**Required Structure:**
+```typescript
+// /types/payment.types.ts
+import { z } from 'zod'
+import type { Tables, TablesInsert, TablesUpdate } from './database.types'
+
+// 1. Define Zod schema
+export const paymentFormSchema = z.object({
+  amount: z.number().min(0),
+  buyer_name: z.string().min(1),
+  buyer_email: z.string().email(),
+})
+
+export type PaymentFormData = z.infer<typeof paymentFormSchema>
+
+// 2. Define database types
+export type Payment = Tables<'payments'>
+export type PaymentInsert = TablesInsert<'payments'>
+export type PaymentUpdate = TablesUpdate<'payments'>
+
+// 3. Add build-time type checks (MANDATORY)
+type _PaymentFormDataCheck = {
+  amount: PaymentFormData['amount'] extends PaymentInsert['amount'] ? true : 'amount type mismatch'
+  buyer_name: PaymentFormData['buyer_name'] extends PaymentInsert['buyer_name'] ? true : 'buyer_name type mismatch'
+  buyer_email: PaymentFormData['buyer_email'] extends PaymentInsert['buyer_email'] ? true : 'buyer_email type mismatch'
+}
+```
+
+**Export from `/types/index.ts`:**
+```typescript
+export {
+  paymentFormSchema,
+  type PaymentFormData,
+  type Payment,
+  type PaymentInsert,
+  type PaymentUpdate,
+} from './payment.types'
+```
+
+**Usage in Components:**
+```typescript
+// ✅ Good - Import from types
+import { paymentFormSchema, type PaymentFormData } from '@/types'
+
+export function PaymentForm() {
+  const form = useForm<PaymentFormData>({
+    resolver: zodResolver(paymentFormSchema),
+  })
+  // ...
+}
+
+// ❌ Bad - Defining schema in component
+import { z } from 'zod'
+
+export function PaymentForm() {
+  const schema = z.object({ ... })  // NEVER do this!
+}
+```
+
+**Type Check Benefits:**
+- When database schema changes (e.g., field becomes required), build will fail
+- TypeScript error forces Zod schema update to match database
+- Prevents runtime errors from schema/database mismatch
+
+**Handling Type Conversions:**
+Some fields may differ between form and database (e.g., Date vs string):
+
+```typescript
+// Document conversions in comments
+export const inquiryFormSchema = z.object({
+  desired_date: z.date(),  // Date in form, string in DB
+})
+
+// Skip converted fields in type check
+type _InquiryFormValuesCheck = {
+  // desired_date: handled in conversion layer
+  name: InquiryFormValues['name'] extends InquiryInsert['name'] ? true : 'name type mismatch'
+}
+```
+
+#### 10. Database Query Optimization
+
+**NEVER use loops to fetch related data (N+1 queries).**
+
+**Use Supabase JOIN queries:**
+```typescript
+// ❌ BAD: N+1 Query Pattern
+const { data: results } = await supabase
+  .from('matching_results')
+  .select('*')
+  .eq('session_id', sessionId)
+
+for (const result of results) {
+  const { data: profile } = await supabase
+    .from('photographer_profiles')
+    .select('*')
+    .eq('photographer_id', result.photographer_id)
+    .single()
+  // Process profile...
+}
+// Result: 1 + N queries (11 queries for 10 results)
+
+// ✅ GOOD: Single Query with JOINs
+const { data: results } = await supabase
+  .from('matching_results')
+  .select(`
+    *,
+    photographer:photographers!inner(
+      id,
+      name,
+      email,
+      specialty
+    ),
+    photographer_profile:photographer_profiles!inner(
+      style_emotion_description,
+      communication_psychology_description,
+      purpose_story_description,
+      companion_description
+    )
+  `)
+  .eq('session_id', sessionId)
+  .order('rank_position')
+// Result: 1 query for all data
+```
+
+**Performance Impact:**
+- N+1 pattern: 11 queries for 10 results (1 + 10)
+- JOIN pattern: 1 query for all results
+- **11x performance improvement**
+
+**Additional Optimization Tips:**
+- Use `!inner` for required relationships (prevents null results)
+- Use `!left` for optional relationships
+- Select only needed columns to reduce payload size
+- Add `.limit()` for pagination
+- Use database indexes on frequently joined columns
+
 ### Matching System Development
 - Use `lib/actions/matching.ts` for core matching logic
 - Embedding generation in `lib/embedding/` utilities
@@ -255,7 +881,6 @@ NEXT_PUBLIC_APP_URL=
 - **Database Management**: Use Supabase MCP tools for schema modifications
 - **Embedding Operations**: OpenAI API integration for text-embedding-3-small
 - **Performance Monitoring**: pgvector query performance and matching analytics
-- **A/B Testing**: Weight experiment framework for matching optimization
 
 ## Key Database Changes (2025.09.16)
 

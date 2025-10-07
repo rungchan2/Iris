@@ -1,0 +1,594 @@
+{
+  "users": {
+    "owner_column": "id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": true
+      },
+      "insert": {
+        "min_role": "anon",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "photographers": {
+    "owner_column": "id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "products": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "payments": {
+    "owner_column": "user_id",
+    "policies": {
+      "select": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "payment_logs": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "refunds": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "settlements": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "inquiries": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "user",
+        "own_only": false,
+        "custom_check": "(auth.uid() = user_id) OR (auth.uid() = photographer_id)"
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "user",
+        "own_only": false,
+        "custom_check": "(auth.uid() = user_id) OR (auth.uid() = photographer_id)"
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "available_slots": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "photographer",
+        "own_only": true
+      }
+    }
+  },
+  "reviews": {
+    "owner_column": "user_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "user",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "survey_questions": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "survey_choices": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "survey_images": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "matching_sessions": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "matching_results": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "photographer_profiles": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "photographer_keywords": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "photographer",
+        "own_only": true
+      }
+    }
+  },
+  "photos": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "delete": {
+        "min_role": "photographer",
+        "own_only": true
+      }
+    }
+  },
+  "user_feedback": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "matching_performance_logs": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "embedding_jobs": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "system_settings": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "settlement_items": {
+    "owner_column": "photographer_id",
+    "policies": {
+      "select": {
+        "min_role": "photographer",
+        "own_only": true
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "categories": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false,
+        "public_when": "is_active = true"
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "photo_categories": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "photographer",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "photographer",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "photographer",
+        "own_only": false
+      }
+    }
+  },
+  "stories": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false,
+        "custom_check": "(auth.uid() = user_id) OR (session_token = current_setting('request.headers')::json->>'x-session-token') OR (moderation_status = 'approved' AND visibility = 'public')"
+      },
+      "insert": {
+        "min_role": "service_role"
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "coupons": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false,
+        "custom_check": "(auth.uid() = user_id) OR (session_token = current_setting('request.headers')::json->>'x-session-token')"
+      },
+      "insert": {
+        "min_role": "service_role"
+      },
+      "update": {
+        "min_role": "anon",
+        "own_only": false,
+        "custom_check": "(auth.uid() = user_id) OR (session_token = current_setting('request.headers')::json->>'x-session-token')"
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  },
+  "coupon_templates": {
+    "owner_column": null,
+    "policies": {
+      "select": {
+        "min_role": "anon",
+        "own_only": false
+      },
+      "insert": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "update": {
+        "min_role": "admin",
+        "own_only": false
+      },
+      "delete": {
+        "min_role": "admin",
+        "own_only": false
+      }
+    }
+  }
+}

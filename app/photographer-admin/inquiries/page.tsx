@@ -24,6 +24,23 @@ export default async function AdminPage({
   // Get current photographer
   const user = await getUserCookie()
 
+  // Verify user is authenticated and is a photographer
+  if (!user || user.role !== 'photographer') {
+    bookingLogger.warn('Unauthorized access attempt to photographer inquiries', { user })
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">문의 관리</h1>
+        </div>
+        <div className="text-center py-10 text-red-500">
+          접근 권한이 없습니다. 사진작가로 로그인해주세요.
+        </div>
+      </div>
+    )
+  }
+
+  bookingLogger.info('Fetching inquiries for photographer', { photographerId: user.id, email: user.email })
+
   const params = await searchParams
   const page = Number.parseInt(params.page || "1")
   const status = params.status || "all"
@@ -60,7 +77,7 @@ export default async function AdminPage({
     `,
     { count: "exact" },
   )
-  .eq("photographer_id", user!.id) // Much faster direct FK filtering
+  .eq("photographer_id", user.id) // Filter by current photographer's ID
 
   // Apply status filter
   if (status !== "all") {
@@ -107,6 +124,15 @@ export default async function AdminPage({
 
   if (error) {
     bookingLogger.error("Error fetching inquiries:", error)
+  } else {
+    bookingLogger.info('Successfully fetched inquiries', {
+      photographerId: user.id,
+      count,
+      inquiriesCount: inquiries?.length || 0,
+      page,
+      status,
+      search
+    })
   }
 
   const totalPages = count ? Math.ceil(count / pageSize) : 0

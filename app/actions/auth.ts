@@ -129,20 +129,36 @@ export async function updateProfile(updates: { name?: string; phone?: string }) 
 export async function completeProfile(userId: string, data: { name: string; phone: string }) {
   const supabase = await createClient()
 
-  const { error: updateError } = await supabase
-    .from('users')
-    .update({
-      name: data.name,
-      phone: data.phone,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId)
+  // Get email from Supabase auth
+  const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (updateError) {
-    authLogger.error('Profile completion failed', { userId, error: updateError })
+  if (!authUser) {
+    authLogger.error('No auth user found', { userId })
     return {
       success: false,
-      error: updateError.message || '프로필 업데이트에 실패했습니다',
+      error: '인증 정보를 찾을 수 없습니다',
+    }
+  }
+
+  // UPSERT: Insert if not exists, update if exists
+  const { error: upsertError } = await supabase
+    .from('users')
+    .upsert({
+      id: userId,
+      email: authUser.email!,
+      name: data.name,
+      phone: data.phone,
+      role: 'user',
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'id'
+    })
+
+  if (upsertError) {
+    authLogger.error('Profile completion failed', { userId, error: upsertError })
+    return {
+      success: false,
+      error: upsertError.message || '프로필 업데이트에 실패했습니다',
     }
   }
 

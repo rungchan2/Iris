@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { bookingLogger } from '@/lib/logger'
 import { Inquiry } from '@/types/inquiry.types'
 
 export interface InquiryFilters {
@@ -79,7 +80,7 @@ export const useInquiryManagement = (initialInquiries: Inquiry[] = []) => {
 
       return { success: true }
     } catch (error) {
-      console.error('Error updating inquiry status:', error)
+      bookingLogger.error('Error updating inquiry status', error)
       return { error: 'Failed to update status' }
     } finally {
       setUpdatingIds(prev => {
@@ -107,7 +108,7 @@ export const useInquiryManagement = (initialInquiries: Inquiry[] = []) => {
 
       return { success: true }
     } catch (error) {
-      console.error('Error deleting inquiry:', error)
+      bookingLogger.error('Error deleting inquiry', error)
       return { error: 'Failed to delete inquiry' }
     } finally {
       setUpdatingIds(prev => {
@@ -139,7 +140,7 @@ export const useInquiryManagement = (initialInquiries: Inquiry[] = []) => {
 
       return { success: true }
     } catch (error) {
-      console.error('Error updating multiple inquiries:', error)
+      bookingLogger.error('Error updating multiple inquiries', error)
       return { error: 'Failed to update inquiries' }
     } finally {
       setLoading(false)

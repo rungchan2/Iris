@@ -1,38 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getUserFromCookie } from '@/lib/auth/cookie'
+import { SignJWT } from 'jose'
 
 export async function middleware(request: NextRequest) {
   const middlewareStartTime = performance.now()
 
-  let supabaseResponse = NextResponse.next({
+  const { pathname } = request.nextUrl
+
+  // CRITICAL: Skip profile completion page entirely to avoid redirect loops
+  if (pathname === '/profile/complete' || pathname.startsWith('/profile/complete')) {
+    console.log('[Middleware] Early exit for /profile/complete')
+    const middlewareDuration = performance.now() - middlewareStartTime
+    console.log(`[Middleware Performance] Total middleware: ${middlewareDuration.toFixed(2)}ms for ${pathname}`)
+    return NextResponse.next()
+  }
+
+  const response = NextResponse.next({
     request,
   })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const { pathname } = request.nextUrl
   const url = request.nextUrl.clone()
 
   // Public routes
@@ -40,7 +27,6 @@ export async function middleware(request: NextRequest) {
     '/login',
     '/signup',
     '/auth',
-    '/profile/complete',
     '/api',
     '/_next',
     '/favicon.ico',
@@ -54,11 +40,114 @@ export async function middleware(request: NextRequest) {
   // Check if current path is public
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
 
+  // Create Supabase client to check session
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
   // Get user from cookie
   const cookieStartTime = performance.now()
-  const user = await getUserFromCookie(request)
+  let user = await getUserFromCookie(request)
   const cookieDuration = performance.now() - cookieStartTime
   console.log(`[Middleware Performance] Cookie parsing: ${cookieDuration.toFixed(2)}ms`)
+
+  // If no kindt-user cookie but Supabase session exists, sync it
+  if (!user && !pathname.startsWith('/auth/callback')) {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      console.error('[Middleware] Error getting session:', sessionError)
+    }
+
+    if (session?.user) {
+      console.log('[Middleware] Found Supabase session without kindt-user cookie, syncing...', {
+        userId: session.user.id,
+        email: session.user.email
+      })
+
+      // Fetch user data from database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, name, phone, role')
+        .eq('id', session.user.id)
+        .single()
+
+      if (userError) {
+        console.error('[Middleware] Error fetching user data:', userError)
+      }
+
+      if (!userData) {
+        console.log('[Middleware] No user data found, redirecting to profile completion')
+        url.pathname = '/profile/complete'
+        return NextResponse.redirect(url)
+      }
+
+      if (userData) {
+        console.log('[Middleware] User data fetched:', {
+          id: userData.id,
+          email: userData.email,
+          role: userData.role
+        })
+
+        // Get photographer data if needed
+        let photographerData = null
+        if (userData.role === 'photographer') {
+          const { data } = await supabase
+            .from('photographers')
+            .select('approval_status, profile_image_url')
+            .eq('id', userData.id)
+            .single()
+          photographerData = data
+        }
+
+        // Set kindt-user cookie with JWT token
+        const userCookie = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name,
+          phone: userData.phone,
+          role: userData.role,
+          approvalStatus: photographerData?.approval_status,
+          profileImageUrl: photographerData?.profile_image_url,
+        }
+
+        console.log('[Middleware] Setting kindt-user cookie:', userCookie)
+
+        // Create JWT token
+        const SECRET = new TextEncoder().encode(process.env.JWT_SECRET_KEY!)
+        const token = await new SignJWT(userCookie)
+          .setProtectedHeader({ alg: 'HS256' })
+          .setExpirationTime('7d')
+          .sign(SECRET)
+
+        console.log('[Middleware] JWT token generated, length:', token.length)
+
+        response.cookies.set('kindt-user', token, {
+          httpOnly: false, // Allow client-side reading
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: '/',
+        })
+
+        user = userCookie
+        console.log('[Middleware] kindt-user cookie synced successfully')
+      }
+    }
+  }
 
   // Profile completion check (for regular users only)
   if (user && user.role === 'user' && !user.phone && pathname !== '/profile/complete') {
@@ -91,8 +180,7 @@ export async function middleware(request: NextRequest) {
   // Routes requiring authentication
   const authRequired =
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/photographer-admin') ||
-    pathname.startsWith('/booking')
+    pathname.startsWith('/photographer-admin')
 
   // Redirect to login if auth required but no user
   if (authRequired && !user) {
@@ -139,7 +227,7 @@ export async function middleware(request: NextRequest) {
   const middlewareDuration = performance.now() - middlewareStartTime
   console.log(`[Middleware Performance] Total middleware: ${middlewareDuration.toFixed(2)}ms for ${pathname}`)
 
-  return supabaseResponse
+  return response
 }
 
 export const config = {

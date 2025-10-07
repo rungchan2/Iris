@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "회원가입 | kindt",
+  title: "회원가입",
   description: "kindt 회원가입 페이지입니다.",
 };
 

@@ -1,7 +1,7 @@
 'use client'
 import { adminLogger } from "@/lib/logger"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -66,7 +66,6 @@ interface PaymentFilters {
 }
 
 export default function PhotographerPaymentManagement() {
-  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([])
   const [filters, setFilters] = useState<PaymentFilters>({})
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [photographerId, setPhotographerId] = useState<string | null>(null)
@@ -103,8 +102,8 @@ export default function PhotographerPaymentManagement() {
     filters.dateRange?.end ? format(filters.dateRange.end, 'yyyy-MM-dd') : undefined
   )
 
-  // Apply filters whenever payments or filters change
-  useEffect(() => {
+  // Apply filters using useMemo to avoid infinite loops
+  const filteredPayments = useMemo(() => {
     let filtered = [...payments]
 
     // Search filter
@@ -117,8 +116,8 @@ export default function PhotographerPaymentManagement() {
       )
     }
 
-    setFilteredPayments(filtered as Payment[])
-  }, [payments, filters])
+    return filtered as Payment[]
+  }, [payments, filters.search])
 
   const handleSort = (field: typeof sortField) => {
     if (field === sortField) {

@@ -113,7 +113,8 @@ export function GoogleOneTap({
           nonce: hashedNonce,
           auto_select: autoSelect,
           cancel_on_tap_outside: cancelOnTapOutside,
-          use_fedcm_for_prompt: true,
+          // Disable FedCM in development (localhost doesn't support it properly)
+          use_fedcm_for_prompt: process.env.NODE_ENV === 'production',
           itp_support: true,
         })
 

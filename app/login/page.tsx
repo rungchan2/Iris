@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import { GoogleSignInButton, GoogleOneTap } from "@/components/auth";
 
 export const metadata: Metadata = {
-  title: "로그인 | kindt",
+  title: "로그인",
   description: "kindt 로그인 페이지 입니다. 로그인 후 사용자 관리, 통계, 설정 등을 관리할 수 있습니다.",
 };
 

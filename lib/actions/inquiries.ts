@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { logger } from '@/lib/logger'
+import { getUserCookie } from '@/lib/auth/cookie'
 import type { Database } from '@/types/database.types'
 
 type InquiryRow = Database['public']['Tables']['inquiries']['Row']
@@ -158,27 +159,44 @@ export async function getInquiryById(id: string) {
 export async function updateInquiry(id: string, updates: Partial<InquiryRow>) {
   try {
     const supabase = await createClient()
+    const user = await getUserCookie()
 
-    const { data, error } = await supabase
+    // Build query with photographer_id filter if user is a photographer
+    let query = supabase
       .from('inquiries')
       .update({
         ...updates,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
-      .single()
+
+    // If user is a photographer, only allow updating their own inquiries
+    if (user?.role === 'photographer') {
+      query = query.eq('photographer_id', user.id)
+    }
+
+    const { data, error } = await query.select()
 
     if (error) {
       logger.error('Error updating inquiry', error, 'Inquiries')
       return { success: false, error: error.message }
     }
 
+    // Check if any rows were updated
+    if (!data || data.length === 0) {
+      logger.warn('No inquiry found or access denied', {
+        inquiryId: id,
+        userId: user?.id,
+        userRole: user?.role
+      }, 'Inquiries')
+      return { success: false, error: 'Inquiry not found or access denied' }
+    }
+
     revalidatePath('/admin/inquiries')
     revalidatePath(`/admin/inquiries/${id}`)
-    revalidatePath('/photographer/inquiries')
+    revalidatePath('/photographer-admin/inquiries')
 
-    return { success: true, data }
+    return { success: true, data: data[0] }
   } catch (error) {
     logger.error('Error in updateInquiry', error, 'Inquiries')
     return { success: false, error: 'Failed to update inquiry' }
@@ -191,27 +209,60 @@ export async function updateInquiry(id: string, updates: Partial<InquiryRow>) {
 export async function updateInquiryStatus(id: string, status: 'new' | 'contacted' | 'completed') {
   try {
     const supabase = await createClient()
+    const user = await getUserCookie()
 
-    const { data, error } = await supabase
+    // Build query with photographer_id filter if user is a photographer
+    let query = supabase
       .from('inquiries')
       .update({
         status,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
-      .single()
+
+    // If user is a photographer, only allow updating their own inquiries
+    if (user?.role === 'photographer') {
+      query = query.eq('photographer_id', user.id)
+      logger.info('Updating inquiry status for photographer', {
+        inquiryId: id,
+        photographerId: user.id,
+        status
+      }, 'Inquiries')
+    } else {
+      logger.info('Updating inquiry status (admin)', {
+        inquiryId: id,
+        status
+      }, 'Inquiries')
+    }
+
+    const { data, error, count } = await query.select()
 
     if (error) {
       logger.error('Error updating inquiry status', error, 'Inquiries')
       return { success: false, error: error.message }
     }
 
+    // Check if any rows were updated
+    if (!data || data.length === 0) {
+      logger.warn('No inquiry found or access denied', {
+        inquiryId: id,
+        userId: user?.id,
+        userRole: user?.role
+      }, 'Inquiries')
+      return { success: false, error: 'Inquiry not found or access denied' }
+    }
+
+    logger.info('Successfully updated inquiry status', {
+      inquiryId: id,
+      status,
+      updatedCount: data.length
+    }, 'Inquiries')
+
     revalidatePath('/admin/inquiries')
     revalidatePath(`/admin/inquiries/${id}`)
-    revalidatePath('/photographer/inquiries')
+    revalidatePath('/photographer-admin/inquiries')
 
-    return { success: true, data }
+    return { success: true, data: data[0] }
   } catch (error) {
     logger.error('Error in updateInquiryStatus', error, 'Inquiries')
     return { success: false, error: 'Failed to update inquiry status' }
@@ -224,19 +275,43 @@ export async function updateInquiryStatus(id: string, status: 'new' | 'contacted
 export async function deleteInquiry(id: string) {
   try {
     const supabase = await createClient()
+    const user = await getUserCookie()
 
-    const { error } = await supabase
+    // Build query with photographer_id filter if user is a photographer
+    let query = supabase
       .from('inquiries')
       .delete()
       .eq('id', id)
+
+    // If user is a photographer, only allow deleting their own inquiries
+    if (user?.role === 'photographer') {
+      query = query.eq('photographer_id', user.id)
+    }
+
+    const { error, count } = await query
 
     if (error) {
       logger.error('Error deleting inquiry', error, 'Inquiries')
       return { success: false, error: error.message }
     }
 
+    // Check if any rows were deleted (count is available when using .delete())
+    if (count === 0) {
+      logger.warn('No inquiry found or access denied for deletion', {
+        inquiryId: id,
+        userId: user?.id,
+        userRole: user?.role
+      }, 'Inquiries')
+      return { success: false, error: 'Inquiry not found or access denied' }
+    }
+
+    logger.info('Successfully deleted inquiry', {
+      inquiryId: id,
+      deletedCount: count
+    }, 'Inquiries')
+
     revalidatePath('/admin/inquiries')
-    revalidatePath('/photographer/inquiries')
+    revalidatePath('/photographer-admin/inquiries')
 
     return { success: true }
   } catch (error) {
