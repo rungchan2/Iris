@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 
-export default function AuthError({
+export default async function AuthError({
   searchParams,
 }: {
-  searchParams: { error?: string; error_code?: string; error_description?: string }
+  searchParams: Promise<{ error?: string; error_code?: string; error_description?: string }>
 }) {
-  const { error, error_code, error_description } = searchParams
+  const { error, error_code, error_description } = await searchParams
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
