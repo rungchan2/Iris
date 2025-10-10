@@ -1,9 +1,10 @@
 'use client'
 
 import { photographerLogger } from '@/lib/logger';
-import React, { useState } from 'react'
-import { PersonalInfoForm } from '@/components/booking/personal-info-form'
-import { SuccessScreen } from '@/components/booking/success-screen'
+import React, { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { PersonalInfoForm } from '@/app/photographers/[id]/booking/personal-info-form'
+import { SuccessScreen } from '@/app/photographers/[id]/booking/success-screen'
 import { createClient } from '@/lib/supabase/client'
 import { Toaster, toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +16,7 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { sendEmail } from '@/lib/send-email'
 import { getSlot } from '@/lib/available-slots'
+import { LoginRequiredModal } from '@/components/auth/login-required-modal'
 import type {
   InquiryFormValues,
   MoodKeyword,
@@ -28,9 +30,16 @@ const EMAIL_TO = [
 
 interface PhotographerBookingPageProps {
   photographer: any
+  isLoggedIn: boolean
+  userProfile: {
+    name: string | null
+    phone: string | null
+  } | null
 }
 
-export function PhotographerBookingPage({ photographer }: PhotographerBookingPageProps) {
+export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile }: PhotographerBookingPageProps) {
+  const pathname = usePathname()
+  const [showLoginModal, setShowLoginModal] = useState(!isLoggedIn)
   const [step, setStep] = useState<"personal-info" | "success">("personal-info")
   const [formData, setFormData] = useState<InquiryFormValues | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -40,6 +49,12 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   const [paymentData, setPaymentData] = useState<any>(null)
 
   const supabase = createClient()
+
+  // Always show login modal for non-logged-in users
+  // Modal stays open even after refresh
+  useEffect(() => {
+    setShowLoginModal(!isLoggedIn)
+  }, [isLoggedIn])
 
   const initials = photographer.name
     .split(' ')
@@ -329,7 +344,16 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
   return (
     <>
       <Toaster position="top-right" richColors />
-      
+
+      {/* Login Required Modal - Cannot be closed by non-logged-in users */}
+      <LoginRequiredModal
+        open={showLoginModal}
+        onOpenChange={() => {}} // Prevent closing the modal
+        title="로그인이 필요합니다"
+        description="예약을 진행하려면 로그인이 필요합니다. 로그인 후 이용해주세요."
+        returnUrl={pathname}
+      />
+
       {/* Photographer Hero Section */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-b">
         <div className="container mx-auto px-4 py-12">
@@ -417,6 +441,7 @@ export function PhotographerBookingPage({ photographer }: PhotographerBookingPag
                   id: photographer.id,
                   name: photographer.name
                 }}
+                userProfile={userProfile}
               />
             </div>
           </div>

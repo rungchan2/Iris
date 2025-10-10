@@ -32,7 +32,10 @@ export const inquiryFormSchema = z.object({
   favorite_music: z.string().optional(),
   shooting_meaning: z.string().optional(),
 
-  // Payment Info (Step 5)
+  // Product Selection (Step 3)
+  selected_product_id: z.string().min(1, { message: "상품을 선택해주세요." }),
+
+  // Payment Info (Step 4)
   paymentKey: z.string().optional(),
   orderId: z.string().optional(),
 })
@@ -67,6 +70,7 @@ type _InquiryFormValuesCheck = {
   conversation_topics: InquiryFormValues['conversation_topics'] extends InquiryInsert['conversation_topics'] ? true : 'conversation_topics type mismatch'
   favorite_music: InquiryFormValues['favorite_music'] extends InquiryInsert['favorite_music'] ? true : 'favorite_music type mismatch'
   shooting_meaning: InquiryFormValues['shooting_meaning'] extends InquiryInsert['shooting_meaning'] ? true : 'shooting_meaning type mismatch'
+  selected_product_id: InquiryFormValues['selected_product_id'] extends InquiryInsert['selected_product_id'] ? true : 'selected_product_id type mismatch'
 }
 
 // Legacy types for backward compatibility with old code

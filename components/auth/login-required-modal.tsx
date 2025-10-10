@@ -45,7 +45,12 @@ export function LoginRequiredModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-yellow-600" />
@@ -54,7 +59,7 @@ export function LoginRequiredModal({
           <DialogDescription className="pt-2">{description}</DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={handleSignup} className="w-full sm:w-auto">
             회원가입
           </Button>

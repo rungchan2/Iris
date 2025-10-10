@@ -32,6 +32,8 @@ import { TimeSlotSelector } from "@/components/booking/time-slot-selector";
 import { TossPaymentForm } from "@/components/payment/toss-payment-form";
 import { createPaymentRequest } from "@/lib/actions/toss-payments";
 import { toast } from "sonner";
+import { useProducts } from "@/lib/hooks/use-products";
+import { Card } from "@/components/ui/card";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -43,6 +45,10 @@ interface PersonalInfoFormProps {
     id: string;
     name: string;
   }; // Add photographer info
+  userProfile?: {
+    name: string | null;
+    phone: string | null;
+  } | null;
 }
 
 export function PersonalInfoForm({
@@ -52,21 +58,28 @@ export function PersonalInfoForm({
   onFormChange,
   photographerId,
   photographer,
+  userProfile,
 }: PersonalInfoFormProps) {
   const [activeSection, setActiveSection] = useState<
-    "personal" | "additional" | "final_questions" | "payment"
+    "personal" | "additional" | "product" | "payment"
   >("personal");
 
   // Fetch slot counts using React Query hook
-  const { data: dateSlotCounts = {} } = useSlotCounts(availableDates, photographerId);
+  const { data: dateSlotCounts = {} } = useSlotCounts(
+    availableDates,
+    photographerId
+  );
+
+  // Fetch products for this photographer
+  const { products, isProductsLoading } = useProducts();
 
   const form = useForm<InquiryFormValues>({
     resolver: zodResolver(inquiryFormSchema),
     defaultValues: {
-      name: "",
+      name: userProfile?.name || "",
       instagram_id: "",
       gender: "male",
-      phone: "",
+      phone: userProfile?.phone || "",
       selected_slot_id: "",
       people_count: 1,
       relationship: "",
@@ -77,6 +90,7 @@ export function PersonalInfoForm({
       conversation_topics: "",
       favorite_music: "",
       shooting_meaning: "",
+      selected_product_id: "",
     },
   });
 
@@ -152,10 +166,10 @@ export function PersonalInfoForm({
     const formDataWithPayment = {
       ...form.getValues(),
       paymentKey,
-      orderId
+      orderId,
     };
     onSubmit(formDataWithPayment);
-    toast.success('결제가 완료되었습니다!');
+    toast.success("결제가 완료되었습니다!");
   };
 
   const nextSection = async () => {
@@ -174,20 +188,23 @@ export function PersonalInfoForm({
       }
     } else if (activeSection === "additional") {
       // Additional section is optional, no validation needed
-      setActiveSection("final_questions");
-    } else if (activeSection === "final_questions") {
-      // Final questions section is optional, no validation needed
-      setActiveSection("payment");
+      setActiveSection("product");
+    } else if (activeSection === "product") {
+      // Validate product selection
+      const isValid = await form.trigger(["selected_product_id"]);
+      if (isValid) {
+        setActiveSection("payment");
+      }
     }
   };
 
   const prevSection = () => {
     if (activeSection === "additional") {
       setActiveSection("personal");
-    } else if (activeSection === "final_questions") {
+    } else if (activeSection === "product") {
       setActiveSection("additional");
     } else if (activeSection === "payment") {
-      setActiveSection("final_questions");
+      setActiveSection("product");
     }
   };
 
@@ -223,7 +240,7 @@ export function PersonalInfoForm({
             <div
               className={cn(
                 "flex-1 h-1 transition-colors mx-1",
-                activeSection === "final_questions" ? "bg-primary" : "bg-primary/30"
+                activeSection === "product" ? "bg-primary" : "bg-primary/30"
               )}
             />
             <div
@@ -239,7 +256,7 @@ export function PersonalInfoForm({
               onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-8"
             >
-              {/* Personal Information Section */}
+              {/* 1단계 : Personal Information Section */}
               <motion.div
                 initial={{
                   opacity: 0,
@@ -252,7 +269,7 @@ export function PersonalInfoForm({
                       ? 0
                       : activeSection === "additional"
                       ? -20
-                      : activeSection === "final_questions"
+                      : activeSection === "product"
                       ? -40
                       : activeSection === "payment"
                       ? -60
@@ -494,7 +511,7 @@ export function PersonalInfoForm({
 
               {/* Mood Keywords Section Removed - No longer using keywords table */}
 
-              {/* Additional Information Section */}
+              {/* 2단계 Additional Information Section (통합: 기존 2단계 + 3단계) */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{
@@ -503,18 +520,23 @@ export function PersonalInfoForm({
                 }}
                 transition={{ duration: 0.3 }}
                 className={cn(
-                  "space-y-4",
+                  "space-y-6",
                   activeSection !== "additional" && "hidden"
                 )}
               >
-                <h3 className="text-xl font-semibold">추가 정보</h3>
+                <div>
+                  <h3 className="text-xl font-semibold">추가 정보</h3>
+                  <p className="text-sm text-muted-foreground">
+                    작가와의 더 나은 소통을 위해 알려주세요!
+                  </p>
+                </div>
 
                 <FormField
                   control={form.control}
                   name="special_request"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>1. 요청 사항 (선택사항)</FormLabel>
+                      <FormLabel>요청 사항 (선택사항)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="추가적으로 촬영에 담겼으면 하는 점이나 나누고 싶으신 말씀을 적어주세요. 촬영 시 희망하시는 사항, 궁금하신 사항, 좋아하시는 작품 등 뭐든 좋습니다!"
@@ -532,7 +554,7 @@ export function PersonalInfoForm({
                   name="difficulty_note"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>2. 촬영 관련 우려사항 (선택사항)</FormLabel>
+                      <FormLabel>촬영 관련 우려사항 (선택사항)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="촬영과 관련해 걱정되거나 신경쓰이는 부분을 적어주세요."
@@ -545,55 +567,55 @@ export function PersonalInfoForm({
                   )}
                 />
 
-                <div className="flex justify-between pt-4 items-center">
-                  <Button type="button" variant="outline" onClick={prevSection}>
-                    뒤로가기
-                  </Button>
-                  <Button type="button" onClick={nextSection}>
-                    다음
-                  </Button>
-                </div>
-              </motion.div>
-
-              {/* Final Questions Section */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{
-                  opacity: activeSection === "final_questions" ? 1 : 0,
-                  x: activeSection === "final_questions" ? 0 : 20,
-                }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  "space-y-4",
-                  activeSection !== "final_questions" && "hidden"
-                )}
-              >
-                <h3 className="text-xl font-semibold">촬영 전 마지막 질문</h3>
-                <p className="text-sm text-muted-foreground">작가와의 더 나은 소통을 위해 몇 가지만 더 알려주세요!</p>
-
                 <FormField
                   control={form.control}
                   name="conversation_preference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>처음 보는 사람과 대화는 많이 or 적게?</FormLabel>
+                      <FormLabel>
+                        처음 보는 사람과 대화는 많이 or 적게?
+                      </FormLabel>
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
                           value={field.value}
-                          className="flex flex-col space-y-2"
+                          className="flex flex-col"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="많이" id="conversation_much" />
-                            <label htmlFor="conversation_much" className="text-sm">많이 (대화를 즐기는 편)</label>
+                            <RadioGroupItem
+                              value="많이"
+                              id="conversation_much"
+                            />
+                            <label
+                              htmlFor="conversation_much"
+                              className="text-sm"
+                            >
+                              많이 (대화를 즐기는 편)
+                            </label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="적게" id="conversation_little" />
-                            <label htmlFor="conversation_little" className="text-sm">적게 (조용한 편)</label>
+                            <RadioGroupItem
+                              value="적게"
+                              id="conversation_little"
+                            />
+                            <label
+                              htmlFor="conversation_little"
+                              className="text-sm"
+                            >
+                              적게 (조용한 편)
+                            </label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="보통" id="conversation_normal" />
-                            <label htmlFor="conversation_normal" className="text-sm">보통 (상황에 따라)</label>
+                            <RadioGroupItem
+                              value="보통"
+                              id="conversation_normal"
+                            />
+                            <label
+                              htmlFor="conversation_normal"
+                              className="text-sm"
+                            >
+                              보통 (상황에 따라)
+                            </label>
                           </div>
                         </RadioGroup>
                       </FormControl>
@@ -643,7 +665,9 @@ export function PersonalInfoForm({
                   name="shooting_meaning"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>이번 촬영은 본인에게 어떤 의미인가요?</FormLabel>
+                      <FormLabel>
+                        이번 촬영은 본인에게 어떤 의미인가요?
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="기념일, 새로운 시작, 자신감 회복, 추억 남기기 등 어떤 의미든 좋습니다."
@@ -666,7 +690,137 @@ export function PersonalInfoForm({
                 </div>
               </motion.div>
 
-              {/* Payment Section */}
+              {/* 3단계 Product Selection Section */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{
+                  opacity: activeSection === "product" ? 1 : 0,
+                  x: activeSection === "product" ? 0 : 20,
+                }}
+                transition={{ duration: 0.3 }}
+                className={cn(
+                  "space-y-4",
+                  activeSection !== "product" && "hidden"
+                )}
+              >
+                <h3 className="text-xl font-semibold">상품 선택</h3>
+                <p className="text-sm text-muted-foreground">
+                  원하시는 촬영 상품을 선택해주세요.
+                </p>
+
+                <FormField
+                  control={form.control}
+                  name="selected_product_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>촬영 상품</FormLabel>
+                      <FormControl>
+                        <div className="space-y-3">
+                          {isProductsLoading ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                              상품을 불러오는 중...
+                            </div>
+                          ) : products.filter(
+                              (p) =>
+                                p.photographer_id === photographerId &&
+                                p.status === "approved"
+                            ).length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                              등록된 상품이 없습니다.
+                            </div>
+                          ) : (
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="space-y-3"
+                            >
+                              {products
+                                .filter(
+                                  (p) =>
+                                    p.photographer_id === photographerId &&
+                                    p.status === "approved"
+                                )
+                                .map((product) => (
+                                  <Card
+                                    key={product.id}
+                                    className={cn(
+                                      "p-4 cursor-pointer transition-all",
+                                      field.value === product.id
+                                        ? "border-primary bg-primary/5"
+                                        : "hover:border-primary/50"
+                                    )}
+                                    onClick={() => field.onChange(product.id)}
+                                  >
+                                    <div className="flex items-start gap-4">
+                                      <RadioGroupItem
+                                        value={product.id}
+                                        id={product.id}
+                                        className="mt-1"
+                                      />
+                                      <div className="flex-1 space-y-2">
+                                        <label
+                                          htmlFor={product.id}
+                                          className="text-base font-semibold cursor-pointer"
+                                        >
+                                          {product.name}
+                                        </label>
+                                        {product.description && (
+                                          <p className="text-sm text-muted-foreground">
+                                            {product.description}
+                                          </p>
+                                        )}
+                                        <div className="flex items-baseline gap-2">
+                                          <span className="text-2xl font-bold">
+                                            {product.price?.toLocaleString()}원
+                                          </span>
+                                          {product.duration_hours && (
+                                            <span className="text-sm text-muted-foreground">
+                                              / {product.duration_hours}시간
+                                            </span>
+                                          )}
+                                        </div>
+                                        {product.includes && (
+                                          <div className="text-sm">
+                                            <span className="font-medium">
+                                              포함 내역:
+                                            </span>
+                                            <ul className="list-disc list-inside mt-1 text-muted-foreground">
+                                              {product.includes.map(
+                                                (item, idx) => (
+                                                  <li key={idx}>{item}</li>
+                                                )
+                                              )}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </Card>
+                                ))}
+                            </RadioGroup>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-between pt-4 items-center">
+                  <Button type="button" variant="outline" onClick={prevSection}>
+                    뒤로가기
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={nextSection}
+                    disabled={!form.watch("selected_product_id")}
+                  >
+                    다음 <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+
+              {/* 4단계 Payment Section */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{
@@ -707,31 +861,63 @@ export function PersonalInfoForm({
                       <span>인원:</span>
                       <span>{form.watch("people_count")}명</span>
                     </div>
+                    {(() => {
+                      const selectedProduct = products.find(
+                        (p) => p.id === form.watch("selected_product_id")
+                      );
+                      return selectedProduct ? (
+                        <>
+                          <div className="flex justify-between border-t pt-2 mt-2">
+                            <span className="font-medium">선택 상품:</span>
+                            <span className="font-medium">
+                              {selectedProduct.name}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>금액:</span>
+                            <span className="text-lg font-bold text-primary">
+                              {selectedProduct.price?.toLocaleString()}원
+                            </span>
+                          </div>
+                        </>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
 
-                <TossPaymentForm
-                  inquiry={{
-                    id: "temp-inquiry", // This will be generated after form submission
-                    name: form.watch("name") || "",
-                    phone: form.watch("phone") || "",
-                    email: undefined
-                  }}
-                  product={{
-                    id: "photography-session",
-                    name: `${photographer?.name || "작가"} 사진 촬영 세션`,
-                    price: 150000, // 15만원 기본 가격
-                    photographer_id: photographerId || ""
-                  }}
-                  photographer={{
-                    id: photographerId || "",
-                    name: photographer?.name || "작가"
-                  }}
-                  onPaymentComplete={handlePaymentSuccess}
-                  onPaymentError={(error: string) => {
-                    toast.error(`결제 중 오류가 발생했습니다: ${error}`);
-                  }}
-                />
+                {(() => {
+                  const selectedProduct = products.find(
+                    (p) => p.id === form.watch("selected_product_id")
+                  );
+                  return selectedProduct ? (
+                    <TossPaymentForm
+                      inquiry={{
+                        id: "temp-inquiry", // This will be generated after form submission
+                        name: form.watch("name") || "",
+                        phone: form.watch("phone") || "",
+                        email: undefined,
+                      }}
+                      product={{
+                        id: selectedProduct.id,
+                        name: selectedProduct.name,
+                        price: selectedProduct.price || 0,
+                        photographer_id: photographerId || "",
+                      }}
+                      photographer={{
+                        id: photographerId || "",
+                        name: photographer?.name || "작가",
+                      }}
+                      onPaymentComplete={handlePaymentSuccess}
+                      onPaymentError={(error: string) => {
+                        toast.error(`결제 중 오류가 발생했습니다: ${error}`);
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      상품 정보를 불러오는 중...
+                    </div>
+                  );
+                })()}
 
                 <div className="flex justify-between pt-4 items-center">
                   <Button type="button" variant="outline" onClick={prevSection}>

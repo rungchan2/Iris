@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { getPhotographerById } from '@/lib/actions/photographers'
 import { PhotographerBookingPage } from './photographer-booking'
 import { Skeleton } from '@/components/ui/skeleton'
+import { createClient } from '@/lib/supabase/server'
 
 interface BookingPageProps {
   params: Promise<{ id: string }>
@@ -68,6 +69,25 @@ function BookingFormSkeleton() {
 }
 
 async function BookingContent({ id }: { id: string }) {
+  const supabase = await createClient()
+
+  // Check if user is logged in
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Get user profile data if logged in
+  let userProfile = null
+  if (user) {
+    const { data } = await supabase
+      .from('users')
+      .select('name, phone')
+      .eq('id', user.id)
+      .single()
+
+    userProfile = data
+  }
+
   const result = await getPhotographerById(id)
 
   if (result.error) {
@@ -85,7 +105,13 @@ async function BookingContent({ id }: { id: string }) {
     notFound()
   }
 
-  return <PhotographerBookingPage photographer={result.data} />
+  return (
+    <PhotographerBookingPage
+      photographer={result.data}
+      isLoggedIn={!!user}
+      userProfile={userProfile}
+    />
+  )
 }
 
 export default async function BookingPage({ params }: BookingPageProps) {

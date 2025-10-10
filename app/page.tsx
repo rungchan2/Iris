@@ -22,7 +22,7 @@ export default async function LandingPage() {
       <PhotographerCarousel photographers={featuredPhotographers} />
 
       {/* Keep FAQ and Footer */}
-      <FAQWidget />
+      {/* <FAQWidget /> */}
       <Footer />
     </div>
   )

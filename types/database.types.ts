@@ -1818,6 +1818,80 @@ export type Database = {
           },
         ]
       }
+      terms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          id: string
+          is_active: boolean | null
+          updated_at: string
+          updated_by: string | null
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_date: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+          updated_by?: string | null
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
+      terms_sections: {
+        Row: {
+          article_number: number
+          content: string
+          created_at: string
+          display_order: number
+          id: string
+          terms_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          article_number: number
+          content: string
+          created_at?: string
+          display_order: number
+          id?: string
+          terms_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          article_number?: number
+          content?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          terms_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_sections_terms_id_fkey"
+            columns: ["terms_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_feedback: {
         Row: {
           created_at: string | null
@@ -1916,6 +1990,14 @@ export type Database = {
       }
       cancel_reservation: {
         Args: { p_inquiry_id: string }
+        Returns: boolean
+      }
+      check_is_owner: {
+        Args: { owner_id: string }
+        Returns: boolean
+      }
+      check_min_role: {
+        Args: { required_role: string }
         Returns: boolean
       }
       get_available_slots: {
@@ -2022,6 +2104,10 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: string
+      }
+      min_role: {
+        Args: { required_role: string }
+        Returns: boolean
       }
       reserve_slot: {
         Args: { p_inquiry_id: string; p_slot_id: string }

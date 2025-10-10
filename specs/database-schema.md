@@ -8,6 +8,7 @@
 - **Region**: ap-northeast-2
 
 ### 최근 업데이트
+- **2025.10.10**: 약관 시스템 추가 (terms, terms_sections)
 - **2025.10.06**: 타입 시스템 동기화 완료
 - **2025.10.05**: 사용자 테이블 통합 (admins, photographers, users → users + photographers)
 - **2025.09.16**: 매칭 시스템 추가 (10-question photographer matching)
@@ -801,6 +802,36 @@ CREATE TABLE system_settings (
 );
 ```
 
+### 8. 약관 시스템 (2025.10.10 신규)
+
+#### `terms` - 약관 버전 관리
+```sql
+CREATE TABLE terms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  version TEXT NOT NULL, -- 버전 번호 (예: '1.0', '1.1')
+  effective_date DATE NOT NULL, -- 약관 시행일
+  is_active BOOLEAN DEFAULT true, -- 현재 활성 약관 여부
+  created_by UUID REFERENCES users(id), -- 약관 작성자 (관리자)
+  updated_by UUID REFERENCES users(id), -- 약관 수정자
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+#### `terms_sections` - 약관 조항 내용
+```sql
+CREATE TABLE terms_sections (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  terms_id UUID NOT NULL REFERENCES terms(id) ON DELETE CASCADE,
+  article_number INTEGER NOT NULL, -- 조항 번호 (예: 1, 2, 3)
+  title TEXT NOT NULL, -- 조항 제목 (예: '제1조 (목적)')
+  content TEXT NOT NULL, -- 조항 내용
+  display_order INTEGER NOT NULL, -- 표시 순서
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
 ## 🎯 매칭 알고리즘 구조
 
 ### 4차원 가중치 분배
@@ -943,3 +974,7 @@ CREATE INDEX idx_categories_parent ON categories(parent_id);
 - `matching_performance_logs` - 성능 로그
 - `embedding_jobs` - 임베딩 작업 큐
 - `system_settings` - 시스템 설정
+
+### 약관 시스템
+- `terms` - 약관 버전 관리
+- `terms_sections` - 약관 조항 내용

@@ -3,9 +3,9 @@
 import React from "react";
 
 import { useState } from "react";
-import { PersonalInfoForm } from "@/components/booking/personal-info-form";
+import { PersonalInfoForm } from "@/app/photographers/[id]/booking/personal-info-form";
 // CategoryTournament removed - no longer using tournament selection
-import { SuccessScreen } from "@/components/booking/success-screen";
+import { SuccessScreen } from "@/app/photographers/[id]/booking/success-screen";
 import { Toaster, toast } from "sonner";
 import type {
   InquiryFormValues,

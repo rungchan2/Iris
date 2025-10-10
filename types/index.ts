@@ -51,3 +51,19 @@ export {
   type AdminUser,
   type PhotographerUser,
 } from './user-management.types'
+
+export {
+  termsSectionSchema,
+  termsCreateSchema,
+  termsUpdateSchema,
+  type TermsSectionFormData,
+  type TermsCreateFormData,
+  type TermsUpdateFormData,
+  type Terms,
+  type TermsInsert,
+  type TermsUpdate,
+  type TermsSection,
+  type TermsSectionInsert,
+  type TermsSectionUpdate,
+  type TermsWithSections,
+} from './terms.types'
