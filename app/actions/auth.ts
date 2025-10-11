@@ -5,6 +5,7 @@ import { unstable_cache } from 'next/cache'
 import { setUserCookie, clearUserCookie } from '@/lib/auth/cookie'
 import { createClient } from '@/lib/supabase/server'
 import { authLogger } from '@/lib/logger'
+import { DOCUMENT_TYPE } from '@/types'
 
 /**
  * 현재 사용자 조회 (캐시 + 쿠키 업데이트)
@@ -201,7 +202,11 @@ export async function signUpNewUser(
   email: string,
   password: string,
   name: string,
-  role: 'user' | 'photographer' | 'admin' = 'user'
+  role: 'user' | 'photographer' | 'admin' = 'user',
+  termsAgreement?: {
+    agreedTermsId?: string
+    agreedPrivacyId?: string
+  }
 ) {
   const supabase = await createClient()
 
@@ -226,7 +231,8 @@ export async function signUpNewUser(
     }
   }
 
-  // 2. users 테이블에 레코드 생성
+  // 2. users 테이블에 레코드 생성 (약관 동의 정보 포함)
+  const now = new Date().toISOString()
   const { error: userInsertError } = await supabase
     .from('users')
     .insert({
@@ -235,6 +241,10 @@ export async function signUpNewUser(
       name,
       role,
       is_active: true,
+      agreed_terms_id: termsAgreement?.agreedTermsId || null,
+      agreed_privacy_id: termsAgreement?.agreedPrivacyId || null,
+      terms_agreed_at: termsAgreement?.agreedTermsId ? now : null,
+      privacy_agreed_at: termsAgreement?.agreedPrivacyId ? now : null,
     })
 
   if (userInsertError) {
@@ -256,7 +266,12 @@ export async function signUpNewUser(
     }
   }
 
-  authLogger.info('User signed up successfully', { userId: authData.user.id, role })
+  authLogger.info('User signed up successfully', {
+    userId: authData.user.id,
+    role,
+    termsAgreed: !!termsAgreement?.agreedTermsId,
+    privacyAgreed: !!termsAgreement?.agreedPrivacyId,
+  })
 
   return {
     success: true,
@@ -373,4 +388,34 @@ export async function login(email: string, password: string) {
   }
 
   return { data, error }
+}
+
+/**
+ * Get active terms versions for signup
+ */
+export async function getActiveTermsVersions() {
+  const supabase = await createClient()
+
+  // Get active terms of service
+  const { data: terms } = await supabase
+    .from('terms')
+    .select('id')
+    .eq('document_type', DOCUMENT_TYPE.TERMS_OF_SERVICE)
+    .eq('is_active', true)
+    .limit(1)
+    .single()
+
+  // Get active privacy policy
+  const { data: privacy } = await supabase
+    .from('terms')
+    .select('id')
+    .eq('document_type', DOCUMENT_TYPE.PRIVACY_POLICY)
+    .eq('is_active', true)
+    .limit(1)
+    .single()
+
+  return {
+    termsId: terms?.id || null,
+    privacyId: privacy?.id || null,
+  }
 }

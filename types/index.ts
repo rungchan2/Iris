@@ -94,3 +94,12 @@ export {
   type PhotographerInsertData,
   mapFormDataToPhotographerInsert,
 } from './photographer-signup.types'
+
+export {
+  userSignupSchema,
+  photographerSignupSchema,
+  type UserSignupFormData,
+  type PhotographerSignupFormData as PhotographerSignupFormDataNew,
+  type TermsAgreement,
+  type ActiveTermsVersions,
+} from './signup.types'

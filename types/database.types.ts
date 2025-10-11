@@ -1954,36 +1954,63 @@ export type Database = {
       }
       users: {
         Row: {
+          agreed_privacy_id: string | null
+          agreed_terms_id: string | null
           created_at: string | null
           email: string
           id: string
           is_active: boolean | null
           name: string
           phone: string | null
+          privacy_agreed_at: string | null
           role: Database["public"]["Enums"]["user_role"]
+          terms_agreed_at: string | null
           updated_at: string | null
         }
         Insert: {
+          agreed_privacy_id?: string | null
+          agreed_terms_id?: string | null
           created_at?: string | null
           email: string
           id: string
           is_active?: boolean | null
           name: string
           phone?: string | null
+          privacy_agreed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          terms_agreed_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          agreed_privacy_id?: string | null
+          agreed_terms_id?: string | null
           created_at?: string | null
           email?: string
           id?: string
           is_active?: boolean | null
           name?: string
           phone?: string | null
+          privacy_agreed_at?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          terms_agreed_at?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_agreed_privacy_id_fkey"
+            columns: ["agreed_privacy_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_agreed_terms_id_fkey"
+            columns: ["agreed_terms_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

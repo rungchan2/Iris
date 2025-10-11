@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signUpNewUser, updateProfile } from "@/app/actions/auth"
+import { signUpNewUser, updateProfile, getActiveTermsVersions } from "@/app/actions/auth"
+import { TermsAgreement } from "@/components/auth/terms-agreement"
 import { authLogger } from "@/lib/logger"
 
 type UserSignupFormData = {
@@ -26,6 +27,8 @@ type UserSignupFormData = {
   phone: string
   password: string
   passwordConfirm: string
+  agreedToTerms: boolean
+  agreedToPrivacy: boolean
 }
 
 export function UserSignupForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
@@ -33,15 +36,36 @@ export function UserSignupForm({ className, ...props }: React.ComponentPropsWith
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [termsVersions, setTermsVersions] = useState<{
+    termsId: string | null
+    privacyId: string | null
+  }>({ termsId: null, privacyId: null })
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
-  } = useForm<UserSignupFormData>()
+  } = useForm<UserSignupFormData>({
+    defaultValues: {
+      agreedToTerms: false,
+      agreedToPrivacy: false,
+    },
+  })
 
   const password = watch("password")
+  const agreedToTerms = watch("agreedToTerms")
+  const agreedToPrivacy = watch("agreedToPrivacy")
+
+  // Fetch active terms versions on mount
+  useEffect(() => {
+    const fetchTermsVersions = async () => {
+      const versions = await getActiveTermsVersions()
+      setTermsVersions(versions)
+    }
+    fetchTermsVersions()
+  }, [])
 
   const onSubmit = async (data: UserSignupFormData) => {
     try {
@@ -53,12 +77,27 @@ export function UserSignupForm({ className, ...props }: React.ComponentPropsWith
         return
       }
 
+      // Validate terms agreement
+      if (!data.agreedToTerms) {
+        toast.error("이용약관에 동의해주세요")
+        return
+      }
+
+      if (!data.agreedToPrivacy) {
+        toast.error("개인정보 처리방침에 동의해주세요")
+        return
+      }
+
       // Sign up with email and password
       const signupResult = await signUpNewUser(
         data.email,
         data.password,
         data.name,
-        'user' // user_type
+        'user', // user_type
+        {
+          agreedTermsId: termsVersions.termsId || undefined,
+          agreedPrivacyId: termsVersions.privacyId || undefined,
+        }
       )
 
       if (!signupResult.success) {
@@ -221,6 +260,17 @@ export function UserSignupForm({ className, ...props }: React.ComponentPropsWith
                   <p className="text-sm text-red-500">{errors.passwordConfirm.message}</p>
                 )}
               </div>
+
+              {/* Terms Agreement */}
+              <TermsAgreement
+                agreedToTerms={agreedToTerms}
+                agreedToPrivacy={agreedToPrivacy}
+                onTermsChange={(checked) => setValue("agreedToTerms", checked)}
+                onPrivacyChange={(checked) => setValue("agreedToPrivacy", checked)}
+                termsError={errors.agreedToTerms?.message}
+                privacyError={errors.agreedToPrivacy?.message}
+                disabled={isLoading}
+              />
 
               {/* Submit Button */}
               <Button type="submit" className="w-full" disabled={isLoading}>
