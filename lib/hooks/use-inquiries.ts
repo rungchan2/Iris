@@ -11,6 +11,7 @@ import {
   deleteInquiry,
   type InquiryFilters,
 } from '@/lib/actions/inquiries'
+import { type InquiryStatus } from '@/types'
 
 type InquiryRow = Database['public']['Tables']['inquiries']['Row']
 
@@ -84,7 +85,7 @@ export function useInquiryMutations() {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'new' | 'contacted' | 'completed' }) =>
+    mutationFn: ({ id, status }: { id: string; status: InquiryStatus }) =>
       updateInquiryStatus(id, status),
     onMutate: async ({ id, status }) => {
       // Cancel any outgoing refetches

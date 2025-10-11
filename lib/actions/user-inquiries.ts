@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getUserCookie } from '@/lib/auth/cookie'
 import type { Tables, TablesUpdate } from '@/types'
 import { bookingLogger } from '@/lib/logger'
+import { INQUIRY_STATUS } from '@/types'
 
 type Inquiry = Tables<'inquiries'>
 
@@ -156,7 +157,7 @@ export async function updateInquiryOptionalFields(
     }
 
     // Prevent editing if status is completed or cancelled
-    if (inquiry.status === 'completed' || inquiry.status === 'cancelled') {
+    if (inquiry.status === INQUIRY_STATUS.COMPLETED || inquiry.status === INQUIRY_STATUS.CANCELLED) {
       return { success: false, error: 'Cannot edit completed or cancelled inquiries' }
     }
 

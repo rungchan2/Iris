@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { Tables, TablesInsert, TablesUpdate } from './database.types'
+import { DOCUMENT_TYPE_VALUES } from './enums'
 
 // Database types
 export type Terms = Tables<'terms'>
@@ -21,9 +22,10 @@ export const termsSectionSchema = z.object({
 export type TermsSectionFormData = z.infer<typeof termsSectionSchema>
 
 export const termsCreateSchema = z.object({
+  document_type: z.enum(DOCUMENT_TYPE_VALUES as [string, ...string[]]),
   version: z.string().min(1, '버전을 입력해주세요').max(50),
   effective_date: z.date(),
-  is_active: z.boolean().default(false),
+  is_active: z.boolean(),
   sections: z.array(termsSectionSchema).min(1, '최소 1개 이상의 조항이 필요합니다'),
 })
 

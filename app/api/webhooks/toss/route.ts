@@ -5,6 +5,7 @@ import type { TossWebhookEvent } from '@/lib/payments/toss-types';
 import { webhookLogger } from '@/lib/logger';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
+import { INQUIRY_STATUS } from '@/types';
 
 interface TossWebhookData {
   paymentKey: string
@@ -135,12 +136,12 @@ async function handlePaymentDone(supabase: SupabaseClient<Database>, data: TossW
       throw new Error(`결제 정보 업데이트 실패: ${paymentError.message}`);
     }
 
-    // 관련 문의 상태 업데이트
+    // 관련 문의 상태 업데이트 (결제 완료 → 예약 확정)
     if (data.metadata?.inquiryId) {
       const { error: inquiryError } = await supabase
         .from('inquiries')
         .update({
-          status: 'reserved',
+          status: INQUIRY_STATUS.RESERVED,
           updated_at: new Date().toISOString()
         })
         .eq('id', data.metadata.inquiryId);
@@ -302,12 +303,12 @@ async function handleVirtualAccountDeposit(supabase: SupabaseClient<Database>, d
       throw new Error(`가상계좌 결제 상태 업데이트 실패: ${paymentError.message}`);
     }
 
-    // 관련 문의 상태도 업데이트
+    // 관련 문의 상태도 업데이트 (가상계좌 입금 완료 → 예약 확정)
     if (data.metadata?.inquiryId) {
       const { error: inquiryError } = await supabase
         .from('inquiries')
         .update({
-          status: 'reserved',
+          status: INQUIRY_STATUS.RESERVED,
           updated_at: new Date().toISOString()
         })
         .eq('id', data.metadata.inquiryId);

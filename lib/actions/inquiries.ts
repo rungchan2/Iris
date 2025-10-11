@@ -5,12 +5,13 @@ import { revalidatePath } from 'next/cache'
 import { bookingLogger } from '@/lib/logger'
 import { getUserCookie } from '@/lib/auth/cookie'
 import type { Database, TablesInsert } from '@/types/database.types'
+import { INQUIRY_STATUS, type InquiryStatus } from '@/types'
 
 type InquiryRow = Database['public']['Tables']['inquiries']['Row']
 type InquiryInsert = TablesInsert<'inquiries'>
 
 export interface InquiryFilters {
-  status?: string
+  status?: string | InquiryStatus
   photographerId?: string
   dateRange?: {
     from: string
@@ -60,7 +61,7 @@ export async function getInquiries(filters: InquiryFilters = {}) {
 
     // Apply filters
     if (status && status !== 'all') {
-      query = query.eq('status', status)
+      query = query.eq('status', status as InquiryStatus)
     }
 
     if (photographerId) {
@@ -162,13 +163,13 @@ export async function createInquiryForPayment(
       }
     }
 
-    // Insert inquiry with status='pending_payment' and user_id
+    // Insert inquiry with status='new' and user_id
     const { data: inquiry, error: insertError } = await supabase
       .from('inquiries')
       .insert({
         ...inquiryData,
         user_id: user.id,  // Add authenticated user ID
-        status: 'pending_payment',
+        status: INQUIRY_STATUS.NEW,  // Use NEW status instead of pending_payment
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -193,7 +194,7 @@ export async function createInquiryForPayment(
       phone,
       photographerId: inquiryData.photographer_id,
       productId: inquiryData.product_id,
-      status: 'pending_payment'
+      status: INQUIRY_STATUS.NEW
     })
 
     return {
@@ -306,7 +307,7 @@ export async function updateInquiry(id: string, updates: Partial<InquiryRow>) {
 /**
  * Update inquiry status
  */
-export async function updateInquiryStatus(id: string, status: 'new' | 'contacted' | 'completed') {
+export async function updateInquiryStatus(id: string, status: InquiryStatus) {
   try {
     const supabase = await createClient()
     const user = await getUserCookie()

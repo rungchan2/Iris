@@ -317,7 +317,7 @@ export type Database = {
           selected_slot_id: string | null
           shooting_meaning: string | null
           special_request: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
           updated_at: string | null
           user_id: string | null
         }
@@ -347,7 +347,7 @@ export type Database = {
           selected_slot_id?: string | null
           shooting_meaning?: string | null
           special_request?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
           updated_at?: string | null
           user_id?: string | null
         }
@@ -377,7 +377,7 @@ export type Database = {
           selected_slot_id?: string | null
           shooting_meaning?: string | null
           special_request?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1825,6 +1825,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          document_type: string
           effective_date: string
           id: string
           is_active: boolean | null
@@ -1835,6 +1836,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          document_type?: string
           effective_date: string
           id?: string
           is_active?: boolean | null
@@ -1845,6 +1847,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          document_type?: string
           effective_date?: string
           id?: string
           is_active?: boolean | null
@@ -2084,8 +2087,28 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_any_owner: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_owner: {
+        Args: { owner_id: string }
+        Returns: boolean
+      }
+      is_photographer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_slot_available: {
         Args: { p_slot_id: string }
+        Returns: boolean
+      }
+      is_user_or_photographer: {
+        Args: { p_photographer_id: string; p_user_id: string }
         Returns: boolean
       }
       ivfflat_bit_support: {
@@ -2163,6 +2186,15 @@ export type Database = {
     }
     Enums: {
       approval_status: "pending" | "approved" | "rejected"
+      inquiry_status:
+        | "new"
+        | "contacted"
+        | "completed"
+        | "cancelled"
+        | "pending_payment"
+        | "payment_failed"
+        | "reserved"
+        | "expired"
       user_role: "user" | "photographer" | "admin"
     }
     CompositeTypes: {
@@ -2295,6 +2327,16 @@ export const Constants = {
   public: {
     Enums: {
       approval_status: ["pending", "approved", "rejected"],
+      inquiry_status: [
+        "new",
+        "contacted",
+        "completed",
+        "cancelled",
+        "pending_payment",
+        "payment_failed",
+        "reserved",
+        "expired",
+      ],
       user_role: ["user", "photographer", "admin"],
     },
   },

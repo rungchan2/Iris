@@ -5,14 +5,24 @@ export type { Database, Tables, TablesInsert, TablesUpdate, Enums } from './data
 export {
   type ApprovalStatus,
   type UserRole,
+  type InquiryStatus,
+  type DocumentType,
   APPROVAL_STATUS,
   USER_ROLE,
+  INQUIRY_STATUS,
+  DOCUMENT_TYPE,
   APPROVAL_STATUS_VALUES,
   USER_ROLE_VALUES,
+  INQUIRY_STATUS_VALUES,
+  DOCUMENT_TYPE_VALUES,
   APPROVAL_STATUS_LABELS,
   USER_ROLE_LABELS,
+  INQUIRY_STATUS_LABELS,
+  DOCUMENT_TYPE_LABELS,
   isApprovalStatus,
   isUserRole,
+  isInquiryStatus,
+  isDocumentType,
 } from './enums'
 
 // Zod Schemas and Form Types
@@ -67,3 +77,20 @@ export {
   type TermsSectionUpdate,
   type TermsWithSections,
 } from './terms.types'
+
+export {
+  photographerSignupStep1Schema,
+  photographerSignupStep2Schema,
+  photographerSignupStep3Schema,
+  photographerSignupStep4Schema,
+  photographerSignupStep5Schema,
+  photographerSignupFormSchema,
+  type PhotographerSignupStep1,
+  type PhotographerSignupStep2,
+  type PhotographerSignupStep3,
+  type PhotographerSignupStep4,
+  type PhotographerSignupStep5,
+  type PhotographerSignupFormData,
+  type PhotographerInsertData,
+  mapFormDataToPhotographerInsert,
+} from './photographer-signup.types'

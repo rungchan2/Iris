@@ -1,5 +1,6 @@
 import { z } from "zod"
 import type { Tables, TablesInsert, TablesUpdate } from './database.types'
+import type { InquiryStatus } from './enums'
 
 // ============================================================================
 // Zod Schemas for Inquiries
@@ -119,7 +120,7 @@ export interface Inquiry {
   gender?: "male" | "female" | "other"
   desired_date: string
   people_count: number
-  status: "new" | "contacted" | "completed"
+  status: InquiryStatus
   created_at: string
   special_request?: string
   admin_note?: string

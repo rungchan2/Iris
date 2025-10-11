@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { bookingLogger } from '@/lib/logger'
 import { Inquiry } from '@/types/inquiry.types'
+import { type InquiryStatus } from '@/types'
 
 export interface InquiryFilters {
   status: string
@@ -60,7 +61,7 @@ export const useInquiryManagement = (initialInquiries: Inquiry[] = []) => {
   }, [router, searchParams])
 
   // Status update
-  const updateInquiryStatus = useCallback(async (id: string, newStatus: "new" | "contacted" | "completed") => {
+  const updateInquiryStatus = useCallback(async (id: string, newStatus: InquiryStatus) => {
     setUpdatingIds(prev => new Set(prev).add(id))
     
     try {
@@ -120,7 +121,7 @@ export const useInquiryManagement = (initialInquiries: Inquiry[] = []) => {
   }, [supabase])
 
   // Bulk status update
-  const updateMultipleInquiryStatuses = useCallback(async (ids: string[], newStatus: "new" | "contacted" | "completed") => {
+  const updateMultipleInquiryStatuses = useCallback(async (ids: string[], newStatus: InquiryStatus) => {
     setLoading(true)
     
     try {

@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { paymentLogger } from '@/lib/logger'
 import type { Json } from '@/types/database.types'
+import { INQUIRY_STATUS } from '@/types'
 // Payment utilities
 function generateOrderId(): string {
   const timestamp = Date.now().toString()
@@ -163,9 +164,9 @@ export async function updatePaymentStatus(
     if (status === 'paid') {
       await supabase
         .from('inquiries')
-        .update({ 
+        .update({
           payment_status: 'paid',
-          status: 'confirmed' // 결제 완료시 예약 확정
+          status: INQUIRY_STATUS.RESERVED // 결제 완료시 예약 확정
         })
         .eq('payment_id', paymentId)
     } else if (status === 'failed' || status === 'cancelled') {

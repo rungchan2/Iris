@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Plus, Trash2 } from 'lucide-react'
-import type { TermsWithSections, TermsSectionInsert, TermsSectionUpdate } from '@/types'
-import { termsUpdateSchema, type TermsUpdateFormData, termsSectionSchema } from '@/types'
-import { updateTerms, updateTermsSection } from '@/lib/actions/terms'
-import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -16,6 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -24,53 +24,42 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
+import { termsCreateSchema, type TermsCreateFormData, type TermsWithSections, type DocumentType } from '@/types'
+import { DOCUMENT_TYPE_LABELS } from '@/types'
+import { createTerms } from '@/lib/actions/terms'
+import { toast } from 'sonner'
 import { adminLogger } from '@/lib/logger'
 
-interface TermsEditDialogProps {
-  terms: TermsWithSections
+interface TermsCreateDialogProps {
+  documentType: DocumentType
   open: boolean
   onOpenChange: (open: boolean) => void
-  onUpdate: (updated: TermsWithSections) => void
+  onCreated: (terms: TermsWithSections) => void
 }
 
-interface SectionFormData {
-  id?: string
-  article_number: number
-  title: string
-  content: string
-  display_order: number
-}
-
-export function TermsEditDialog({
-  terms,
+export function TermsCreateDialog({
+  documentType,
   open,
   onOpenChange,
-  onUpdate,
-}: TermsEditDialogProps) {
+  onCreated,
+}: TermsCreateDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const form = useForm<TermsUpdateFormData & { sections: SectionFormData[] }>({
-    resolver: zodResolver(
-      termsUpdateSchema.extend({
-        sections: termsSectionSchema.extend({ id: z.string().optional() }).array(),
-      })
-    ),
+  const form = useForm<TermsCreateFormData>({
+    resolver: zodResolver(termsCreateSchema),
     defaultValues: {
-      version: terms.version,
-      effective_date: new Date(terms.effective_date),
-      is_active: terms.is_active ?? false,
-      sections: terms.sections.map((s) => ({
-        id: s.id,
-        article_number: s.article_number,
-        title: s.title,
-        content: s.content,
-        display_order: s.display_order,
-      })),
+      document_type: documentType,
+      version: '',
+      effective_date: new Date(),
+      is_active: false,
+      sections: [
+        {
+          article_number: 1,
+          title: '',
+          content: '',
+          display_order: 0,
+        },
+      ],
     },
   })
 
@@ -79,83 +68,22 @@ export function TermsEditDialog({
     name: 'sections',
   })
 
-  // Reset form when dialog opens with new terms
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        version: terms.version,
-        effective_date: new Date(terms.effective_date),
-        is_active: terms.is_active ?? false,
-        sections: terms.sections.map((s) => ({
-          id: s.id,
-          article_number: s.article_number,
-          title: s.title,
-          content: s.content,
-          display_order: s.display_order,
-        })),
-      })
-    }
-  }, [open, terms, form])
-
-  const onSubmit = async (data: TermsUpdateFormData & { sections: SectionFormData[] }) => {
+  const onSubmit = async (data: TermsCreateFormData) => {
     setIsSubmitting(true)
     try {
-      // Update terms metadata
-      const termsUpdateData = {
-        version: data.version,
-        effective_date: data.effective_date?.toISOString(),
-        is_active: data.is_active,
+      const result = await createTerms(data)
+
+      if (result.success && result.data) {
+        toast.success('약관이 생성되었습니다')
+        onCreated(result.data)
+        onOpenChange(false)
+        form.reset()
+      } else {
+        toast.error('약관 생성에 실패했습니다')
       }
-
-      const termsResult = await updateTerms(terms.id, termsUpdateData)
-
-      if (!termsResult.success) {
-        toast.error(termsResult.error || '약관 수정에 실패했습니다')
-        return
-      }
-
-      // Update all sections
-      const sectionUpdatePromises = data.sections.map((section) => {
-        if (!section.id) return Promise.resolve({ success: true })
-
-        return updateTermsSection(section.id, {
-          article_number: section.article_number,
-          title: section.title,
-          content: section.content,
-          display_order: section.display_order,
-        })
-      })
-
-      const sectionResults = await Promise.all(sectionUpdatePromises)
-      const failedSections = sectionResults.filter((r) => !r.success)
-
-      if (failedSections.length > 0) {
-        toast.error('일부 조항 수정에 실패했습니다')
-        adminLogger.error('Failed to update sections:', failedSections)
-        return
-      }
-
-      // Update local state
-      onUpdate({
-        ...terms,
-        ...termsResult.data,
-        sections: data.sections.map((s, idx) => ({
-          id: s.id || '',
-          terms_id: terms.id,
-          article_number: s.article_number,
-          title: s.title,
-          content: s.content,
-          display_order: s.display_order,
-          created_at: terms.sections[idx]?.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })),
-      })
-
-      toast.success('약관이 수정되었습니다')
-      onOpenChange(false)
     } catch (error) {
-      adminLogger.error('Error updating terms:', error)
-      toast.error('수정 중 오류가 발생했습니다')
+      adminLogger.error('Error creating terms:', error)
+      toast.error('약관 생성 중 오류가 발생했습니다')
     } finally {
       setIsSubmitting(false)
     }
@@ -175,14 +103,16 @@ export function TermsEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>약관 수정</DialogTitle>
+          <DialogTitle>새 {DOCUMENT_TYPE_LABELS[documentType]} 생성</DialogTitle>
           <DialogDescription>
-            약관의 기본 정보와 조항 내용을 수정합니다
+            새로운 버전의 {DOCUMENT_TYPE_LABELS[documentType]}을 작성합니다
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <input type="hidden" {...form.register('document_type')} />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -229,9 +159,9 @@ export function TermsEditDialog({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>활성화</FormLabel>
+                    <FormLabel>즉시 활성화</FormLabel>
                     <p className="text-sm text-muted-foreground">
-                      이 약관을 활성화하면 다른 모든 버전은 비활성화됩니다
+                      체크하면 이 버전이 즉시 활성화됩니다
                     </p>
                   </div>
                 </FormItem>
@@ -352,7 +282,7 @@ export function TermsEditDialog({
                 취소
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? '저장 중...' : '저장'}
+                {isSubmitting ? '생성 중...' : '생성'}
               </Button>
             </div>
           </form>

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getTossErrorMessage } from '@/lib/payments/toss-client';
 import { paymentLogger } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/client';
+import { INQUIRY_STATUS } from '@/types';
 
 export default function PaymentFailClient({
   code,
@@ -82,11 +83,10 @@ export default function PaymentFailClient({
           const { error: inquiryUpdateError } = await supabase
             .from('inquiries')
             .update({
-              status: 'payment_failed',
+              status: INQUIRY_STATUS.PAYMENT_FAILED,
               updated_at: new Date().toISOString()
             })
-            .eq('id', payment.inquiry_id)
-            .eq('status', 'pending_payment');  // pending_payment만 payment_failed로 변경
+            .eq('id', payment.inquiry_id);
 
           if (inquiryUpdateError) {
             paymentLogger.error('문의 상태 업데이트 실패', {

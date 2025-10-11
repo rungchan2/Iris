@@ -11,14 +11,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Label } from '@/components/ui/label'
-import { CalendarIcon, Search, Filter, Eye, RefreshCw, Download } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CalendarIcon, Search, Filter, Eye, RefreshCw, Download, Shield, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { toast } from 'sonner'
 import { getPayments, getPayment } from '@/lib/actions/payments'
 import { getPhotographers } from '@/lib/actions/photographers'
 import type { PaymentStatus, PaymentMethod } from '@/lib/payments/types'
 import type { Database } from '@/types/database.types'
 import PaymentStatistics from './payment-statistics'
+import PaymentRecoveryQueue from './payment-recovery-queue'
+import PaymentFraudAlerts from './payment-fraud-alerts'
+import PaymentLogsViewer from './payment-logs-viewer'
 
 interface Payment {
   id: string
@@ -215,12 +220,6 @@ export default function PaymentManagement() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">결제 관리</h1>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowStatistics(!showStatistics)}
-          >
-            {showStatistics ? '통계 숨기기' : '통계 보기'}
-          </Button>
           <Button variant="outline" onClick={loadPayments} disabled={loading}>
             <RefreshCw className="h-4 w-4 mr-2" />
             새로고침
@@ -232,17 +231,23 @@ export default function PaymentManagement() {
         </div>
       </div>
 
-      {/* Statistics */}
-      {showStatistics && (
-        <Card>
-          <CardHeader>
-            <CardTitle>결제 통계</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PaymentStatistics />
-          </CardContent>
-        </Card>
-      )}
+      {/* Main Tabs */}
+      <Tabs defaultValue="payments" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="payments">결제 내역</TabsTrigger>
+          <TabsTrigger value="recovery">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            복구 관리
+          </TabsTrigger>
+          <TabsTrigger value="fraud">
+            <Shield className="h-4 w-4 mr-2" />
+            사기 감지
+          </TabsTrigger>
+          <TabsTrigger value="statistics">통계</TabsTrigger>
+        </TabsList>
+
+        {/* Tab: 결제 내역 */}
+        <TabsContent value="payments" className="space-y-6">
 
       {/* Filters */}
       <Card>
@@ -495,7 +500,7 @@ export default function PaymentManagement() {
                               상세보기
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogContent className="max-h-[80vh] overflow-y-auto" maxWidth="5xl">
                             <PaymentDetailsModal payment={selectedPayment} />
                           </DialogContent>
                         </Dialog>
@@ -538,11 +543,38 @@ export default function PaymentManagement() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {/* Tab: 복구 관리 */}
+        <TabsContent value="recovery" className="space-y-6">
+          <PaymentRecoveryQueue />
+        </TabsContent>
+
+        {/* Tab: 사기 감지 */}
+        <TabsContent value="fraud" className="space-y-6">
+          <PaymentFraudAlerts />
+        </TabsContent>
+
+        {/* Tab: 통계 */}
+        <TabsContent value="statistics" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>결제 통계</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PaymentStatistics />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
 
 function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
+  const [syncing, setSyncing] = useState(false)
+  const [showLogs, setShowLogs] = useState(false)
+
   if (!payment) {
     return (
       <div className="p-6">
@@ -588,6 +620,40 @@ function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
         {labels[status] || status}
       </Badge>
     )
+  }
+
+  const handleSyncWithToss = async () => {
+    setSyncing(true)
+    try {
+      const { syncPaymentWithToss } = await import('@/lib/actions/payment-recovery')
+      const result = await syncPaymentWithToss(payment.id)
+
+      if (result.success && result.data) {
+        toast.success(`상태 동기화 완료: ${result.data.oldStatus} → ${result.data.newStatus}`)
+        window.location.reload()
+      } else {
+        toast.error('동기화 실패: ' + result.error)
+      }
+    } catch (error) {
+      toast.error('동기화 중 오류 발생')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const handleCreateSettlement = async () => {
+    try {
+      const { createSettlementItem } = await import('@/lib/actions/payment-recovery')
+      const result = await createSettlementItem(payment.id)
+
+      if (result.success && result.data) {
+        toast.success(`정산 항목 생성 완료: ${result.data.settlementAmount.toLocaleString()}원`)
+      } else {
+        toast.error('정산 항목 생성 실패: ' + result.error)
+      }
+    } catch (error) {
+      toast.error('정산 항목 생성 중 오류 발생')
+    }
   }
 
   return (
@@ -700,14 +766,66 @@ function PaymentDetailsModal({ payment }: { payment: Payment | null }) {
         )}
       </div>
 
+      {/* 결제 로그 */}
+      {showLogs && (
+        <div className="col-span-2">
+          <PaymentLogsViewer paymentId={payment.id} />
+        </div>
+      )}
+
       {/* 관리 액션 */}
-      <div className="flex justify-end gap-2 pt-4 border-t">
-        <Button variant="outline">
-          환불 처리
-        </Button>
-        <Button variant="outline">
-          상태 동기화
-        </Button>
+      <div className="pt-4 border-t space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold text-gray-900">수동 복구 도구</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLogs(!showLogs)}
+          >
+            {showLogs ? '로그 숨기기' : '처리 로그 보기'}
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            onClick={handleSyncWithToss}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                동기화 중...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                토스 상태 동기화
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleCreateSettlement}
+            disabled={payment.status !== 'paid'}
+          >
+            정산 항목 생성
+          </Button>
+
+          <Button variant="outline">
+            환불 처리
+          </Button>
+
+          <Button variant="outline" className="text-red-600 hover:text-red-700">
+            상태 강제 변경
+          </Button>
+        </div>
+
+        <div className="text-xs text-gray-500">
+          ⚠️ 수동 복구 도구는 자동 복구가 실패한 경우에만 사용하세요.
+          모든 작업은 로그에 기록되며 복구 불가능할 수 있습니다.
+        </div>
       </div>
     </div>
   )

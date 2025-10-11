@@ -8,6 +8,7 @@
 - **Region**: ap-northeast-2
 
 ### 최근 업데이트
+- **2025.10.11**: 데이터베이스 스키마 동기화 (terms.document_type 추가, inquiry_status enum 업데이트)
 - **2025.10.10**: 약관 시스템 추가 (terms, terms_sections)
 - **2025.10.06**: 타입 시스템 동기화 완료
 - **2025.10.05**: 사용자 테이블 통합 (admins, photographers, users → users + photographers)
@@ -318,8 +319,9 @@ CREATE TABLE inquiries (
   difficulty_note TEXT,
 
   -- 상태 관리
-  status TEXT DEFAULT 'new', -- 'new', 'contacted', 'completed'
+  status inquiry_status DEFAULT 'new', -- enum: 'new' | 'contacted' | 'completed' | 'cancelled' | 'pending_payment' | 'payment_failed' | 'reserved' | 'expired'
   admin_note TEXT,
+  deleted_at TIMESTAMPTZ,
 
   -- 결제 정보
   payment_id UUID REFERENCES payments(id),
@@ -809,6 +811,7 @@ CREATE TABLE system_settings (
 CREATE TABLE terms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   version TEXT NOT NULL, -- 버전 번호 (예: '1.0', '1.1')
+  document_type TEXT DEFAULT 'terms_of_service', -- 문서 타입 (예: 'terms_of_service', 'privacy_policy', 'photographer_terms')
   effective_date DATE NOT NULL, -- 약관 시행일
   is_active BOOLEAN DEFAULT true, -- 현재 활성 약관 여부
   created_by UUID REFERENCES users(id), -- 약관 작성자 (관리자)

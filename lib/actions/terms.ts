@@ -11,16 +11,20 @@ import type {
   TermsSectionUpdate,
   TermsWithSections,
   TermsCreateFormData,
+  DocumentType,
 } from '@/types'
+import { DOCUMENT_TYPE } from '@/types'
 
 type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: string }
 
 /**
- * Get active terms
+ * Get active terms by document type
  */
-export async function getActiveTerms(): Promise<ApiResponse<TermsWithSections | null>> {
+export async function getActiveTerms(
+  documentType: DocumentType = DOCUMENT_TYPE.TERMS_OF_SERVICE
+): Promise<ApiResponse<TermsWithSections | null>> {
   try {
     const supabase = await createClient()
 
@@ -31,6 +35,7 @@ export async function getActiveTerms(): Promise<ApiResponse<TermsWithSections | 
         sections:terms_sections(*)
       `)
       .eq('is_active', true)
+      .eq('document_type', documentType)
       .order('effective_date', { ascending: false })
       .limit(1)
       .single()
@@ -60,20 +65,27 @@ export async function getActiveTerms(): Promise<ApiResponse<TermsWithSections | 
 }
 
 /**
- * Get all terms (admin only)
+ * Get all terms by document type (admin only)
  */
-export async function getAllTerms(): Promise<ApiResponse<TermsWithSections[]>> {
+export async function getAllTerms(
+  documentType?: DocumentType
+): Promise<ApiResponse<TermsWithSections[]>> {
   try {
     const supabase = await createClient()
 
-    const { data: terms, error } = await supabase
+    let query = supabase
       .from('terms')
       .select(`
         *,
-        sections:terms_sections(*),
-        created_by_user:users!terms_created_by_fkey(name, email),
-        updated_by_user:users!terms_updated_by_fkey(name, email)
+        sections:terms_sections(*)
       `)
+
+    // Filter by document type if provided
+    if (documentType) {
+      query = query.eq('document_type', documentType)
+    }
+
+    const { data: terms, error } = await query
       .order('effective_date', { ascending: false })
 
     if (error) {
@@ -153,12 +165,13 @@ export async function createTerms(
       return { success: false, error: 'Unauthorized' }
     }
 
-    // If this is set to active, deactivate all other terms first
+    // If this is set to active, deactivate all other terms of the same document type first
     if (data.is_active) {
       const { error: deactivateError } = await supabase
         .from('terms')
         .update({ is_active: false })
         .eq('is_active', true)
+        .eq('document_type', data.document_type)
 
       if (deactivateError) {
         adminLogger.error('Error deactivating other terms:', deactivateError)
@@ -168,6 +181,7 @@ export async function createTerms(
 
     // Create terms
     const termsInsert: TermsInsert = {
+      document_type: data.document_type,
       version: data.version,
       effective_date: data.effective_date.toISOString(),
       is_active: data.is_active,
@@ -244,17 +258,27 @@ export async function updateTerms(
       return { success: false, error: 'Unauthorized' }
     }
 
-    // If setting to active, deactivate all other terms first
+    // If setting to active, deactivate all other terms of the same document type first
     if (data.is_active) {
-      const { error: deactivateError } = await supabase
+      // First, get the document type of the current terms
+      const { data: currentTerms } = await supabase
         .from('terms')
-        .update({ is_active: false })
-        .eq('is_active', true)
-        .neq('id', id)
+        .select('document_type')
+        .eq('id', id)
+        .single()
 
-      if (deactivateError) {
-        adminLogger.error('Error deactivating other terms:', deactivateError)
-        return { success: false, error: deactivateError.message }
+      if (currentTerms) {
+        const { error: deactivateError } = await supabase
+          .from('terms')
+          .update({ is_active: false })
+          .eq('is_active', true)
+          .eq('document_type', currentTerms.document_type)
+          .neq('id', id)
+
+        if (deactivateError) {
+          adminLogger.error('Error deactivating other terms:', deactivateError)
+          return { success: false, error: deactivateError.message }
+        }
       }
     }
 
@@ -358,11 +382,23 @@ export async function activateTerms(id: string): Promise<ApiResponse<Terms>> {
       return { success: false, error: 'Unauthorized' }
     }
 
-    // Deactivate all other terms
+    // Get the document type of the terms to activate
+    const { data: termsToActivate } = await supabase
+      .from('terms')
+      .select('document_type')
+      .eq('id', id)
+      .single()
+
+    if (!termsToActivate) {
+      return { success: false, error: 'Terms not found' }
+    }
+
+    // Deactivate all other terms of the same document type
     const { error: deactivateError } = await supabase
       .from('terms')
       .update({ is_active: false })
       .eq('is_active', true)
+      .eq('document_type', termsToActivate.document_type)
       .neq('id', id)
 
     if (deactivateError) {

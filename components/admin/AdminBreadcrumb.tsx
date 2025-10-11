@@ -21,7 +21,6 @@ const routeMap: Record<string, BreadcrumbRoute> = {
   '/admin/photos': { label: '사진' },
   '/admin/schedule': { label: '일정' },
   '/admin/users': { label: '사용자 관리' },
-  '/admin/admin-users': { label: '관리자 계정' },
   '/admin/matching': { label: 'AI 매칭 시스템' },
   '/admin/matching/questions': { label: '질문 관리' },
   '/admin/matching/photographers': { label: '작가 프로필 관리' },

@@ -22,8 +22,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { signUpNewUser, login } from "@/app/actions/auth"
 import { validateInvitationCode } from "@/lib/actions/code"
+import { createPhotographerProfileAction, uploadPortfolioImagesAction } from "@/lib/actions/photographer-signup"
 import { useForm, Controller } from "react-hook-form"
-import { createPhotographerProfile, uploadPortfolioImages } from "@/lib/actions/photographer-client"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  photographerSignupFormSchema,
+  mapFormDataToPhotographerInsert,
+  type PhotographerSignupFormData,
+} from "@/types"
 
 import { useState, useCallback } from "react"
 import { Eye, EyeOff, Upload, X, ChevronRight, ChevronLeft, Camera, User, MapPin, DollarSign, FileImage, Loader2 } from "lucide-react"
@@ -36,40 +42,6 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-type PhotographerSignupFormData = {
-  // Step 1: 기본 정보
-  step1_email: string;
-  step1_name: string;
-  step1_password: string;
-  step1_passwordConfirm: string;
-  step1_code: string;
-  
-  // Step 2: 연락처 및 개인정보
-  step2_phone: string;
-  step2_gender?: 'male' | 'female' | 'other';
-  step2_ageRange?: string;
-  step2_instagramHandle?: string;
-  step2_websiteUrl?: string;
-  
-  // Step 3: 전문 정보
-  step3_yearsExperience: number;
-  step3_specialties: string[];
-  step3_studioLocation: string;
-  step3_equipmentInfo?: string;
-  step3_bio: string;
-  
-  // Step 4: 가격 정보
-  step4_priceRangeMin?: number;
-  step4_priceRangeMax?: number;
-  step4_priceDescription?: string;
-  
-  // Step 5: 포트폴리오
-  step5_portfolioFiles: File[];
-  step5_portfolioDescriptions: string[];
-  step5_agreeToTerms: boolean;
-  step5_agreeToPrivacy: boolean;
-}
 
 const STEPS = [
   { id: 1, title: '기본 정보', icon: User },
@@ -98,12 +70,14 @@ interface SignupFormProps extends React.ComponentPropsWithoutRef<"div"> {
   props?: React.ComponentPropsWithoutRef<"div">;
 }
 
-export function SignupForm({
+export function PhotographerSignupForm({
   className,
   ...props
 }: SignupFormProps) {
   const router = useRouter();
-  const { register, handleSubmit, formState: { errors }, setError, watch, control, setValue } = useForm<PhotographerSignupFormData>({
+  const { register, handleSubmit, formState: { errors }, setError, watch, control, setValue, trigger } = useForm<PhotographerSignupFormData>({
+    resolver: zodResolver(photographerSignupFormSchema),
+    mode: 'onChange',
     defaultValues: {
       step3_specialties: [],
       step5_portfolioFiles: [],
@@ -164,119 +138,49 @@ export function SignupForm({
   // 파일 제거 핸들러
   const removeFile = useCallback((index: number) => {
     const currentFiles = watchedPortfolioFiles || [];
-    const newFiles = currentFiles.filter((_, i) => i !== index);
+    const newFiles = currentFiles.filter((_file: File, i: number) => i !== index);
     setValue('step5_portfolioFiles', newFiles);
-    
-    const newPreviews = portfolioPreviews.filter((_, i) => i !== index);
+
+    const newPreviews = portfolioPreviews.filter((_preview: string, i: number) => i !== index);
     setPortfolioPreviews(newPreviews);
   }, [watchedPortfolioFiles, portfolioPreviews, setValue]);
 
-  // 단계별 validation
+  // 단계별 validation (Zod 기반)
   const validateCurrentStep = async () => {
-    const formData = watch();
-    
-    switch (currentStep) {
-      case 1:
-        // 기본 필드 체크
-        if (!formData.step1_email?.trim()) {
-          toast.error('이메일을 입력해주세요.');
-          return false;
-        }
-        if (!formData.step1_name?.trim()) {
-          toast.error('이름을 입력해주세요.');
-          return false;
-        }
-        if (!formData.step1_password?.trim()) {
-          toast.error('비밀번호를 입력해주세요.');
-          return false;
-        }
-        if (!formData.step1_passwordConfirm?.trim()) {
-          toast.error('비밀번호 확인을 입력해주세요.');
-          return false;
-        }
-        if (!formData.step1_code?.trim()) {
-          toast.error('가입 코드를 입력해주세요.');
-          return false;
-        }
-        
-        // 이메일 형식 검증
-        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-        if (!emailRegex.test(formData.step1_email)) {
-          toast.error('올바른 이메일 형식을 입력해주세요.');
-          return false;
-        }
-        
-        // 비밀번호 길이 검증
-        if (formData.step1_password.length < 6) {
-          toast.error('비밀번호는 최소 6글자 이상이어야 합니다.');
-          return false;
-        }
-        
-        // 비밀번호 일치 검증
-        if (formData.step1_password !== formData.step1_passwordConfirm) {
-          toast.error('비밀번호가 일치하지 않습니다.');
-          return false;
-        }
-        break;
-        
-      case 2:
-        if (!formData.step2_phone?.trim()) {
-          toast.error('전화번호를 입력해주세요.');
-          return false;
-        }
-        
-        // 전화번호 형식 검증
-        const phoneRegex = /^[0-9-]+$/;
-        if (!phoneRegex.test(formData.step2_phone)) {
-          toast.error('올바른 전화번호 형식을 입력해주세요.');
-          return false;
-        }
-        break;
-        
-      case 3:
-        if (!formData.step3_yearsExperience || formData.step3_yearsExperience < 0) {
-          toast.error('경력을 올바르게 입력해주세요.');
-          return false;
-        }
-        if (!formData.step3_specialties || formData.step3_specialties.length === 0) {
-          toast.error('최소 하나의 전문 분야를 선택해주세요.');
-          return false;
-        }
-        if (!formData.step3_studioLocation?.trim()) {
-          toast.error('활동 지역을 선택해주세요.');
-          return false;
-        }
-        if (!formData.step3_bio?.trim()) {
-          toast.error('자기소개를 입력해주세요.');
-          return false;
-        }
-        if (formData.step3_bio.length < 50) {
-          toast.error('자기소개는 최소 50자 이상 입력해주세요.');
-          return false;
-        }
-        break;
-        
-      case 4:
-        // 가격 정보는 선택사항이므로 validation 없음
-        break;
-        
-      case 5:
-        if (!formData.step5_portfolioFiles || formData.step5_portfolioFiles.length < 3) {
-          toast.error('최소 3장의 포트폴리오 이미지를 업로드해주세요.');
-          return false;
-        }
-        if (!watchedAgreeToTerms) {
-          toast.error('이용약관에 동의해주세요.');
-          return false;
-        }
-        if (!watchedAgreeToPrivacy) {
-          toast.error('개인정보처리방침에 동의해주세요.');
-          return false;
-        }
-        break;
+    const fieldsToValidate = getFieldsForStep(currentStep)
+    const isValid = await trigger(fieldsToValidate as any)
+
+    if (!isValid) {
+      const errorMessages = Object.values(errors)
+        .filter((error): error is { message?: string } => error !== undefined)
+        .map(error => error.message)
+        .filter((message): message is string => typeof message === 'string')
+
+      if (errorMessages.length > 0) {
+        toast.error(errorMessages[0])
+      }
     }
-    return true;
-  };
+
+    return isValid
+  }
+
+  // 각 단계별 검증할 필드 반환
+  const getFieldsForStep = (step: number) => {
+    switch (step) {
+      case 1:
+        return ['step1_email', 'step1_name', 'step1_password', 'step1_passwordConfirm', 'step1_code']
+      case 2:
+        return ['step2_phone', 'step2_gender', 'step2_ageRange', 'step2_instagramHandle', 'step2_websiteUrl']
+      case 3:
+        return ['step3_yearsExperience', 'step3_specialties', 'step3_studioLocation', 'step3_equipmentInfo', 'step3_bio']
+      case 4:
+        return ['step4_priceRangeMin', 'step4_priceRangeMax', 'step4_priceDescription']
+      case 5:
+        return ['step5_portfolioFiles', 'step5_portfolioDescriptions', 'step5_agreeToTerms', 'step5_agreeToPrivacy']
+      default:
+        return []
+    }
+  }
 
   // 다음 단계로 이동
   const nextStep = useCallback(async () => {
@@ -301,7 +205,7 @@ export function SignupForm({
   const toggleSpecialty = useCallback((specialty: string) => {
     const current = watchedSpecialties || [];
     const newSpecialties = current.includes(specialty)
-      ? current.filter(s => s !== specialty)
+      ? current.filter((s: string) => s !== specialty)
       : [...current, specialty];
     setValue('step3_specialties', newSpecialties);
   }, [watchedSpecialties, setValue]);
@@ -321,7 +225,7 @@ export function SignupForm({
         return;
       }
 
-      // 2. Supabase 회원가입
+      // 2. Supabase 회원가입 (users 테이블 레코드 포함)
       const signupResult = await signUpNewUser(
         data.step1_email,
         data.step1_password,
@@ -330,8 +234,7 @@ export function SignupForm({
       );
 
       if (!signupResult.success || signupResult.error) {
-        console.error("회원가입 오류:", signupResult.error);
-        toast.error("회원가입에 실패했습니다. 다시 시도해주세요.");
+        toast.error(signupResult.error || "회원가입에 실패했습니다. 다시 시도해주세요.");
         setIsLoading(false);
         setSubmissionStep('idle');
         return;
@@ -344,15 +247,7 @@ export function SignupForm({
         return;
       }
 
-      const signupData = signupResult.data;
-      const userId = signupData.user?.id;
-
-      if (!userId) {
-        toast.error("사용자 ID를 가져올 수 없습니다.");
-        setIsLoading(false);
-        setSubmissionStep('idle');
-        return;
-      }
+      const userId = signupResult.data.user.id;
 
       // 3. 로그인 준비 단계
       setSubmissionStep('profile');
@@ -363,57 +258,40 @@ export function SignupForm({
       const { data: loginData, error: loginError } = await login(data.step1_email, data.step1_password);
 
       if (loginError || !loginData?.user) {
-        console.error("로그인 오류:", loginError);
         toast.error("자동 로그인에 실패했습니다. 수동으로 로그인해주세요.");
         router.push("/login?message=application-submitted");
         return;
       }
 
-      // 로그인 성공 후 잠시 대기 (브라우저가 쿠키를 인식할 시간)
+      // 로그인 성공 후 잠시 대기 (세션 안정화)
       setSubmissionMessage('세션을 설정하고 있습니다...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // 5. 작가 프로필 생성 (로그인 후 실행)
+      // 5. 작가 프로필 생성 (Server Action)
       setSubmissionMessage('작가 프로필을 생성하고 있습니다...');
 
-      const profileResult = await createPhotographerProfile({
-        userId,
-        email: data.step1_email,
-        name: data.step1_name,
-        phone: data.step2_phone,
-        gender: data.step2_gender,
-        ageRange: data.step2_ageRange,
-        instagramHandle: data.step2_instagramHandle,
-        websiteUrl: data.step2_websiteUrl,
-        yearsExperience: data.step3_yearsExperience,
-        specialties: data.step3_specialties,
-        studioLocation: data.step3_studioLocation,
-        equipmentInfo: data.step3_equipmentInfo,
-        bio: data.step3_bio,
-        priceRangeMin: data.step4_priceRangeMin,
-        priceRangeMax: data.step4_priceRangeMax,
-        priceDescription: data.step4_priceDescription,
-      });
+      const photographerData = mapFormDataToPhotographerInsert(data, userId);
+      const profileResult = await createPhotographerProfileAction(photographerData);
 
       if (!profileResult.success) {
         toast.error(profileResult.error || "작가 프로필 생성에 실패했습니다.");
-        // 회원가입은 성공했으므로 로그인 페이지로 이동
         router.push("/login?message=profile-creation-failed");
         return;
       }
 
-      // 6. 포트폴리오 이미지 업로드
+      // 6. 포트폴리오 이미지 업로드 (Server Action)
       setSubmissionStep('upload');
       setSubmissionMessage(`포트폴리오 이미지를 업로드하고 있습니다... (0/${data.step5_portfolioFiles.length})`);
-      
-      const uploadResult = await uploadPortfolioImages(
-        data.step5_portfolioFiles,
-        data.step5_portfolioDescriptions
-      );
+
+      const formData = new FormData();
+      data.step5_portfolioFiles.forEach((file: File, index: number) => {
+        formData.append(`file_${index}`, file);
+      });
+
+      const uploadResult = await uploadPortfolioImagesAction(formData);
 
       if (!uploadResult.success) {
         toast.error(uploadResult.error || "포트폴리오 업로드에 실패했습니다.");
-        // 포트폴리오 업로드 실패해도 회원가입은 성공했으므로 로그인 페이지로 이동
         router.push("/login?message=portfolio-upload-failed");
         return;
       }
@@ -421,16 +299,15 @@ export function SignupForm({
       // 7. 성공 처리
       setSubmissionStep('complete');
       setSubmissionMessage('회원가입이 완료되었습니다!');
-      
+
       toast.success("작가 지원서가 성공적으로 제출되었습니다! 검토 후 연락드리겠습니다.");
-      
+
       // 지연 후 승인 상태 페이지로 이동
       setTimeout(() => {
         router.push("/photographer/approval-status");
       }, 2000);
-      
+
     } catch (error) {
-      console.error("예상치 못한 오류:", error);
       toast.error("예상치 못한 오류가 발생했습니다. 다시 시도해주세요.");
       setSubmissionStep('idle');
     } finally {

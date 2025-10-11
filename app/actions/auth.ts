@@ -195,7 +195,7 @@ export async function completeProfile(userId: string, data: { name: string; phon
 }
 
 /**
- * 회원가입
+ * 회원가입 (users 테이블 레코드 생성 포함)
  */
 export async function signUpNewUser(
   email: string,
@@ -205,7 +205,7 @@ export async function signUpNewUser(
 ) {
   const supabase = await createClient()
 
-  // Supabase Auth 회원가입
+  // 1. Supabase Auth 회원가입
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -222,6 +222,36 @@ export async function signUpNewUser(
     return {
       success: false,
       error: authError?.message || '회원가입에 실패했습니다.',
+      data: null,
+    }
+  }
+
+  // 2. users 테이블에 레코드 생성
+  const { error: userInsertError } = await supabase
+    .from('users')
+    .insert({
+      id: authData.user.id,
+      email: authData.user.email!,
+      name,
+      role,
+      is_active: true,
+    })
+
+  if (userInsertError) {
+    authLogger.error('Failed to create user record in users table', {
+      userId: authData.user.id,
+      error: userInsertError,
+    })
+
+    // Auth 사용자는 생성되었지만 users 테이블 레코드 생성 실패
+    // 이 경우 Auth 사용자 삭제 시도 (cleanup)
+    await supabase.auth.admin.deleteUser(authData.user.id).catch(() => {
+      // 삭제 실패는 무시 (관리자가 나중에 정리)
+    })
+
+    return {
+      success: false,
+      error: '사용자 정보 저장에 실패했습니다. 다시 시도해주세요.',
       data: null,
     }
   }

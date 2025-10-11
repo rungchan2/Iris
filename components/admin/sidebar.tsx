@@ -37,13 +37,6 @@ const navigationItems = [
     permissions: ['schedule.read']
   },
   { 
-    name: "작가 관리", 
-    href: "/admin/admin-users", 
-    icon: Users,
-    permissions: ['users.read'],
-    userTypes: ['admin'] // 관리자만 접근
-  },
-  { 
     name: "사용자 관리", 
     href: "/admin/users", 
     icon: Shield,

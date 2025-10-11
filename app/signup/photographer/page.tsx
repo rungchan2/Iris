@@ -1,4 +1,4 @@
-import { SignupForm } from "@/components/signup-form";
+import { PhotographerSignupForm } from "@/components/photographer-signup-form";
 import { Metadata } from "next";
 import { Toaster } from "sonner";
 
@@ -12,7 +12,7 @@ export default function PhotographerSignupPage() {
     <>
       <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-4xl">
-          <SignupForm />
+          <PhotographerSignupForm />
         </div>
       </div>
       <Toaster richColors position="top-right" />

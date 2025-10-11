@@ -113,8 +113,7 @@ export function MatchingAnalyticsDashboard() {
           id,
           responses,
           completed_at,
-          created_at,
-          session_steps_log
+          created_at
         `)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
@@ -165,8 +164,8 @@ export function MatchingAnalyticsDashboard() {
       }) || []
 
       return questionStats
-    } catch (error) {
-      console.error('Error fetching question stats:', error)
+    } catch (error: any) {
+      console.error('Error fetching question stats:', error.message)
       // Return empty array instead of hardcoded data
       return []
     }

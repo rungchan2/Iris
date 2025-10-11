@@ -21,7 +21,8 @@ import {
   TrendingUp,
   Package,
   Ticket,
-  Heart
+  Heart,
+  BookA
 } from "lucide-react"
 
 import {
@@ -82,12 +83,6 @@ const navItems: NavItem[] = [
     title: "사용자 관리",
     url: "/admin/users",
     icon: Users,
-    requiredPermission: "canAccessUsers",
-  },
-  {
-    title: "관리자 계정",
-    url: "/admin/admin-users",
-    icon: UserPlus,
     requiredPermission: "canAccessUsers",
   },
   {
@@ -170,6 +165,12 @@ const navItems: NavItem[] = [
     title: "내 계정",
     url: "/admin/my-page",
     icon: User,
+    requiredPermission: "canAccessMyPage",
+  },
+  {
+    title: "정책 관리",
+    url: "/admin/terms",
+    icon: BookA,
     requiredPermission: "canAccessMyPage",
   },
 ]

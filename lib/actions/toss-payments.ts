@@ -4,6 +4,7 @@ import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { paymentLogger } from '@/lib/logger';
+import { INQUIRY_STATUS } from '@/types';
 import {
   confirmPayment,
   getPayment,
@@ -247,12 +248,12 @@ export async function confirmTossPayment(formData: FormData) {
 
     paymentLogger.info('결제 완료 상태 업데이트 성공', { orderId, paymentId: existingPayment.id });
 
-    // Step 5: 문의 상태 업데이트
+    // Step 5: 문의 상태 업데이트 (결제 완료 → 예약 확정)
     if (existingPayment.inquiry_id) {
       const { error: inquiryError } = await supabase
         .from('inquiries')
         .update({
-          status: 'reserved',
+          status: INQUIRY_STATUS.RESERVED, // 결제 완료 시 예약 확정 상태로
           updated_at: new Date().toISOString()
         })
         .eq('id', existingPayment.inquiry_id);

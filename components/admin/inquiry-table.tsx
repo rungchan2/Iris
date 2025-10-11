@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/admin/status-badge"
 import { formatDate } from "@/lib/utils"
 import { useInquiryMutations } from "@/lib/hooks/use-inquiries"
 import { Inquiry } from "@/types/inquiry.types"
+import { INQUIRY_STATUS, type InquiryStatus } from "@/types"
 
 export function InquiryTable({
   inquiries,
@@ -83,7 +84,7 @@ export function InquiryTable({
     return currentOrder === 'desc' ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />
   }
 
-  const handleStatusChange = (id: string, newStatus: "new" | "contacted" | "completed") => {
+  const handleStatusChange = (id: string, newStatus: InquiryStatus) => {
     updateStatus({ id, status: newStatus })
 
     // Call optional callback to update parent state
@@ -156,22 +157,52 @@ export function InquiryTable({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem
-                        onClick={() => handleStatusChange(inquiry.id, "new")}
-                        disabled={inquiry.status === "new"}
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.NEW)}
+                        disabled={inquiry.status === INQUIRY_STATUS.NEW}
                       >
-                        <StatusBadge status="new" />
+                        <StatusBadge status={INQUIRY_STATUS.NEW} />
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleStatusChange(inquiry.id, "contacted")}
-                        disabled={inquiry.status === "contacted"}
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.PENDING_PAYMENT)}
+                        disabled={inquiry.status === INQUIRY_STATUS.PENDING_PAYMENT}
                       >
-                        <StatusBadge status="contacted" />
+                        <StatusBadge status={INQUIRY_STATUS.PENDING_PAYMENT} />
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleStatusChange(inquiry.id, "completed")}
-                        disabled={inquiry.status === "completed"}
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.PAYMENT_FAILED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.PAYMENT_FAILED}
                       >
-                        <StatusBadge status="completed" />
+                        <StatusBadge status={INQUIRY_STATUS.PAYMENT_FAILED} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.RESERVED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.RESERVED}
+                      >
+                        <StatusBadge status={INQUIRY_STATUS.RESERVED} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.CONTACTED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.CONTACTED}
+                      >
+                        <StatusBadge status={INQUIRY_STATUS.CONTACTED} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.COMPLETED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.COMPLETED}
+                      >
+                        <StatusBadge status={INQUIRY_STATUS.COMPLETED} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.CANCELLED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.CANCELLED}
+                      >
+                        <StatusBadge status={INQUIRY_STATUS.CANCELLED} />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStatusChange(inquiry.id, INQUIRY_STATUS.EXPIRED)}
+                        disabled={inquiry.status === INQUIRY_STATUS.EXPIRED}
+                      >
+                        <StatusBadge status={INQUIRY_STATUS.EXPIRED} />
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

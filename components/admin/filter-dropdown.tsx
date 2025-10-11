@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { INQUIRY_STATUS, INQUIRY_STATUS_LABELS } from "@/types"
 
 interface FilterDropdownProps {
   currentStatus: string
@@ -33,9 +34,14 @@ export function FilterDropdown({ currentStatus }: FilterDropdownProps) {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All Statuses</SelectItem>
-        <SelectItem value="new">New</SelectItem>
-        <SelectItem value="contacted">Contacted</SelectItem>
-        <SelectItem value="completed">Completed</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.NEW}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.NEW]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.PENDING_PAYMENT}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.PENDING_PAYMENT]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.PAYMENT_FAILED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.PAYMENT_FAILED]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.RESERVED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.RESERVED]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.CONTACTED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.CONTACTED]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.COMPLETED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.COMPLETED]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.CANCELLED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.CANCELLED]}</SelectItem>
+        <SelectItem value={INQUIRY_STATUS.EXPIRED}>{INQUIRY_STATUS_LABELS[INQUIRY_STATUS.EXPIRED]}</SelectItem>
       </SelectContent>
     </Select>
   )

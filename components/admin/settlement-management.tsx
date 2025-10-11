@@ -11,29 +11,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { 
-  CreditCard, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Search, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  CreditCard,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Search,
   Calendar,
   Eye,
   Check,
   X,
   Send
 } from 'lucide-react';
-import { 
-  getSettlements, 
-  getSettlementStats, 
+import {
+  getSettlements,
+  getSettlementStats,
   approveSettlement,
   rejectSettlement,
   completeSettlementTransfer,
-  type SettlementData 
+  type SettlementData
 } from '@/lib/actions/settlements';
 import { formatAmount } from '@/lib/payments/toss-client';
 import { toast } from 'sonner';
+import { SettlementCreateDialog } from '@/components/admin/settlement-create-dialog';
+import { paymentLogger } from '@/lib/logger';
 
 interface SettlementStats {
   totalCount: number;
@@ -133,7 +137,7 @@ export function SettlementManagement() {
         toast.error(statsResult.error || '정산 통계를 불러오는데 실패했습니다.');
       }
     } catch (error) {
-      console.error('데이터 로드 오류:', error);
+      paymentLogger.error('Settlement data load error:', error);
       toast.error('데이터를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -191,7 +195,7 @@ export function SettlementManagement() {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error('정산 액션 실행 오류:', error);
+      paymentLogger.error('Settlement action execution error:', error);
       toast.error('처리 중 오류가 발생했습니다.');
     } finally {
       setActionLoading(false);
@@ -281,8 +285,9 @@ export function SettlementManagement() {
 
       {/* 필터 및 검색 */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>정산 목록</CardTitle>
+          <SettlementCreateDialog />
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-6 mb-6">

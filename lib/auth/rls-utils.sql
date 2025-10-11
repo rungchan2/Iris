@@ -8,7 +8,7 @@
 -- ============================================
 -- 1. 기본 소유자 체크 (단일 컬럼)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.is_owner(owner_id UUID)
+CREATE OR REPLACE FUNCTION public.is_owner(owner_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -17,14 +17,14 @@ AS $$
   SELECT auth.uid() = owner_id;
 $$;
 
-COMMENT ON FUNCTION auth.is_owner(UUID) IS
+COMMENT ON FUNCTION public.is_owner(UUID) IS
 '단일 owner_id와 현재 사용자 비교.
-예: auth.is_owner(user_id)';
+예: public.is_owner(user_id)';
 
 -- ============================================
 -- 2. 다중 소유자 체크 (여러 컬럼 중 하나라도)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.is_any_owner(VARIADIC owner_ids UUID[])
+CREATE OR REPLACE FUNCTION public.is_any_owner(VARIADIC owner_ids UUID[])
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -33,14 +33,14 @@ AS $$
   SELECT auth.uid() = ANY(owner_ids);
 $$;
 
-COMMENT ON FUNCTION auth.is_any_owner(UUID[]) IS
+COMMENT ON FUNCTION public.is_any_owner(UUID[]) IS
 '여러 owner 컬럼 중 하나라도 현재 사용자와 일치하면 true.
-예: auth.is_any_owner(user_id, photographer_id, admin_id)';
+예: public.is_any_owner(user_id, photographer_id, admin_id)';
 
 -- ============================================
 -- 3. 사용자 + 작가 체크 (payments, inquiries 전용)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.is_user_or_photographer(
+CREATE OR REPLACE FUNCTION public.is_user_or_photographer(
   p_user_id UUID,
   p_photographer_id UUID
 )
@@ -53,14 +53,14 @@ AS $$
       OR auth.uid() = p_photographer_id;
 $$;
 
-COMMENT ON FUNCTION auth.is_user_or_photographer(UUID, UUID) IS
+COMMENT ON FUNCTION public.is_user_or_photographer(UUID, UUID) IS
 '사용자 또는 작가가 소유한 데이터인지 체크.
-예: auth.is_user_or_photographer(user_id, photographer_id)';
+예: public.is_user_or_photographer(user_id, photographer_id)';
 
 -- ============================================
 -- 4. 최소 권한 체크 (기존 함수 유지)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.min_role(required_role TEXT)
+CREATE OR REPLACE FUNCTION public.min_role(required_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE sql
 SECURITY DEFINER
@@ -89,14 +89,14 @@ AS $$
   FROM role_levels;
 $$;
 
-COMMENT ON FUNCTION auth.min_role(TEXT) IS
+COMMENT ON FUNCTION public.min_role(TEXT) IS
 '현재 사용자가 최소 요구 권한을 만족하는지 체크.
-예: auth.min_role(''photographer'')';
+예: public.min_role(''photographer'')';
 
 -- ============================================
 -- 5. 관리자 체크 (빠른 단축 함수)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -110,14 +110,14 @@ AS $$
   );
 $$;
 
-COMMENT ON FUNCTION auth.is_admin() IS
+COMMENT ON FUNCTION public.is_admin() IS
 '현재 사용자가 관리자인지 빠르게 체크.
-예: auth.is_admin()';
+예: public.is_admin()';
 
 -- ============================================
 -- 6. 작가 권한 체크 (빠른 단축 함수)
 -- ============================================
-CREATE OR REPLACE FUNCTION auth.is_photographer()
+CREATE OR REPLACE FUNCTION public.is_photographer()
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -131,9 +131,9 @@ AS $$
   );
 $$;
 
-COMMENT ON FUNCTION auth.is_photographer() IS
+COMMENT ON FUNCTION public.is_photographer() IS
 '현재 사용자가 작가 이상 권한인지 체크 (photographer or admin).
-예: auth.is_photographer()';
+예: public.is_photographer()';
 
 -- ============================================
 -- 인덱스 최적화 (성능 향상)

@@ -465,3 +465,160 @@ export async function getPhotographerSettlements(photographerId: string) {
     };
   }
 }
+
+/**
+ * 정산 항목이 없는 결제 내역 조회 (정산 대기 중)
+ */
+export async function getPaymentsNeedingSettlement(params: {
+  page?: number;
+  limit?: number;
+  photographerId?: string;
+} = {}) {
+  try {
+    const supabase = await createClient();
+    const { page = 1, limit = 20, photographerId } = params;
+
+    // settlement_items가 없는 paid 상태의 결제만 조회
+    let query = supabase
+      .from('payments')
+      .select(`
+        *,
+        settlement_items!left(id),
+        photographer:photographers(id, name, email)
+      `)
+      .eq('status', 'paid')
+      .is('settlement_items.id', null);
+
+    if (photographerId) {
+      query = query.eq('photographer_id', photographerId);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    query = query
+      .order('paid_at', { ascending: false })
+      .range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      paymentLogger.error('정산 대기 결제 조회 실패', error);
+      return {
+        success: false,
+        error: '정산 대기 결제를 불러오는데 실패했습니다.'
+      };
+    }
+
+    return {
+      success: true,
+      data: data || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limit)
+      }
+    };
+
+  } catch (error) {
+    paymentLogger.error('정산 대기 결제 조회 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
+    };
+  }
+}
+
+/**
+ * 여러 결제 건에 대한 정산 항목 생성
+ */
+export async function createSettlementItems(paymentIds: string[]) {
+  if (!paymentIds || paymentIds.length === 0) {
+    return { success: false, error: '선택된 결제 건이 없습니다.' };
+  }
+
+  try {
+    const supabase = await createClient();
+    const results = [];
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const paymentId of paymentIds) {
+      try {
+        // 1. 결제 정보 조회
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('id', paymentId)
+          .eq('status', 'paid')
+          .single();
+
+        if (paymentError || !payment) {
+          failCount++;
+          results.push({ paymentId, success: false, error: '결제 정보를 찾을 수 없습니다' });
+          continue;
+        }
+
+        // 2. 이미 정산 항목이 있는지 확인
+        const { data: existingItem } = await supabase
+          .from('settlement_items')
+          .select('id')
+          .eq('payment_id', paymentId)
+          .single();
+
+        if (existingItem) {
+          failCount++;
+          results.push({ paymentId, success: false, error: '이미 정산 항목이 존재합니다' });
+          continue;
+        }
+
+        // 3. 정산 항목 생성
+        const settlementAmount = Math.floor(payment.amount * 0.7); // 70% 정산 (예시)
+        const platformFee = Math.floor(payment.amount * 0.3); // 30% 플랫폼 수수료
+        const taxAmount = Math.floor(payment.amount * 0.033); // 3.3% 세금
+
+        const { error: insertError } = await supabase
+          .from('settlement_items')
+          .insert({
+            payment_id: paymentId,
+            payment_amount: payment.amount,
+            platform_fee: platformFee,
+            payment_gateway_fee: 0,
+            tax_amount: taxAmount,
+            settlement_amount: settlementAmount,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          } as any);
+
+        if (insertError) {
+          failCount++;
+          results.push({ paymentId, success: false, error: insertError.message });
+        } else {
+          successCount++;
+          results.push({ paymentId, success: true });
+        }
+
+      } catch (err) {
+        failCount++;
+        results.push({ paymentId, success: false, error: '처리 중 오류 발생' });
+      }
+    }
+
+    revalidatePath('/admin/settlements');
+    revalidatePath('/admin/payments');
+
+    return {
+      success: true,
+      message: `${successCount}건 성공, ${failCount}건 실패`,
+      results
+    };
+
+  } catch (error) {
+    paymentLogger.error('정산 항목 생성 오류', error);
+    return {
+      success: false,
+      error: '시스템 오류가 발생했습니다.'
+    };
+  }
+}

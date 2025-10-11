@@ -22,6 +22,7 @@ import type {
   MoodKeyword,
   Inquiry,
 } from '@/types/inquiry.types'
+import { INQUIRY_STATUS } from '@/types'
 
 const EMAIL_TO = [
   "chajimmy1214@gmail.com",
@@ -162,7 +163,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
               },
               matched_admin_id: photographer.id, // Add photographer ID for proper linking
               photographer_id: photographer.id, // Set photographer_id FK for direct filtering
-              status: data.paymentKey ? 'reserved' : 'new', // If payment was completed, set as reserved
+              status: data.paymentKey ? INQUIRY_STATUS.RESERVED : INQUIRY_STATUS.PENDING_PAYMENT, // If payment was completed, set as reserved, otherwise pending payment
             })
             .select()
             .single()
