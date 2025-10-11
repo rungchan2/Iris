@@ -2,12 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
+import type { Review, ReviewInsert, ReviewUpdate } from '@/types'
 import { logger } from '@/lib/logger'
-
-export type Review = Tables<'reviews'>
-export type ReviewInsert = TablesInsert<'reviews'>
-export type ReviewUpdate = TablesUpdate<'reviews'>
 
 export interface ReviewSubmissionData {
   reviewer_name?: string

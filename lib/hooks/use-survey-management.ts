@@ -1,6 +1,12 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type {
+  CreateChoiceData,
+  UpdateChoiceData,
+  CreateSurveyImageData,
+  UpdateSurveyImageData,
+} from '@/types'
 import {
   getSurveyQuestions,
   getSurveyQuestion,
@@ -14,10 +20,6 @@ import {
   updateSurveyImage,
   deleteSurveyImage,
   uploadSurveyImageFile,
-  type CreateChoiceData,
-  type UpdateChoiceData,
-  type CreateSurveyImageData,
-  type UpdateSurveyImageData
 } from '@/lib/actions/survey-management'
 import { toast } from 'sonner'
 

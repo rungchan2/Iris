@@ -1,23 +1,15 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/types/database.types'
+import type {
+  PhotographerKeywordDB,
+  PhotographerKeywordInsert,
+  PhotographerKeywordUpdate,
+  CreateKeywordData,
+  UpdateKeywordData,
+} from '@/types'
 
-type PhotographerKeyword = Database['public']['Tables']['photographer_keywords']['Row']
-type PhotographerKeywordInsert = Database['public']['Tables']['photographer_keywords']['Insert']
-type PhotographerKeywordUpdate = Database['public']['Tables']['photographer_keywords']['Update']
-
-export interface CreateKeywordData {
-  keyword: string
-  proficiency_level?: number
-  portfolio_count?: number
-}
-
-export interface UpdateKeywordData {
-  keyword?: string
-  proficiency_level?: number
-  portfolio_count?: number
-}
+type PhotographerKeyword = PhotographerKeywordDB
 
 /**
  * Get all keywords for a photographer

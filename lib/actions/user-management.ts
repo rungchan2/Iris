@@ -1,7 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 interface CreateAdminUserParams {
@@ -20,18 +19,6 @@ interface CreatePhotographerParams {
   bio?: string
 }
 
-// Service role client for admin operations
-const supabaseService = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
-
 export async function createAdminUser(params: CreateAdminUserParams) {
   try {
     const supabase = await createClient()
@@ -45,6 +32,7 @@ export async function createAdminUser(params: CreateAdminUserParams) {
     const { email, password, name } = params
 
     // Auth 사용자 생성 (service role 사용)
+    const supabaseService = createServiceRoleClient()
     const { data: authData, error: authError } = await supabaseService.auth.admin.createUser({
       email,
       password,
@@ -104,6 +92,8 @@ export async function createPhotographerUser(params: CreatePhotographerParams) {
     }
 
     const { email, password, name, phone, website_url, instagram_handle, bio } = params
+
+    const supabaseService = createServiceRoleClient()
 
     // 이메일 중복 확인
     const { data: existingUser } = await supabaseService
@@ -257,6 +247,8 @@ export async function getPhotographerUsers() {
 
 export async function createInitialAdmin(params: { email: string; password: string; name: string }) {
   try {
+    const supabaseService = createServiceRoleClient()
+
     // 이미 Admin이 존재하는지 확인
     const { data: existingAdmins } = await supabaseService
       .from('users')
@@ -331,6 +323,7 @@ export async function createInitialAdmin(params: { email: string; password: stri
 
 export async function checkAdminExists() {
   try {
+    const supabaseService = createServiceRoleClient()
     const { data: existingAdmins } = await supabaseService
       .from('users')
       .select('id')
@@ -349,6 +342,8 @@ export async function createSpecificAdmin() {
     const specificUserId = 'b6a15cf5-8a2d-4d34-b6c5-9f7ff6fc64c0'
     const specificEmail = 'leeh09077@gmail.com'
     const specificName = 'Lee Heechan'
+
+    const supabaseService = createServiceRoleClient()
 
     // 이미 존재하는지 확인
     const { data: existingUser } = await supabaseService
@@ -400,6 +395,7 @@ export async function deleteUser(userId: string, userType: 'admin' | 'photograph
     }
 
     // Auth 사용자 삭제 (모든 관련 데이터는 CASCADE로 자동 삭제)
+    const supabaseService = createServiceRoleClient()
     const { error: authError } = await supabaseService.auth.admin.deleteUser(userId)
 
     if (authError) {

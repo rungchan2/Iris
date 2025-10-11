@@ -52,26 +52,67 @@ export type InquiryInsert = TablesInsert<'inquiries'>
 export type InquiryUpdate = TablesUpdate<'inquiries'>
 
 // ============================================================================
-// Type Compatibility Checks
-// These will cause build errors if Zod schema doesn't match database schema
+// Build-time Type Checks (Database와 Form 타입 일치 검증)
 // ============================================================================
 
 type _InquiryFormValuesCheck = {
-  name: InquiryFormValues['name'] extends InquiryInsert['name'] ? true : 'name type mismatch'
-  instagram_id: InquiryFormValues['instagram_id'] extends InquiryInsert['instagram_id'] ? true : 'instagram_id type mismatch'
-  gender: InquiryFormValues['gender'] extends InquiryInsert['gender'] ? true : 'gender type mismatch'
-  phone: InquiryFormValues['phone'] extends InquiryInsert['phone'] ? true : 'phone type mismatch'
-  // desired_date is Date in form, string in DB (handled in conversion)
-  // selected_product_id maps to product_id in DB (handled in conversion)
-  selected_slot_id: InquiryFormValues['selected_slot_id'] extends InquiryInsert['selected_slot_id'] ? true : 'selected_slot_id type mismatch'
-  people_count: InquiryFormValues['people_count'] extends InquiryInsert['people_count'] ? true : 'people_count type mismatch'
-  relationship: InquiryFormValues['relationship'] extends InquiryInsert['relationship'] ? true : 'relationship type mismatch'
-  special_request: InquiryFormValues['special_request'] extends InquiryInsert['special_request'] ? true : 'special_request type mismatch'
-  difficulty_note: InquiryFormValues['difficulty_note'] extends InquiryInsert['difficulty_note'] ? true : 'difficulty_note type mismatch'
-  conversation_preference: InquiryFormValues['conversation_preference'] extends InquiryInsert['conversation_preference'] ? true : 'conversation_preference type mismatch'
-  conversation_topics: InquiryFormValues['conversation_topics'] extends InquiryInsert['conversation_topics'] ? true : 'conversation_topics type mismatch'
-  favorite_music: InquiryFormValues['favorite_music'] extends InquiryInsert['favorite_music'] ? true : 'favorite_music type mismatch'
-  shooting_meaning: InquiryFormValues['shooting_meaning'] extends InquiryInsert['shooting_meaning'] ? true : 'shooting_meaning type mismatch'
+  // Personal Info
+  name: InquiryFormValues['name'] extends NonNullable<InquiryInsert['name']>
+    ? true
+    : 'name type mismatch - check inquiries.name column type'
+
+  instagram_id: InquiryFormValues['instagram_id'] extends InquiryInsert['instagram_id']
+    ? true
+    : 'instagram_id type mismatch - check inquiries.instagram_id column type'
+
+  gender: InquiryFormValues['gender'] extends InquiryInsert['gender']
+    ? true
+    : 'gender type mismatch - check inquiries.gender column type'
+
+  phone: InquiryFormValues['phone'] extends NonNullable<InquiryInsert['phone']>
+    ? true
+    : 'phone type mismatch - check inquiries.phone column type'
+
+  // desired_date: Date in form, string in DB (handled in conversion layer)
+  // selected_product_id maps to product_id in DB (handled in conversion layer)
+
+  selected_slot_id: InquiryFormValues['selected_slot_id'] extends InquiryInsert['selected_slot_id']
+    ? true
+    : 'selected_slot_id type mismatch - check inquiries.selected_slot_id column type'
+
+  people_count: InquiryFormValues['people_count'] extends InquiryInsert['people_count']
+    ? true
+    : 'people_count type mismatch - check inquiries.people_count column type'
+
+  relationship: InquiryFormValues['relationship'] extends InquiryInsert['relationship']
+    ? true
+    : 'relationship type mismatch - check inquiries.relationship column type'
+
+  // Additional Info
+  special_request: InquiryFormValues['special_request'] extends InquiryInsert['special_request']
+    ? true
+    : 'special_request type mismatch - check inquiries.special_request column type'
+
+  difficulty_note: InquiryFormValues['difficulty_note'] extends InquiryInsert['difficulty_note']
+    ? true
+    : 'difficulty_note type mismatch - check inquiries.difficulty_note column type'
+
+  // Final Questions
+  conversation_preference: InquiryFormValues['conversation_preference'] extends InquiryInsert['conversation_preference']
+    ? true
+    : 'conversation_preference type mismatch - check inquiries.conversation_preference column type'
+
+  conversation_topics: InquiryFormValues['conversation_topics'] extends InquiryInsert['conversation_topics']
+    ? true
+    : 'conversation_topics type mismatch - check inquiries.conversation_topics column type'
+
+  favorite_music: InquiryFormValues['favorite_music'] extends InquiryInsert['favorite_music']
+    ? true
+    : 'favorite_music type mismatch - check inquiries.favorite_music column type'
+
+  shooting_meaning: InquiryFormValues['shooting_meaning'] extends InquiryInsert['shooting_meaning']
+    ? true
+    : 'shooting_meaning type mismatch - check inquiries.shooting_meaning column type'
 }
 
 // Legacy types for backward compatibility with old code

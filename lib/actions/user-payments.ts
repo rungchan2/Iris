@@ -2,10 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getUserCookie } from '@/lib/auth/cookie'
-import type { Tables } from '@/types'
+import type { Payment } from '@/types'
 import { paymentLogger } from '@/lib/logger'
-
-type Payment = Tables<'payments'>
 
 export type PaymentWithDetails = Payment & {
   inquiry?: {

@@ -1,54 +1,33 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/types/database.types'
+import type {
+  SurveyQuestionDB,
+  SurveyChoiceDB,
+  SurveyChoiceInsert,
+  SurveyChoiceUpdate,
+  SurveyImageDB,
+  SurveyImageInsert,
+  SurveyImageUpdate,
+  QuestionWithChoicesAndImages,
+  CreateChoiceData,
+  UpdateChoiceData,
+  CreateSurveyImageData,
+  UpdateSurveyImageData,
+} from '@/types'
 
-type SurveyQuestion = Database['public']['Tables']['survey_questions']['Row']
-type SurveyChoice = Database['public']['Tables']['survey_choices']['Row']
-type SurveyChoiceInsert = Database['public']['Tables']['survey_choices']['Insert']
-type SurveyChoiceUpdate = Database['public']['Tables']['survey_choices']['Update']
-type SurveyImage = Database['public']['Tables']['survey_images']['Row']
-type SurveyImageInsert = Database['public']['Tables']['survey_images']['Insert']
-type SurveyImageUpdate = Database['public']['Tables']['survey_images']['Update']
-
-export interface QuestionWithChoicesAndImages extends SurveyQuestion {
-  choices: SurveyChoice[]
-  images: SurveyImage[]
+// Re-export types for external use
+export type {
+  CreateChoiceData,
+  UpdateChoiceData,
+  CreateSurveyImageData,
+  UpdateSurveyImageData,
+  QuestionWithChoicesAndImages,
 }
 
-export interface CreateChoiceData {
-  choice_key: string
-  choice_label: string
-  choice_description?: string
-  choice_order: number
-  is_active?: boolean
-}
-
-export interface UpdateChoiceData {
-  choice_key?: string
-  choice_label?: string
-  choice_description?: string
-  choice_order?: number
-  is_active?: boolean
-}
-
-export interface CreateSurveyImageData {
-  image_key: string
-  image_label: string
-  image_description?: string
-  image_url: string
-  image_order: number
-  is_active?: boolean
-}
-
-export interface UpdateSurveyImageData {
-  image_key?: string
-  image_label?: string
-  image_description?: string
-  image_url?: string
-  image_order?: number
-  is_active?: boolean
-}
+type SurveyQuestion = SurveyQuestionDB
+type SurveyChoice = SurveyChoiceDB
+type SurveyImage = SurveyImageDB
 
 /**
  * Get all survey questions with choices and images

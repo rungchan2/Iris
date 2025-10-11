@@ -82,7 +82,7 @@ export default function PhotographerManagementPage() {
           price_range_max,
           profile_completed,
           created_at,
-          photographer_profiles(
+          photographer_profiles!photographer_profiles_photographer_id_fkey(
             service_regions,
             style_emotion_description,
             communication_psychology_description,
@@ -102,8 +102,8 @@ export default function PhotographerManagementPage() {
 
       setPhotographers(data as PhotographerProfile[] || [])
       calculateStats(data as PhotographerProfile[] || [])
-    } catch (error) {
-      console.error('Error fetching photographers:', error)
+    } catch (error: any) {
+      console.error('Error fetching photographers:', error.message)
     } finally {
       setLoading(false)
     }

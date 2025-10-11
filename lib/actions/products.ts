@@ -2,24 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { adminLogger } from '@/lib/logger'
-import type { Database } from '@/types/database.types'
-
-type Product = Database['public']['Tables']['products']['Row'] & {
-  photographer?: {
-    name: string
-    email: string
-  }
-}
-
-type ProductInsert = Database['public']['Tables']['products']['Insert']
-type ProductUpdate = Database['public']['Tables']['products']['Update']
-
-export interface ProductStats {
-  totalProducts: number
-  pendingProducts: number
-  approvedProducts: number
-  rejectedProducts: number
-}
+import type { Product, ProductInsert, ProductUpdate, ProductStats } from '@/types'
 
 export interface ApiResponse<T> {
   success: boolean

@@ -1,25 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
-
-type User = Tables<'users'>
-type UserInsert = TablesInsert<'users'>
-type UserUpdate = TablesUpdate<'users'>
-
-// Service role client for admin operations
-const supabaseService = createServiceClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+import type { User, UserInsert, UserUpdate } from '@/types'
 
 /**
  * Get current admin profile
@@ -130,6 +113,7 @@ export async function createAdmin(params: {
     const { email, password, name, phone } = params
 
     // Create Auth user
+    const supabaseService = createServiceRoleClient()
     const { data: authData, error: authError } = await supabaseService.auth.admin.createUser({
       email,
       password,
@@ -299,6 +283,7 @@ export async function deleteAdmin(adminId: string) {
     }
 
     // Delete auth user (this will cascade delete user record)
+    const supabaseService = createServiceRoleClient()
     const { error: authError } = await supabaseService.auth.admin.deleteUser(adminId)
 
     if (authError) {

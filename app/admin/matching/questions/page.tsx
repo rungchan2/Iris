@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { SurveyQuestion } from '@/types/matching.types'
-import type { TablesUpdate } from '@/types/database.types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -11,9 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import QuestionEditor from '@/components/admin/matching/QuestionEditor'
 import EmbeddingManager from '@/components/admin/matching/EmbeddingManager'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb'
-import { 
-  FileQuestion, 
-  Settings, 
+import {
   Zap,
   Plus,
   ChevronRight,
@@ -21,88 +17,27 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react'
-import { toast } from 'sonner'
+import {
+  useSurveyQuestions,
+  useEmbeddingStatus,
+  useUpdateSurveyQuestion,
+  useRefreshEmbeddingStatus,
+} from '@/lib/hooks/use-matching-questions'
 
 export default function QuestionsManagement() {
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([])
-  const [loading, setLoading] = useState(true)
+  // React Query hooks
+  const { data: questions = [], isLoading: loadingQuestions } = useSurveyQuestions()
+  const { data: embeddingStatus = { total: 0, generated: 0, pending: 0 } } = useEmbeddingStatus()
+  const updateQuestionMutation = useUpdateSurveyQuestion()
+  const refreshEmbeddingStatus = useRefreshEmbeddingStatus()
+
+  // Local state
   const [selectedQuestion, setSelectedQuestion] = useState<SurveyQuestion | null>(null)
-  const [embeddingStatus, setEmbeddingStatus] = useState({
-    total: 0,
-    generated: 0,
-    pending: 0
-  })
-  const supabase = createClient()
 
-  useEffect(() => {
-    loadQuestions()
-    checkEmbeddingStatus()
-  }, [])
+  const loading = loadingQuestions
 
-  const loadQuestions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('survey_questions')
-        .select(`
-          *,
-          survey_choices(id, choice_label, choice_embedding),
-          survey_images(id, image_label, image_embedding)
-        `)
-        .order('question_order')
-
-      if (error) throw error
-      setQuestions(data as SurveyQuestion[] || [])
-    } catch (error) {
-      console.error('Error loading questions:', error)
-      toast.error('질문을 불러오는 중 오류가 발생했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const checkEmbeddingStatus = async () => {
-    try {
-      // Check choices embeddings
-      const { data: choices } = await supabase
-        .from('survey_choices')
-        .select('id, choice_embedding')
-
-      const totalChoices = choices?.length || 0
-      const generatedChoices = choices?.filter(c => c.choice_embedding).length || 0
-
-      // Check images embeddings
-      const { data: images } = await supabase
-        .from('survey_images')
-        .select('id, image_embedding')
-
-      const totalImages = images?.length || 0
-      const generatedImages = images?.filter(i => i.image_embedding).length || 0
-
-      setEmbeddingStatus({
-        total: totalChoices + totalImages,
-        generated: generatedChoices + generatedImages,
-        pending: (totalChoices + totalImages) - (generatedChoices + generatedImages)
-      })
-    } catch (error) {
-      console.error('Error checking embedding status:', error)
-    }
-  }
-
-  const handleQuestionUpdate = async (questionId: string, updates: TablesUpdate<'survey_questions'>) => {
-    try {
-      const { error } = await supabase
-        .from('survey_questions')
-        .update(updates)
-        .eq('id', questionId)
-
-      if (error) throw error
-      
-      toast.success('질문이 업데이트되었습니다')
-      loadQuestions()
-    } catch (error) {
-      console.error('Error updating question:', error)
-      toast.error('질문 업데이트 중 오류가 발생했습니다')
-    }
+  const handleQuestionUpdate = (questionId: string, updates: Parameters<typeof updateQuestionMutation.mutate>[0]['updates']) => {
+    updateQuestionMutation.mutate({ questionId, updates })
   }
 
   const getQuestionTypeLabel = (type: string) => {
@@ -149,7 +84,6 @@ export default function QuestionsManagement() {
 
   return (
     <div className="space-y-6">
-      <AdminBreadcrumb />
       
       {/* Header */}
       <div className="flex justify-between items-start">
@@ -197,7 +131,7 @@ export default function QuestionsManagement() {
                 </Badge>
               )}
               
-              <EmbeddingManager onComplete={checkEmbeddingStatus} />
+              <EmbeddingManager onComplete={refreshEmbeddingStatus} />
             </div>
           </div>
           
@@ -361,7 +295,10 @@ export default function QuestionsManagement() {
         <QuestionEditor
           question={selectedQuestion}
           onClose={() => setSelectedQuestion(null)}
-          onUpdate={loadQuestions}
+          onUpdate={() => {
+            // Questions will auto-refresh via React Query invalidation
+            setSelectedQuestion(null)
+          }}
         />
       )}
     </div>

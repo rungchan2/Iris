@@ -34,6 +34,12 @@ import { createPaymentRequest } from "@/lib/actions/toss-payments";
 import { toast } from "sonner";
 import { useProducts } from "@/lib/hooks/use-products";
 import { Card } from "@/components/ui/card";
+import {
+  isDateAvailable,
+  getDateModifiers,
+  calendarModifiersStyles
+} from "@/lib/utils/booking-form.utils";
+import { usePhoneFormatter } from "@/lib/hooks/use-phone-formatter";
 
 interface PersonalInfoFormProps {
   onSubmit: (data: InquiryFormValues) => void;
@@ -94,7 +100,7 @@ export function PersonalInfoForm({
     },
   });
 
-  // Add this after the form initialization
+  // Form change subscription
   useEffect(() => {
     const subscription = form.watch(() => {
       onFormChange?.();
@@ -102,60 +108,8 @@ export function PersonalInfoForm({
     return () => subscription.unsubscribe();
   }, [form, onFormChange]);
 
-  // Phone number formatting
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === "phone" && value.phone) {
-        // Remove non-digits
-        const digitsOnly = value.phone.replace(/\D/g, "");
-
-        // Format based on length
-        let formatted = "";
-        if (digitsOnly.length <= 3) {
-          formatted = digitsOnly;
-        } else if (digitsOnly.length <= 7) {
-          formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`;
-        } else {
-          formatted = `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(
-            3,
-            7
-          )}-${digitsOnly.slice(7, 11)}`;
-        }
-
-        // Only update if it's different to avoid cursor jumping
-        if (formatted !== value.phone) {
-          form.setValue("phone", formatted);
-        }
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  // Removed mood keywords filtering - no longer using keywords
-
-  // 시간대 문제를 방지하기 위해 date-fns format 사용
-  const isDateAvailable = (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    return availableDates.includes(dateStr);
-  };
-
-  // Get date modifiers for calendar styling
-  const getDateModifiers = (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    const slotCount = dateSlotCounts[dateStr];
-
-    if (!slotCount || slotCount.total === 0) {
-      return { available: false, partiallyBooked: false, fullyBooked: false };
-    }
-
-    if (slotCount.available === 0) {
-      return { available: false, partiallyBooked: false, fullyBooked: true };
-    } else if (slotCount.available < slotCount.total) {
-      return { available: false, partiallyBooked: true, fullyBooked: false };
-    } else {
-      return { available: true, partiallyBooked: false, fullyBooked: false };
-    }
-  };
+  // Phone number auto-formatting (using custom hook)
+  usePhoneFormatter(form);
 
   const handleSubmit = (data: InquiryFormValues) => {
     onSubmit(data);
@@ -377,40 +331,24 @@ export function PersonalInfoForm({
                           onSelect={field.onChange}
                           disabled={
                             (date) =>
-                              date < new Date() || // Can't select past dates
-                              !isDateAvailable(date) // Only show available dates
+                              date < new Date() ||
+                              !isDateAvailable(date, availableDates)
                           }
                           modifiers={{
                             available: (date) => {
-                              const modifiers = getDateModifiers(date);
+                              const modifiers = getDateModifiers(date, dateSlotCounts);
                               return modifiers.available === true;
                             },
                             partiallyBooked: (date) => {
-                              const modifiers = getDateModifiers(date);
+                              const modifiers = getDateModifiers(date, dateSlotCounts);
                               return modifiers.partiallyBooked === true;
                             },
                             fullyBooked: (date) => {
-                              const modifiers = getDateModifiers(date);
+                              const modifiers = getDateModifiers(date, dateSlotCounts);
                               return modifiers.fullyBooked === true;
                             },
                           }}
-                          modifiersStyles={{
-                            available: {
-                              backgroundColor: "hsl(142, 76%, 36%)",
-                              color: "white",
-                              fontWeight: "bold",
-                            },
-                            partiallyBooked: {
-                              backgroundColor: "hsl(48, 96%, 53%)",
-                              color: "black",
-                              fontWeight: "bold",
-                            },
-                            fullyBooked: {
-                              backgroundColor: "hsl(0, 84%, 60%)",
-                              color: "white",
-                              fontWeight: "bold",
-                            },
-                          }}
+                          modifiersStyles={calendarModifiersStyles}
                         />
 
                         {/* Calendar Legend */}

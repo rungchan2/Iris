@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import type { StoryFilters } from '@/types'
 import {
   getStories,
   getStoryById,
@@ -9,7 +10,6 @@ import {
   toggleFeaturedStory,
   updateStoryVisibility,
   deleteStory,
-  type StoryFilters,
 } from '@/lib/actions/stories'
 
 // Re-export StoryFilters for components

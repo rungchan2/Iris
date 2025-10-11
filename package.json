@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-type": "supabase gen types typescript --linked --debug > types/database.types.ts"
+    "update-type": "supabase gen types typescript --linked --debug > types/database.types.ts",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -80,7 +81,9 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "glob": "^11.0.0",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "tw-animate-css": "^1.3.1",
     "typescript": "^5"
   }

@@ -4,11 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { bookingLogger } from '@/lib/logger'
 import { getUserCookie } from '@/lib/auth/cookie'
-import type { Database, TablesInsert } from '@/types/database.types'
-import { INQUIRY_STATUS, type InquiryStatus } from '@/types'
+import { INQUIRY_STATUS, type InquiryStatus, type InquiryDB, type InquiryInsert } from '@/types'
 
-type InquiryRow = Database['public']['Tables']['inquiries']['Row']
-type InquiryInsert = TablesInsert<'inquiries'>
+type InquiryRow = InquiryDB
 
 export interface InquiryFilters {
   status?: string | InquiryStatus

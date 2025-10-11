@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Tables } from './database.types'
+import type { Tables, TablesInsert } from './database.types'
 
 // ============================================================================
 // Signup Form Schema
@@ -68,4 +68,59 @@ export interface TermsAgreement {
 export interface ActiveTermsVersions {
   termsId: string | null
   privacyId: string | null
+}
+
+// ============================================================================
+// Build-time Type Checks (Database와 Form 타입 일치 검증)
+// ============================================================================
+
+type UsersInsert = TablesInsert<'users'>
+type PhotographersInsert = TablesInsert<'photographers'>
+
+// 1. User Signup Schema Check
+type _UserSignupDataCheck = {
+  // Core fields that map to users table
+  email: UserSignupFormData['email'] extends NonNullable<UsersInsert['email']>
+    ? true
+    : 'email type mismatch - check users.email column type'
+
+  name: UserSignupFormData['name'] extends NonNullable<UsersInsert['name']>
+    ? true
+    : 'name type mismatch - check users.name column type'
+
+  phone: UserSignupFormData['phone'] extends NonNullable<UsersInsert['phone']>
+    ? true
+    : 'phone type mismatch - check users.phone column type'
+
+  // password and passwordConfirm are auth-only, not stored in users table
+  // agreedToTerms and agreedToPrivacy map to boolean flags, verified separately
+}
+
+// 2. Photographer Signup Schema Check
+type _PhotographerSignupDataCheck = {
+  // Core fields that map to users table (photographers extend users)
+  email: PhotographerSignupFormData['email'] extends NonNullable<UsersInsert['email']>
+    ? true
+    : 'email type mismatch - check users.email column type'
+
+  name: PhotographerSignupFormData['name'] extends NonNullable<UsersInsert['name']>
+    ? true
+    : 'name type mismatch - check users.name column type'
+
+  phone: PhotographerSignupFormData['phone'] extends NonNullable<UsersInsert['phone']>
+    ? true
+    : 'phone type mismatch - check users.phone column type'
+
+  // Photographer-specific fields from photographers table
+  website_url: NonNullable<PhotographerSignupFormData['website_url']> extends NonNullable<PhotographersInsert['website_url']>
+    ? true
+    : 'website_url type mismatch - check photographers.website_url column type'
+
+  instagram_handle: PhotographerSignupFormData['instagram_handle'] extends PhotographersInsert['instagram_handle']
+    ? true
+    : 'instagram_handle type mismatch - check photographers.instagram_handle column type'
+
+  bio: PhotographerSignupFormData['bio'] extends PhotographersInsert['bio']
+    ? true
+    : 'bio type mismatch - check photographers.bio column type'
 }

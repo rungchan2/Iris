@@ -2,10 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { Tables, TablesUpdate } from '@/types/database.types'
+import type { User, UserUpdate } from '@/types'
 import { setUserCookie } from '@/lib/auth/cookie'
-
-type User = Tables<'users'>
 
 export type ApiResponse<T> =
   | { success: true; data: T }
@@ -59,7 +57,7 @@ export async function updateUserProfile(updates: {
       return { success: false, error: 'Unauthorized' }
     }
 
-    const updateData: TablesUpdate<'users'> = {}
+    const updateData: UserUpdate = {}
 
     if (updates.name !== undefined) {
       updateData.name = updates.name

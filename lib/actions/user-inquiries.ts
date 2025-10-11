@@ -2,11 +2,11 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getUserCookie } from '@/lib/auth/cookie'
-import type { Tables, TablesUpdate } from '@/types'
+import type { InquiryDB, InquiryUpdate } from '@/types'
 import { bookingLogger } from '@/lib/logger'
 import { INQUIRY_STATUS } from '@/types'
 
-type Inquiry = Tables<'inquiries'>
+type Inquiry = InquiryDB
 
 export type InquiryWithDetails = Inquiry & {
   photographer?: {

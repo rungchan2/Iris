@@ -140,24 +140,72 @@ export type PhotographerInsertData = Omit<
 // =====================================
 // Build-time Type Checks (Database와 Form 타입 일치 검증)
 // =====================================
+type PhotographersInsert = TablesInsert<'photographers'>
+
 type _PhotographerDataCheck = {
-  // Step 1
-  email: PhotographerSignupFormData['step1_email'] extends string ? true : 'email type mismatch'
-  name: PhotographerSignupFormData['step1_name'] extends string ? true : 'name type mismatch'
+  // Step 1 - Email and Name mapping
+  email: PhotographerSignupFormData['step1_email'] extends NonNullable<PhotographersInsert['email']>
+    ? true
+    : 'email type mismatch - check photographers.email column type'
 
-  // Step 2
-  phone: PhotographerSignupFormData['step2_phone'] extends string ? true : 'phone type mismatch'
-  // gender, age_range: TEXT in DB (no validation needed)
+  name: PhotographerSignupFormData['step1_name'] extends NonNullable<PhotographersInsert['name']>
+    ? true
+    : 'name type mismatch - check photographers.name column type'
 
-  // Step 3
-  years_experience: PhotographerSignupFormData['step3_yearsExperience'] extends number ? true : 'years_experience type mismatch'
-  specialties: PhotographerSignupFormData['step3_specialties'] extends string[] ? true : 'specialties type mismatch'
-  studio_location: PhotographerSignupFormData['step3_studioLocation'] extends string ? true : 'studio_location type mismatch'
-  bio: PhotographerSignupFormData['step3_bio'] extends string ? true : 'bio type mismatch'
+  // Step 2 - Contact info
+  phone: PhotographerSignupFormData['step2_phone'] extends NonNullable<PhotographersInsert['phone']>
+    ? true
+    : 'phone type mismatch - check photographers.phone column type'
 
-  // Step 4
-  price_range_min: PhotographerSignupFormData['step4_priceRangeMin'] extends number | undefined ? true : 'price_range_min type mismatch'
-  price_range_max: PhotographerSignupFormData['step4_priceRangeMax'] extends number | undefined ? true : 'price_range_max type mismatch'
+  gender: PhotographerSignupFormData['step2_gender'] extends PhotographersInsert['gender']
+    ? true
+    : 'gender type mismatch - check photographers.gender column type'
+
+  age_range: PhotographerSignupFormData['step2_ageRange'] extends PhotographersInsert['age_range']
+    ? true
+    : 'age_range type mismatch - check photographers.age_range column type'
+
+  instagram_handle: PhotographerSignupFormData['step2_instagramHandle'] extends PhotographersInsert['instagram_handle']
+    ? true
+    : 'instagram_handle type mismatch - check photographers.instagram_handle column type'
+
+  website_url: NonNullable<PhotographerSignupFormData['step2_websiteUrl']> extends NonNullable<PhotographersInsert['website_url']>
+    ? true
+    : 'website_url type mismatch - check photographers.website_url column type'
+
+  // Step 3 - Professional info
+  years_experience: PhotographerSignupFormData['step3_yearsExperience'] extends NonNullable<PhotographersInsert['years_experience']>
+    ? true
+    : 'years_experience type mismatch - check photographers.years_experience column type'
+
+  specialties: PhotographerSignupFormData['step3_specialties'] extends NonNullable<PhotographersInsert['specialties']>
+    ? true
+    : 'specialties type mismatch - check photographers.specialties column type'
+
+  studio_location: PhotographerSignupFormData['step3_studioLocation'] extends NonNullable<PhotographersInsert['studio_location']>
+    ? true
+    : 'studio_location type mismatch - check photographers.studio_location column type'
+
+  equipment_info: PhotographerSignupFormData['step3_equipmentInfo'] extends PhotographersInsert['equipment_info']
+    ? true
+    : 'equipment_info type mismatch - check photographers.equipment_info column type'
+
+  bio: PhotographerSignupFormData['step3_bio'] extends NonNullable<PhotographersInsert['bio']>
+    ? true
+    : 'bio type mismatch - check photographers.bio column type'
+
+  // Step 4 - Pricing
+  price_range_min: PhotographerSignupFormData['step4_priceRangeMin'] extends PhotographersInsert['price_range_min']
+    ? true
+    : 'price_range_min type mismatch - check photographers.price_range_min column type'
+
+  price_range_max: PhotographerSignupFormData['step4_priceRangeMax'] extends PhotographersInsert['price_range_max']
+    ? true
+    : 'price_range_max type mismatch - check photographers.price_range_max column type'
+
+  price_description: PhotographerSignupFormData['step4_priceDescription'] extends PhotographersInsert['price_description']
+    ? true
+    : 'price_description type mismatch - check photographers.price_description column type'
 }
 
 // =====================================

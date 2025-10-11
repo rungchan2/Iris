@@ -44,15 +44,56 @@ export type TermsWithSections = Terms & {
   sections: TermsSection[]
 }
 
-// Type checks
+// ============================================================================
+// Build-time Type Checks (Database와 Form 타입 일치 검증)
+// ============================================================================
+
+// 1. Terms Section Form Check
 type _TermsSectionFormDataCheck = {
-  article_number: TermsSectionFormData['article_number'] extends number ? true : 'article_number type mismatch'
-  title: TermsSectionFormData['title'] extends string ? true : 'title type mismatch'
-  content: TermsSectionFormData['content'] extends string ? true : 'content type mismatch'
-  display_order: TermsSectionFormData['display_order'] extends number ? true : 'display_order type mismatch'
+  article_number: TermsSectionFormData['article_number'] extends NonNullable<TermsSectionInsert['article_number']>
+    ? true
+    : 'article_number type mismatch - check terms_sections.article_number column type'
+
+  title: TermsSectionFormData['title'] extends NonNullable<TermsSectionInsert['title']>
+    ? true
+    : 'title type mismatch - check terms_sections.title column type'
+
+  content: TermsSectionFormData['content'] extends NonNullable<TermsSectionInsert['content']>
+    ? true
+    : 'content type mismatch - check terms_sections.content column type'
+
+  display_order: TermsSectionFormData['display_order'] extends NonNullable<TermsSectionInsert['display_order']>
+    ? true
+    : 'display_order type mismatch - check terms_sections.display_order column type'
 }
 
+// 2. Terms Create Form Check
 type _TermsCreateFormDataCheck = {
-  version: TermsCreateFormData['version'] extends string ? true : 'version type mismatch'
+  document_type: TermsCreateFormData['document_type'] extends NonNullable<TermsInsert['document_type']>
+    ? true
+    : 'document_type type mismatch - check terms.document_type column type'
+
+  version: TermsCreateFormData['version'] extends NonNullable<TermsInsert['version']>
+    ? true
+    : 'version type mismatch - check terms.version column type'
+
+  is_active: TermsCreateFormData['is_active'] extends NonNullable<TermsInsert['is_active']>
+    ? true
+    : 'is_active type mismatch - check terms.is_active column type'
+
+  // effective_date: Date in form, string in DB - handled in conversion layer
+  // sections: nested array, validated separately via TermsSectionFormData
+}
+
+// 3. Terms Update Form Check
+type _TermsUpdateFormDataCheck = {
+  version: NonNullable<TermsUpdateFormData['version']> extends NonNullable<TermsUpdate['version']>
+    ? true
+    : 'version type mismatch - check terms.version column type'
+
+  is_active: NonNullable<TermsUpdateFormData['is_active']> extends NonNullable<TermsUpdate['is_active']>
+    ? true
+    : 'is_active type mismatch - check terms.is_active column type'
+
   // effective_date: Date in form, string in DB - handled in conversion layer
 }

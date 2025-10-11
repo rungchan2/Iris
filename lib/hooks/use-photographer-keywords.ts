@@ -1,14 +1,13 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { CreateKeywordData, UpdateKeywordData } from '@/types'
 import {
   getKeywords,
   createKeyword,
   updateKeyword,
   deleteKeyword,
   bulkUpsertKeywords,
-  type CreateKeywordData,
-  type UpdateKeywordData
 } from '@/lib/actions/photographer-keywords'
 import { toast } from 'sonner'
 

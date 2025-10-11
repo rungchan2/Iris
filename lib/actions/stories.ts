@@ -3,18 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { adminLogger } from '@/lib/logger'
-import { Database } from '@/types/database.types'
+import type { StoryDB, StoryUpdate, StoryFilters } from '@/types'
 
-type Story = Database['public']['Tables']['stories']['Row']
-type StoryUpdate = Database['public']['Tables']['stories']['Update']
-
-export interface StoryFilters {
-  moderationStatus?: string
-  isSuspicious?: boolean
-  isFeatured?: boolean
-  visibility?: string
-  searchTerm?: string
-}
+type Story = StoryDB
 
 export type ApiResponse<T> =
   | { success: true; data: T }

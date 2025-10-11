@@ -1,10 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/types/database.types'
+import type { PhotographerProfile, PhotographerDB } from '@/types'
 
-type PhotographerProfile = Database['public']['Tables']['photographer_profiles']['Row']
-type Photographer = Database['public']['Tables']['photographers']['Row']
+type Photographer = PhotographerDB
 
 export interface PhotographerProfileFull {
   photographer: Photographer

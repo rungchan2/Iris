@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 
 export interface PublicReview {
   id: string
@@ -20,11 +20,8 @@ export interface PublicReview {
 
 export async function getPublicReviews() {
   try {
-    // Service Role 클라이언트 사용하여 RLS 우회
-    const supabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    // Service Role 클라이언트 사용하여 RLS 우회 (inquiries 테이블 접근을 위해 필요)
+    const supabase = createServiceRoleClient()
 
     const { data: reviews, error } = await supabase
       .from('reviews')

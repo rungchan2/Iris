@@ -3,32 +3,20 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { adminLogger } from '@/lib/logger'
-import { Database } from '@/types/database.types'
+import type {
+  CouponDB,
+  CouponInsert,
+  CouponTemplateDB,
+  CouponWithTemplate,
+  CouponFilters,
+  CouponStats,
+} from '@/types'
 
-type Coupon = Database['public']['Tables']['coupons']['Row']
-type CouponInsert = Database['public']['Tables']['coupons']['Insert']
-type CouponTemplate = Database['public']['Tables']['coupon_templates']['Row']
+// Re-export types for external use
+export type { CouponFilters, CouponStats, CouponWithTemplate }
 
-export interface CouponWithTemplate extends Coupon {
-  template: CouponTemplate | null
-}
-
-export interface CouponFilters {
-  status?: 'unused' | 'used' | 'expired'
-  templateId?: string
-  userId?: string
-  dateFrom?: string
-  dateTo?: string
-  search?: string
-}
-
-export interface CouponStats {
-  totalIssued: number
-  unusedCount: number
-  usedCount: number
-  expiredCount: number
-  totalDiscountValue: number
-}
+type Coupon = CouponDB
+type CouponTemplate = CouponTemplateDB
 
 /**
  * Get coupons with filters and pagination

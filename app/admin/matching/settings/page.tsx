@@ -1,5 +1,4 @@
 'use client'
-import { adminLogger } from "@/lib/logger"
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,10 +10,9 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb'
-import { 
-  Sliders, 
-  Database, 
+import {
+  Sliders,
+  Database,
   Zap,
   Save,
   RotateCcw,
@@ -26,49 +24,41 @@ import {
   Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
-
-interface SurveyQuestion {
-  id: string
-  question_order: number
-  question_key: string
-  question_title: string
-  question_type: string
-  weight_category: string
-  base_weight: number
-  is_hard_filter: boolean
-  is_active: boolean
-  survey_choices?: Array<{
-    id: string
-    choice_key: string
-    choice_label: string
-    choice_order: number
-    is_active: boolean
-  }>
-  survey_images?: Array<{
-    id: string
-    image_key: string
-    image_label: string
-    image_url: string
-    image_order: number
-    is_active: boolean
-  }>
-}
+import {
+  useMatchingQuestions,
+  useSystemSettings,
+  useUpdateQuestionTitle,
+  useUpdateChoiceLabel,
+  useToggleQuestionActive,
+  useUpdateMatchingWeights,
+  useSaveSystemSettings,
+} from '@/lib/hooks/use-matching-settings'
+import type { SurveyQuestion } from '@/lib/actions/matching-settings'
 
 
 export default function MatchingSettingsPage() {
-  const [questions, setQuestions] = useState<SurveyQuestion[]>([])
-  const [systemSettings, setSystemSettings] = useState<Record<string, string | number | boolean>>({})
+  // React Query hooks for data fetching
+  const { data: questions = [], isLoading: loadingQuestions } = useMatchingQuestions()
+  const { data: systemSettings = {}, isLoading: loadingSettings } = useSystemSettings()
+
+  // Mutation hooks
+  const updateQuestionTitleMutation = useUpdateQuestionTitle()
+  const updateChoiceLabelMutation = useUpdateChoiceLabel()
+  const toggleQuestionActiveMutation = useToggleQuestionActive()
+  const updateWeightsMutation = useUpdateMatchingWeights()
+  const saveSettingsMutation = useSaveSystemSettings()
+
+  // Local state for UI only
   const [weights, setWeights] = useState({
     styleEmotion: [40],
     communicationPsychology: [30],
     purposeStory: [20],
     companion: [10]
   })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
   const [editingChoice, setEditingChoice] = useState<string | null>(null)
+  const [editedQuestionTitle, setEditedQuestionTitle] = useState('')
+  const [editedChoiceLabel, setEditedChoiceLabel] = useState('')
   const [settings, setSettings] = useState({
     maxResults: 10,
     minSimilarityScore: 0.7,
@@ -79,318 +69,140 @@ export default function MatchingSettingsPage() {
     autoRefreshEmbeddings: false
   })
 
-  const supabase = createClient()
+  const loading = loadingQuestions || loadingSettings
+  const saving = updateWeightsMutation.isPending || saveSettingsMutation.isPending
 
+  // Calculate weights from questions when data loads
   useEffect(() => {
-    loadData()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadData = async () => {
-    setLoading(true)
-    try {
-      // Load survey questions with choices and images
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('survey_questions')
-        .select(`
-          *,
-          survey_choices (*),
-          survey_images (*)
-        `)
-        .order('question_order')
-
-      if (questionsError) throw questionsError
-
-      setQuestions((questionsData || []) as any)
-
-      // Load system settings
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('system_settings')
-        .select('*')
-
-      if (settingsError) throw settingsError
-
-      const settingsMap: Record<string, string | number | boolean> = {}
-      settingsData?.forEach(setting => {
-        settingsMap[setting.setting_key] = setting.setting_value as any
-      })
-      setSystemSettings(settingsMap)
-
-      // Calculate current weights from questions
-      const currentWeights = {
-        styleEmotion: [40],
-        communicationPsychology: [30], 
-        purposeStory: [20],
-        companion: [10]
+    if (questions.length > 0) {
+      const categories = {
+        style_emotion: 0,
+        communication_psychology: 0,
+        purpose_story: 0,
+        companion: 0
       }
 
-      if (questionsData) {
-        const categories = {
-          style_emotion: 0,
-          communication_psychology: 0,
-          purpose_story: 0,
-          companion: 0
+      questions.forEach(q => {
+        if (q.weight_category && categories.hasOwnProperty(q.weight_category)) {
+          (categories as any)[q.weight_category] += q.base_weight
         }
-
-        questionsData.forEach(q => {
-          if (q.weight_category && categories.hasOwnProperty(q.weight_category)) {
-            (categories as any)[q.weight_category] += q.base_weight
-          }
-        })
-
-        currentWeights.styleEmotion = [Math.round(categories.style_emotion * 100)]
-        currentWeights.communicationPsychology = [Math.round(categories.communication_psychology * 100)]
-        currentWeights.purposeStory = [Math.round(categories.purpose_story * 100)]
-        currentWeights.companion = [Math.round(categories.companion * 100)]
-      }
-
-      setWeights(currentWeights)
-
-      // Load system settings into local state
-      const settingsState = {
-        maxResults: Number(settingsMap.max_results) || 10,
-        minSimilarityScore: Number(settingsMap.min_similarity_score) || 0.7,
-        enableKeywordBonus: Boolean(settingsMap.enable_keyword_bonus ?? true),
-        enableRegionFilter: Boolean(settingsMap.enable_region_filter ?? true),
-        enableBudgetFilter: Boolean(settingsMap.enable_budget_filter ?? true),
-        cacheResults: Boolean(settingsMap.cache_results ?? true),
-        autoRefreshEmbeddings: Boolean(settingsMap.auto_refresh_embeddings ?? false)
-      }
-      setSettings(settingsState)
-
-    } catch (error) {
-      adminLogger.error('Error loading data:', error)
-      toast.error('데이터 로딩 실패', {
-        description: '설정 데이터를 불러오는 중 오류가 발생했습니다.'
       })
-    } finally {
-      setLoading(false)
+
+      setWeights({
+        styleEmotion: [Math.round(categories.style_emotion * 100)],
+        communicationPsychology: [Math.round(categories.communication_psychology * 100)],
+        purposeStory: [Math.round(categories.purpose_story * 100)],
+        companion: [Math.round(categories.companion * 100)]
+      })
     }
-  }
+  }, [questions])
+
+  // Load system settings into local state
+  useEffect(() => {
+    if (Object.keys(systemSettings).length > 0) {
+      setSettings({
+        maxResults: Number(systemSettings.max_results) || 10,
+        minSimilarityScore: Number(systemSettings.min_similarity_score) || 0.7,
+        enableKeywordBonus: Boolean(systemSettings.enable_keyword_bonus ?? true),
+        enableRegionFilter: Boolean(systemSettings.enable_region_filter ?? true),
+        enableBudgetFilter: Boolean(systemSettings.enable_budget_filter ?? true),
+        cacheResults: Boolean(systemSettings.cache_results ?? true),
+        autoRefreshEmbeddings: Boolean(systemSettings.auto_refresh_embeddings ?? false)
+      })
+    }
+  }, [systemSettings])
 
   const handleWeightChange = (dimension: string, value: number[]) => {
     setWeights(prev => ({ ...prev, [dimension]: value }))
   }
 
   const handleSettingChange = (key: string, value: string | number | boolean) => {
-    setSystemSettings(prev => ({ ...prev, [key]: value }))
+    setSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  const updateQuestionTitle = async (questionId: string, newTitle: string) => {
-    try {
-      const { error } = await supabase
-        .from('survey_questions')
-        .update({ question_title: newTitle })
-        .eq('id', questionId)
-
-      if (error) throw error
-
-      setQuestions(prev => prev.map(q => 
-        q.id === questionId ? { ...q, question_title: newTitle } : q
-      ))
-
-      toast.success('질문 제목이 업데이트되었습니다')
-      setEditingQuestion(null)
-    } catch (error) {
-      adminLogger.error('Error updating question:', error)
-      toast.error('질문 업데이트 실패')
-    }
-  }
-
-  const updateChoiceLabel = async (choiceId: string, newLabel: string) => {
-    try {
-      const { error } = await supabase
-        .from('survey_choices')
-        .update({ choice_label: newLabel })
-        .eq('id', choiceId)
-
-      if (error) throw error
-
-      setQuestions(prev => prev.map(q => ({
-        ...q,
-        survey_choices: q.survey_choices?.map(c => 
-          c.id === choiceId ? { ...c, choice_label: newLabel } : c
-        )
-      })))
-
-      // Add to embedding job queue
-      await supabase
-        .from('embedding_jobs')
-        .insert({
-          job_type: 'choice_embedding',
-          target_id: choiceId,
-          job_status: 'pending'
-        })
-
-      toast.success('선택지가 업데이트되었습니다')
-      setEditingChoice(null)
-    } catch (error) {
-      adminLogger.error('Error updating choice:', error)
-      toast.error('선택지 업데이트 실패')
-    }
-  }
-
-  const toggleQuestionActive = async (questionId: string, isActive: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('survey_questions')
-        .update({ is_active: isActive })
-        .eq('id', questionId)
-
-      if (error) throw error
-
-      setQuestions(prev => prev.map(q => 
-        q.id === questionId ? { ...q, is_active: isActive } : q
-      ))
-
-      toast.success(isActive ? '질문이 활성화되었습니다' : '질문이 비활성화되었습니다')
-    } catch (error) {
-      adminLogger.error('Error toggling question:', error)
-      toast.error('질문 상태 변경 실패')
-    }
-  }
-
-  const updateWeights = async () => {
-    setSaving(true)
-    try {
-      // Calculate weight ratios
-      const total = Object.values(weights).reduce((sum, [value]) => sum + value, 0)
-      const styleRatio = weights.styleEmotion[0] / total
-      const commRatio = weights.communicationPsychology[0] / total
-      const purposeRatio = weights.purposeStory[0] / total
-      const companionRatio = weights.companion[0] / total
-
-      // Update questions with new weights
-      const updates = []
-
-      for (const question of questions) {
-        let newWeight = question.base_weight
-        
-        switch (question.weight_category) {
-          case 'style_emotion':
-            newWeight = styleRatio / questions.filter(q => q.weight_category === 'style_emotion').length
-            break
-          case 'communication_psychology':
-            newWeight = commRatio / questions.filter(q => q.weight_category === 'communication_psychology').length
-            break
-          case 'purpose_story':
-            newWeight = purposeRatio / questions.filter(q => q.weight_category === 'purpose_story').length
-            break
-          case 'companion':
-            newWeight = companionRatio / questions.filter(q => q.weight_category === 'companion').length
-            break
-        }
-
-        if (Math.abs(newWeight - question.base_weight) > 0.001) {
-          updates.push({ id: question.id, base_weight: newWeight })
-        }
+  const handleUpdateQuestionTitle = (questionId: string, newTitle: string) => {
+    updateQuestionTitleMutation.mutate(
+      { questionId, newTitle },
+      {
+        onSuccess: () => {
+          setEditingQuestion(null)
+        },
       }
-
-      // Batch update
-      for (const update of updates) {
-        await supabase
-          .from('survey_questions')
-          .update({ base_weight: update.base_weight })
-          .eq('id', update.id)
-      }
-
-      toast.success('가중치가 저장되었습니다')
-      await loadData() // Reload to verify changes
-    } catch (error) {
-      adminLogger.error('Error updating weights:', error)
-      toast.error('가중치 저장 실패')
-    } finally {
-      setSaving(false)
-    }
+    )
   }
 
-  const saveSystemSettings = async () => {
-    setSaving(true)
-    try {
-      for (const [key, value] of Object.entries(systemSettings)) {
-        await supabase
-          .from('system_settings')
-          .upsert({
-            setting_key: key,
-            setting_value: value,
-            setting_description: getSettingDescription(key)
-          })
+  const handleUpdateChoiceLabel = (choiceId: string, newLabel: string) => {
+    updateChoiceLabelMutation.mutate(
+      { choiceId, newLabel },
+      {
+        onSuccess: () => {
+          setEditingChoice(null)
+        },
       }
-
-      toast.success('시스템 설정이 저장되었습니다')
-    } catch (error) {
-      adminLogger.error('Error saving system settings:', error)
-      toast.error('시스템 설정 저장 실패')
-    } finally {
-      setSaving(false)
-    }
+    )
   }
 
-  const getSettingDescription = (key: string): string => {
-    const descriptions = {
-      max_results: '최대 매칭 결과 수',
-      min_similarity_score: '최소 유사도 점수',
-      enable_keyword_bonus: '키워드 보너스 활성화',
-      enable_region_filter: '지역 필터링 활성화',
-      enable_budget_filter: '예산 필터링 활성화',
-      cache_results: '결과 캐싱 활성화',
-      auto_refresh_embeddings: '자동 임베딩 갱신'
-    }
-    return (descriptions as any)[key] || key
+  const handleToggleQuestionActive = (questionId: string, isActive: boolean) => {
+    toggleQuestionActiveMutation.mutate({ questionId, isActive })
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      // Save weights
-      await updateWeights()
-      
-      // Save system settings
-      await saveSystemSettings()
-      
-      toast.success('모든 설정이 저장되었습니다')
-    } catch (error) {
-      adminLogger.error('Error saving settings:', error)
-      toast.error('설정 저장 중 오류가 발생했습니다')
-    } finally {
-      setSaving(false)
+  const handleUpdateWeights = () => {
+    const weightsPayload = {
+      styleEmotion: weights.styleEmotion[0],
+      communicationPsychology: weights.communicationPsychology[0],
+      purposeStory: weights.purposeStory[0],
+      companion: weights.companion[0],
     }
+    updateWeightsMutation.mutate({ weights: weightsPayload, questions })
   }
 
-  const handleReset = async () => {
-    try {
-      // Reset weights to default
-      const defaultWeights = {
-        styleEmotion: [40],
-        communicationPsychology: [30],
-        purposeStory: [20],
-        companion: [10]
-      }
-      setWeights(defaultWeights)
-      
-      // Reset settings to default
-      const defaultSettings = {
-        maxResults: 10,
-        minSimilarityScore: 0.7,
-        enableKeywordBonus: true,
-        enableRegionFilter: true,
-        enableBudgetFilter: true,
-        cacheResults: true,
-        autoRefreshEmbeddings: false
-      }
-      setSettings(defaultSettings)
-      
-      toast.info('설정이 초기화되었습니다')
-    } catch (error) {
-      adminLogger.error('Error resetting settings:', error)
-      toast.error('설정 초기화 실패')
+  const handleSaveSystemSettings = () => {
+    const settingsPayload = {
+      max_results: settings.maxResults,
+      min_similarity_score: settings.minSimilarityScore,
+      enable_keyword_bonus: settings.enableKeywordBonus,
+      enable_region_filter: settings.enableRegionFilter,
+      enable_budget_filter: settings.enableBudgetFilter,
+      cache_results: settings.cacheResults,
+      auto_refresh_embeddings: settings.autoRefreshEmbeddings,
     }
+    saveSettingsMutation.mutate(settingsPayload)
+  }
+
+  const handleSave = () => {
+    handleUpdateWeights()
+    handleSaveSystemSettings()
+  }
+
+  const handleReset = () => {
+    // Reset weights to default
+    const defaultWeights = {
+      styleEmotion: [40],
+      communicationPsychology: [30],
+      purposeStory: [20],
+      companion: [10]
+    }
+    setWeights(defaultWeights)
+
+    // Reset settings to default
+    const defaultSettings = {
+      maxResults: 10,
+      minSimilarityScore: 0.7,
+      enableKeywordBonus: true,
+      enableRegionFilter: true,
+      enableBudgetFilter: true,
+      cacheResults: true,
+      autoRefreshEmbeddings: false
+    }
+    setSettings(defaultSettings)
+
+    toast.info('설정이 초기화되었습니다')
   }
 
   const totalWeight = Object.values(weights).reduce((sum, [value]) => sum + value, 0)
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <AdminBreadcrumb />
+    <div className="flex-1 space-y-6">
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -521,8 +333,8 @@ export default function MatchingSettingsPage() {
           </div>
           
           <div className="flex justify-end pt-4">
-            <Button 
-              onClick={updateWeights} 
+            <Button
+              onClick={handleUpdateWeights}
               disabled={loading || saving || totalWeight !== 100}
               variant="outline"
             >
@@ -739,13 +551,21 @@ export default function MatchingSettingsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setEditingQuestion(editingQuestion === question.id ? null : question.id)}
+                            onClick={() => {
+                              if (editingQuestion === question.id) {
+                                setEditingQuestion(null)
+                                setEditedQuestionTitle('')
+                              } else {
+                                setEditingQuestion(question.id)
+                                setEditedQuestionTitle(question.question_title)
+                              }
+                            }}
                           >
                             <Edit3 className="h-4 w-4" />
                           </Button>
                           <Switch
                             checked={question.is_active}
-                            onCheckedChange={(checked) => toggleQuestionActive(question.id, checked)}
+                            onCheckedChange={(checked) => handleToggleQuestionActive(question.id, checked)}
                           />
                         </div>
                       </div>
@@ -753,19 +573,14 @@ export default function MatchingSettingsPage() {
                       {editingQuestion === question.id ? (
                         <div className="space-y-2 pt-2">
                           <Textarea
-                            value={question.question_title}
-                            onChange={(e) => {
-                              const newTitle = e.target.value
-                              setQuestions(prev => prev.map(q => 
-                                q.id === question.id ? { ...q, question_title: newTitle } : q
-                              ))
-                            }}
+                            value={editedQuestionTitle || question.question_title}
+                            onChange={(e) => setEditedQuestionTitle(e.target.value)}
                             rows={2}
                           />
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => updateQuestionTitle(question.id, question.question_title)}
+                              onClick={() => handleUpdateQuestionTitle(question.id, editedQuestionTitle || question.question_title)}
                             >
                               저장
                             </Button>
@@ -774,7 +589,7 @@ export default function MatchingSettingsPage() {
                               size="sm"
                               onClick={() => {
                                 setEditingQuestion(null)
-                                loadData() // Reload to reset changes
+                                setEditedQuestionTitle('')
                               }}
                             >
                               취소
@@ -796,20 +611,12 @@ export default function MatchingSettingsPage() {
                                 {editingChoice === choice.id ? (
                                   <div className="flex-1 flex gap-2">
                                     <Input
-                                      value={choice.choice_label}
-                                      onChange={(e) => {
-                                        const newLabel = e.target.value
-                                        setQuestions(prev => prev.map(q => ({
-                                          ...q,
-                                          survey_choices: q.survey_choices?.map(c => 
-                                            c.id === choice.id ? { ...c, choice_label: newLabel } : c
-                                          )
-                                        })))
-                                      }}
+                                      value={editedChoiceLabel || choice.choice_label}
+                                      onChange={(e) => setEditedChoiceLabel(e.target.value)}
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => updateChoiceLabel(choice.id, choice.choice_label)}
+                                      onClick={() => handleUpdateChoiceLabel(choice.id, editedChoiceLabel || choice.choice_label)}
                                     >
                                       저장
                                     </Button>
@@ -818,7 +625,7 @@ export default function MatchingSettingsPage() {
                                       size="sm"
                                       onClick={() => {
                                         setEditingChoice(null)
-                                        loadData()
+                                        setEditedChoiceLabel('')
                                       }}
                                     >
                                       취소
@@ -830,7 +637,10 @@ export default function MatchingSettingsPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => setEditingChoice(choice.id)}
+                                      onClick={() => {
+                                        setEditingChoice(choice.id)
+                                        setEditedChoiceLabel(choice.choice_label)
+                                      }}
                                     >
                                       <Edit3 className="h-4 w-4" />
                                     </Button>
