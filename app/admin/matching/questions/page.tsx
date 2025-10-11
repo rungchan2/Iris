@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { SurveyQuestion } from '@/types/matching.types'
+import type { TablesUpdate } from '@/types/database.types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -87,7 +88,7 @@ export default function QuestionsManagement() {
     }
   }
 
-  const handleQuestionUpdate = async (questionId: string, updates: any) => {
+  const handleQuestionUpdate = async (questionId: string, updates: TablesUpdate<'survey_questions'>) => {
     try {
       const { error } = await supabase
         .from('survey_questions')

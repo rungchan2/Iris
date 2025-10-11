@@ -198,7 +198,7 @@
 ### TypeScript 타입 재생성
 - [ ] Supabase 타입 재생성
   ```bash
-  npm run gen-types
+  npm run update-types
   ```
 - [ ] 타입 오류 확인 및 수정
 

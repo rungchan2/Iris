@@ -29,7 +29,7 @@ npm start
 npm run lint
 
 # Sync Types with Supabase
-npm run gen-types
+npm run update-types
 ```
 
 ## Architecture Overview
@@ -160,10 +160,72 @@ npm run gen-types
 - RLS policies support anonymous matching via session tokens
 
 ### Authentication & Authorization
+
+**Client-Side Auth Utilities**:
+- **Documentation**: [`/docs/AUTH_UTILS_GUIDE.md`](/docs/AUTH_UTILS_GUIDE.md)
+- **Implementation**: [`/lib/auth/auth-utils.tsx`](/lib/auth/auth-utils.tsx)
+- **Components**: `PermissionGuard`, `RoleGuard`, `ProtectedAction` for UI access control
+- **Hooks**: `useAuth()`, `usePermission()` for client-side permission checks
+- **Server Actions**: `checkPermission()` for server-side authorization
+
+**System Features**:
 - **Anonymous Matching**: Full questionnaire and results without login
 - **Session Tokens**: Secure access to anonymous matching results
 - **Admin Controls**: Full matching system configuration access
 - **Photographer Profiles**: 4-dimensional description management
+
+### Row Level Security (RLS)
+
+**Role Hierarchy**: `anon (0) < user (10) < photographer (20) < admin (40)`
+
+**Documentation**:
+- **Comprehensive Guide**: [`/docs/RLS_UTILS_GUIDE.md`](/docs/RLS_UTILS_GUIDE.md) - Complete usage examples
+- **SQL Functions**: [`/lib/auth/rls-utils.sql`](/lib/auth/rls-utils.sql) - Function definitions
+- **Quick Reference**: [`/specs/rls-guide.md`](/specs/rls-guide.md) - Table patterns
+
+**Available RLS Functions** (all in `public` schema):
+
+```sql
+-- Ownership checks
+public.is_owner(owner_id UUID)                         -- Single owner check
+public.is_any_owner(VARIADIC owner_ids UUID[])         -- Multiple owners (OR logic)
+public.is_user_or_photographer(user_id, photographer_id) -- Specialized for payments/inquiries
+
+-- Role checks (faster than min_role)
+public.is_admin()                                      -- Admin only
+public.is_photographer()                               -- Photographer or admin
+
+-- Legacy (still supported)
+auth.min_role(required_role TEXT)                      -- Minimum role level check
+```
+
+**Common RLS Patterns**:
+
+```sql
+-- 1. Public tables (photographers, products, photos)
+CREATE POLICY "select_public" ON table_name FOR SELECT
+USING (true);  -- Anyone can view
+
+CREATE POLICY "modify_own" ON table_name FOR UPDATE
+USING (public.is_owner(photographer_id) OR public.is_admin());
+
+-- 2. Private user data (inquiries, payments)
+CREATE POLICY "select_own_or_related" ON table_name FOR SELECT
+USING (
+  public.is_any_owner(user_id, photographer_id)
+  OR public.is_admin()
+);
+
+-- 3. Admin-only tables (system_settings, logs)
+CREATE POLICY "admin_only" ON table_name FOR ALL
+USING (public.is_admin())
+WITH CHECK (public.is_admin());
+```
+
+**Performance**:
+- All functions use `STABLE` and `SECURITY DEFINER` for optimization
+- Index on `users(id, role)` for fast role lookups
+- Recommended: Add indexes on owner columns (user_id, photographer_id)
 
 ### Performance Considerations
 - pgvector indexes optimized for embedding similarity search
@@ -202,6 +264,29 @@ NEXT_PUBLIC_APP_URL=
 ```
 
 ## Recent Updates
+
+### 2025.10.11 - Authentication & RLS Utilities
+**NEW FEATURE**: Complete authentication and database security utilities
+
+#### Client-Side Auth Utilities
+- ✅ **Auth Components**: `PermissionGuard`, `RoleGuard`, `ProtectedAction` for UI access control
+- ✅ **Auth Hooks**: `useAuth()`, `usePermission()` for client-side permission checks
+- ✅ **Server Integration**: `checkPermission()` for server action authorization
+- ✅ **Role Hierarchy**: Simplified 3-tier system (admin > photographer > user)
+- ✅ **Documentation**: Comprehensive guide in `/docs/AUTH_UTILS_GUIDE.md`
+
+#### Database RLS Utilities (public schema)
+- ✅ **Ownership Functions**: `is_owner()`, `is_any_owner()`, `is_user_or_photographer()`
+- ✅ **Role Functions**: `is_admin()`, `is_photographer()` for fast permission checks
+- ✅ **Performance**: STABLE + SECURITY DEFINER + indexed for optimal query speed
+- ✅ **Reusability**: Apply consistent patterns across all 30+ database tables
+- ✅ **Documentation**: Complete guide in `/docs/RLS_UTILS_GUIDE.md` with examples
+
+#### Architecture Benefits
+- ✅ **Centralized Logic**: Auth/permission logic in reusable utilities
+- ✅ **Type Safety**: Full TypeScript support for roles and permissions
+- ✅ **Maintainability**: Single source of truth for access control
+- ✅ **Performance**: Optimized database functions with proper indexing
 
 ### 2025.10.05 - Code Quality & Architecture Refactoring
 **MAJOR REFACTORING**: Systematic code quality improvements and architectural cleanup
@@ -809,7 +894,119 @@ type _InquiryFormValuesCheck = {
 }
 ```
 
-#### 10. Database Query Optimization
+#### 10. Authentication & Authorization (MANDATORY)
+
+**NEVER implement inline permission checks. Always use auth utilities.**
+
+**Client-Side Authorization**:
+```typescript
+// ✅ GOOD: Use PermissionGuard component
+import { PermissionGuard } from '@/lib/auth/auth-utils'
+
+export default function AdminPage({ children }) {
+  return (
+    <PermissionGuard
+      minRole="admin"
+      onUnauthorized={() => {
+        toast.error('관리자 권한이 필요합니다')
+        router.push('/')
+      }}
+    >
+      {children}
+    </PermissionGuard>
+  )
+}
+
+// ✅ GOOD: Use usePermission hook
+import { usePermission } from '@/lib/auth/auth-utils'
+
+export function DeleteButton() {
+  const canDelete = usePermission('admin')
+
+  if (!canDelete) return null
+
+  return <Button onClick={handleDelete}>삭제</Button>
+}
+
+// ❌ BAD: Inline permission check
+export function AdminPanel() {
+  const { data: user } = useQuery('user', fetchUser)
+
+  if (user?.role !== 'admin') {  // ❌ WRONG
+    return <AccessDenied />
+  }
+}
+```
+
+**Server-Side Authorization**:
+```typescript
+// ✅ GOOD: Use checkPermission in Server Actions
+'use server'
+import { checkPermission } from '@/lib/auth/auth-utils'
+
+export async function deleteProduct(id: string): Promise<ApiResponse<void>> {
+  // Check permission first
+  const permissionCheck = await checkPermission({ minRole: 'admin' })
+  if (!permissionCheck.authorized) {
+    return { success: false, error: permissionCheck.message }
+  }
+
+  // Proceed with deletion
+  const supabase = await createClient()
+  const { error } = await supabase.from('products').delete().eq('id', id)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, data: undefined }
+}
+
+// ❌ BAD: Inline permission check
+export async function deleteProduct(id: string) {
+  const supabase = await createClient()
+  const { data: user } = await supabase.auth.getUser()  // ❌ WRONG
+
+  if (user?.role !== 'admin') {  // ❌ WRONG
+    throw new Error('Unauthorized')
+  }
+}
+```
+
+**Database RLS Policies**:
+```sql
+-- ✅ GOOD: Use RLS utility functions
+CREATE POLICY "select_own_or_admin" ON table_name FOR SELECT
+USING (
+  public.is_owner(user_id)
+  OR public.is_admin()
+);
+
+CREATE POLICY "photographers_can_create" ON products FOR INSERT
+WITH CHECK (
+  public.is_photographer()
+  AND public.is_owner(photographer_id)
+);
+
+-- ❌ BAD: Inline permission logic
+CREATE POLICY "select_own_or_admin" ON table_name FOR SELECT
+USING (
+  auth.uid() = user_id
+  OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+);
+```
+
+**Available Utilities**:
+- **Client Components**: `PermissionGuard`, `RoleGuard`, `ProtectedAction`
+- **Client Hooks**: `useAuth()`, `usePermission()`
+- **Server Actions**: `checkPermission(user, { minRole, customCheck })`
+- **RLS Functions**: `public.is_owner()`, `public.is_admin()`, `public.is_photographer()`
+
+**Documentation**:
+- [`/docs/AUTH_UTILS_GUIDE.md`](/docs/AUTH_UTILS_GUIDE.md) - Client-side auth
+- [`/docs/RLS_UTILS_GUIDE.md`](/docs/RLS_UTILS_GUIDE.md) - Database RLS
+
+#### 11. Database Query Optimization
 
 **NEVER use loops to fetch related data (N+1 queries).**
 
@@ -873,10 +1070,25 @@ const { data: results } = await supabase
 - Anonymous user flow in `app/matching/` routes
 
 ### Database Schema Changes
-- Always regenerate TypeScript types after schema changes
+- Always regenerate TypeScript types after schema changes: `npm run update-types`
 - Use migrations for pgvector index updates
-- Test RLS policies with anonymous session tokens
+- **Test RLS policies** with anonymous session tokens and different user roles
+- **Use RLS utility functions** instead of inline permission logic in policies
 - Monitor embedding job queue for async operations
+
+**When creating new RLS policies**:
+```sql
+-- ✅ Good - Use utility functions
+CREATE POLICY "select_own" ON new_table FOR SELECT
+USING (public.is_owner(user_id) OR public.is_admin());
+
+-- ❌ Bad - Inline logic
+CREATE POLICY "select_own" ON new_table FOR SELECT
+USING (
+  auth.uid() = user_id
+  OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+);
+```
 
 ## Tools and Workflow Notes
 

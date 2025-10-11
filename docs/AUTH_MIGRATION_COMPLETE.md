@@ -66,7 +66,7 @@
 
 **Public Pages (3개):**
 14. `app/signup/layout.tsx`
-15. `app/profile/complete/page.tsx`
+15. `app/complete/page.tsx`
 16. `app/login/page.tsx`
 
 **총 제거된 코드:**
@@ -280,7 +280,7 @@ Core Routes:
 Pages:
 - app/login/page.tsx
 - app/signup/layout.tsx
-- app/profile/complete/page.tsx
+- app/complete/page.tsx
 - app/admin/schedule/page.tsx
 - app/admin/photos/page.tsx
 - app/admin/reviews/page.tsx

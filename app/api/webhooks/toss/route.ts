@@ -3,6 +3,25 @@ import { createClient } from '@/lib/supabase/server';
 import { verifyWebhookSignature } from '@/lib/payments/toss-server';
 import type { TossWebhookEvent } from '@/lib/payments/toss-types';
 import { webhookLogger } from '@/lib/logger';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
+
+interface TossWebhookData {
+  paymentKey: string
+  orderId: string
+  status?: string
+  totalAmount?: number
+  balanceAmount?: number
+  cancels?: Array<{
+    cancelReason?: string
+    cancelAmount?: number
+    canceledAt?: string
+    transactionKey?: string
+  }>
+  metadata?: {
+    inquiryId?: string
+  }
+}
 
 /**
  * TossPayments 웹훅 처리 엔드포인트
@@ -52,28 +71,29 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // 이벤트 타입별 처리
+    const webhookData = data as unknown as TossWebhookData
     switch (eventType) {
       case 'PAYMENT.DONE':
-        await handlePaymentDone(supabase, data);
+        await handlePaymentDone(supabase, webhookData);
         break;
-        
+
       case 'PAYMENT.CANCELED':
       case 'PAYMENT.PARTIAL_CANCELED':
-        await handlePaymentCanceled(supabase, data);
+        await handlePaymentCanceled(supabase, webhookData);
         break;
-        
+
       case 'PAYMENT.ABORTED':
-        await handlePaymentAborted(supabase, data);
+        await handlePaymentAborted(supabase, webhookData);
         break;
-        
+
       case 'PAYMENT.EXPIRED':
-        await handlePaymentExpired(supabase, data);
+        await handlePaymentExpired(supabase, webhookData);
         break;
-        
+
       case 'VIRTUAL_ACCOUNT.DEPOSIT':
-        await handleVirtualAccountDeposit(supabase, data);
+        await handleVirtualAccountDeposit(supabase, webhookData);
         break;
-        
+
       default:
         webhookLogger.info(`처리되지 않은 웹훅 이벤트: ${eventType}`);
     }
@@ -95,7 +115,7 @@ export async function POST(request: NextRequest) {
 /**
  * 결제 완료 처리 (PAYMENT.DONE)
  */
-async function handlePaymentDone(supabase: any, data: any) {
+async function handlePaymentDone(supabase: SupabaseClient<Database>, data: TossWebhookData) {
   const { paymentKey, orderId } = data;
 
   try {
@@ -106,7 +126,7 @@ async function handlePaymentDone(supabase: any, data: any) {
         provider_transaction_id: paymentKey,
         status: 'paid',
         paid_at: new Date().toISOString(),
-        raw_response: data,
+        raw_response: data as any,
         updated_at: new Date().toISOString()
       })
       .eq('order_id', orderId);
@@ -116,16 +136,18 @@ async function handlePaymentDone(supabase: any, data: any) {
     }
 
     // 관련 문의 상태 업데이트
-    const { error: inquiryError } = await supabase
-      .from('inquiries')
-      .update({
-        status: 'reserved',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', data.metadata?.inquiryId);
+    if (data.metadata?.inquiryId) {
+      const { error: inquiryError } = await supabase
+        .from('inquiries')
+        .update({
+          status: 'reserved',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.metadata.inquiryId);
 
-    if (inquiryError) {
-      webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
+      if (inquiryError) {
+        webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
+      }
     }
 
     webhookLogger.info(`결제 완료 처리됨: ${orderId} (${paymentKey})`);
@@ -138,7 +160,7 @@ async function handlePaymentDone(supabase: any, data: any) {
 /**
  * 결제 취소 처리 (PAYMENT.CANCELED, PAYMENT.PARTIAL_CANCELED)
  */
-async function handlePaymentCanceled(supabase: any, data: any) {
+async function handlePaymentCanceled(supabase: SupabaseClient<Database>, data: TossWebhookData) {
   const { paymentKey, orderId, cancels } = data;
   const isPartialCancel = data.status === 'PARTIAL_CANCELED';
 
@@ -148,7 +170,7 @@ async function handlePaymentCanceled(supabase: any, data: any) {
       .from('payments')
       .update({
         status: isPartialCancel ? 'partial_refunded' : 'refunded',
-        raw_response: data,
+        raw_response: data as any,
         updated_at: new Date().toISOString()
       })
       .eq('provider_transaction_id', paymentKey);
@@ -182,11 +204,11 @@ async function handlePaymentCanceled(supabase: any, data: any) {
             remaining_amount: data.balanceAmount,
             provider: 'toss',
             provider_refund_id: latestCancel.transactionKey,
-            refund_response: latestCancel,
+            refund_response: latestCancel as any,
             status: 'completed',
-            processed_at: new Date(latestCancel.canceledAt).toISOString(),
+            processed_at: latestCancel.canceledAt ? new Date(latestCancel.canceledAt).toISOString() : new Date().toISOString(),
             created_at: new Date().toISOString()
-          });
+          } as any);
 
         if (refundError) {
           webhookLogger.error('환불 레코드 생성 실패:', refundError);
@@ -204,7 +226,7 @@ async function handlePaymentCanceled(supabase: any, data: any) {
 /**
  * 결제 실패 처리 (PAYMENT.ABORTED)
  */
-async function handlePaymentAborted(supabase: any, data: any) {
+async function handlePaymentAborted(supabase: SupabaseClient<Database>, data: TossWebhookData) {
   const { orderId } = data;
 
   try {
@@ -214,7 +236,7 @@ async function handlePaymentAborted(supabase: any, data: any) {
         status: 'failed',
         failed_at: new Date().toISOString(),
         error_message: '결제가 중단되었습니다.',
-        raw_response: data,
+        raw_response: data as any,
         updated_at: new Date().toISOString()
       })
       .eq('order_id', orderId);
@@ -233,7 +255,7 @@ async function handlePaymentAborted(supabase: any, data: any) {
 /**
  * 결제 만료 처리 (PAYMENT.EXPIRED)
  */
-async function handlePaymentExpired(supabase: any, data: any) {
+async function handlePaymentExpired(supabase: SupabaseClient<Database>, data: TossWebhookData) {
   const { orderId } = data;
 
   try {
@@ -242,7 +264,7 @@ async function handlePaymentExpired(supabase: any, data: any) {
       .update({
         status: 'expired',
         error_message: '결제 시간이 만료되었습니다.',
-        raw_response: data,
+        raw_response: data as any,
         updated_at: new Date().toISOString()
       })
       .eq('order_id', orderId);
@@ -261,7 +283,7 @@ async function handlePaymentExpired(supabase: any, data: any) {
 /**
  * 가상계좌 입금 완료 처리 (VIRTUAL_ACCOUNT.DEPOSIT)
  */
-async function handleVirtualAccountDeposit(supabase: any, data: any) {
+async function handleVirtualAccountDeposit(supabase: SupabaseClient<Database>, data: TossWebhookData) {
   const { paymentKey, orderId } = data;
 
   try {
@@ -271,7 +293,7 @@ async function handleVirtualAccountDeposit(supabase: any, data: any) {
       .update({
         status: 'paid',
         paid_at: new Date().toISOString(),
-        raw_response: data,
+        raw_response: data as any,
         updated_at: new Date().toISOString()
       })
       .eq('order_id', orderId);
@@ -281,16 +303,18 @@ async function handleVirtualAccountDeposit(supabase: any, data: any) {
     }
 
     // 관련 문의 상태도 업데이트
-    const { error: inquiryError } = await supabase
-      .from('inquiries')
-      .update({
-        status: 'reserved',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', data.metadata?.inquiryId);
+    if (data.metadata?.inquiryId) {
+      const { error: inquiryError } = await supabase
+        .from('inquiries')
+        .update({
+          status: 'reserved',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.metadata.inquiryId);
 
-    if (inquiryError) {
-      webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
+      if (inquiryError) {
+        webhookLogger.error('문의 상태 업데이트 실패:', inquiryError);
+      }
     }
 
     webhookLogger.info(`가상계좌 입금 완료 처리됨: ${orderId} (${paymentKey})`);
@@ -303,7 +327,7 @@ async function handleVirtualAccountDeposit(supabase: any, data: any) {
 /**
  * 웹훅 이벤트 로그 저장
  */
-async function logWebhookEvent(supabase: any, webhookEvent: TossWebhookEvent) {
+async function logWebhookEvent(supabase: SupabaseClient<Database>, webhookEvent: TossWebhookEvent) {
   try {
     const { error } = await supabase
       .from('payment_logs')

@@ -146,7 +146,7 @@ npm run build
 npm run type-check
 
 # Supabase 타입 생성
-npm run gen-types
+npm run update-types
 
 # 코드 스타일 검사
 npm run lint

@@ -1,17 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTossPayments, formatAmount, generateOrderId, getSuccessUrl, getFailUrl, getTossErrorMessage } from '@/lib/payments/toss-client';
+import { getTossPayments, formatAmount, getSuccessUrl, getFailUrl, getTossErrorMessage } from '@/lib/payments/toss-client';
+import { createPaymentRequest } from '@/lib/actions/toss-payments';
+import { createInquiryForPayment } from '@/lib/actions/inquiries';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { paymentLogger } from '@/lib/logger';
+import type { TablesInsert } from '@/types/database.types';
 
 interface TossPaymentFormProps {
-  inquiry: {
-    id: string;
+  inquiryData: {
     name: string;
     phone: string;
     email?: string;
+    gender: string;
+    desired_date: string;
+    selected_slot_id?: string;
+    people_count: number;
+    relationship?: string;
+    special_request?: string;
+    difficulty_note?: string;
+    conversation_preference?: string;
+    conversation_topics?: string;
+    favorite_music?: string;
+    shooting_meaning?: string;
   };
   product: {
     id: string;
@@ -32,7 +46,7 @@ const replaceHyphen = (phone: string) => {
 };
 
 export function TossPaymentForm({
-  inquiry,
+  inquiryData,
   product,
   photographer,
   onPaymentComplete,
@@ -42,7 +56,8 @@ export function TossPaymentForm({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [orderId] = useState(generateOrderId());
+  const [customerKey, setCustomerKey] = useState<string | null>(null);
+  const [inquiryId, setInquiryId] = useState<string | null>(null);
 
   // TossPayments 초기화
   useEffect(() => {
@@ -50,22 +65,25 @@ export function TossPaymentForm({
       try {
         setLoading(true);
         setError(null);
-        
+
         const tossPaymentsInstance = await getTossPayments();
         // payment 인스턴스 생성 (비회원 결제)
+        const guestKey = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        setCustomerKey(guestKey);
+
         const paymentInstance = tossPaymentsInstance.payment({
-          customerKey: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          customerKey: guestKey
         });
         setPayment(paymentInstance);
       } catch (err) {
-        console.error('TossPayments 초기화 실패:', err);
+        paymentLogger.error('TossPayments 초기화 실패', err);
         setError('결제 시스템 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
         onPaymentError?.('결제 시스템 초기화 실패');
       } finally {
         setLoading(false);
       }
     }
-    
+
     initTossPayments();
   }, [onPaymentError]);
 
@@ -80,20 +98,84 @@ export function TossPaymentForm({
     setError(null);
 
     try {
-      // 결제창 호출
+      // Step 1: Create inquiry before payment (status='pending_payment')
+      paymentLogger.info('Creating inquiry before payment', {
+        phone: inquiryData.phone,
+        photographerId: photographer.id,
+        productId: product.id
+      });
+
+      const inquiryResult = await createInquiryForPayment({
+        name: inquiryData.name,
+        phone: inquiryData.phone,
+        gender: inquiryData.gender,
+        desired_date: inquiryData.desired_date,
+        selected_slot_id: inquiryData.selected_slot_id || null,
+        people_count: inquiryData.people_count,
+        relationship: inquiryData.relationship || null,
+        special_request: inquiryData.special_request || null,
+        difficulty_note: inquiryData.difficulty_note || null,
+        conversation_preference: inquiryData.conversation_preference || null,
+        conversation_topics: inquiryData.conversation_topics || null,
+        favorite_music: inquiryData.favorite_music || null,
+        shooting_meaning: inquiryData.shooting_meaning || null,
+        photographer_id: photographer.id,
+        product_id: product.id,
+      });
+
+      if (!inquiryResult.success || !inquiryResult.inquiryId) {
+        setError(inquiryResult.error || '예약 정보 생성에 실패했습니다.');
+        onPaymentError?.(inquiryResult.error || '예약 정보 생성 실패');
+        return;
+      }
+
+      const createdInquiryId = inquiryResult.inquiryId;
+      setInquiryId(createdInquiryId);
+
+      paymentLogger.info('Inquiry created successfully', { inquiryId: createdInquiryId });
+
+      // Step 2: 서버에 결제 준비 요청 (pending 상태로 DB 레코드 생성)
+      const formData = new FormData();
+      formData.append('inquiryId', createdInquiryId);
+      formData.append('productId', product.id);
+      formData.append('amount', product.price.toString());
+      formData.append('orderName', `${product.name} - ${photographer.name}`);
+      formData.append('buyerName', inquiryData.name);
+      formData.append('buyerEmail', inquiryData.email || '');
+      formData.append('buyerTel', inquiryData.phone);
+
+      paymentLogger.info('결제 준비 요청 (클라이언트)', {
+        inquiryId: createdInquiryId,
+        productId: product.id,
+        amount: product.price
+      });
+
+      const prepareResult = await createPaymentRequest(formData);
+
+      if (!prepareResult.success || !prepareResult.orderId) {
+        setError(prepareResult.error || '결제 준비에 실패했습니다.');
+        onPaymentError?.(prepareResult.error || '결제 준비 실패');
+        return;
+      }
+
+      const { orderId, paymentId } = prepareResult;
+
+      paymentLogger.info('결제 준비 완료 (클라이언트)', { orderId, paymentId });
+
+      // Step 3: Toss 결제창 호출
       await payment.requestPayment({
         method: 'CARD', // 카드 결제
         amount: {
           currency: 'KRW',
           value: product.price,
         },
-        orderId: orderId,
+        orderId: orderId,  // ✅ 서버에서 받은 orderId 사용
         orderName: `${product.name} - ${photographer.name}`,
         successUrl: getSuccessUrl(orderId),
         failUrl: getFailUrl(orderId),
-        customerEmail: inquiry.email,
-        customerName: inquiry.name,
-        customerMobilePhone: replaceHyphen(inquiry.phone),
+        customerEmail: inquiryData.email,
+        customerName: inquiryData.name,
+        customerMobilePhone: replaceHyphen(inquiryData.phone),
         // 카드 결제에 필요한 정보
         card: {
           useEscrow: false,
@@ -103,8 +185,8 @@ export function TossPaymentForm({
         },
       });
     } catch (err: any) {
-      console.error('결제 요청 실패:', err);
-      
+      paymentLogger.error('결제 요청 실패 (클라이언트)', err);
+
       // 에러 처리
       if (err.code === 'USER_CANCEL') {
         setError('결제를 취소하셨습니다.');
@@ -153,11 +235,7 @@ export function TossPaymentForm({
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">예약자</span>
-            <span className="font-medium">{inquiry.name}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">주문번호</span>
-            <span className="font-medium text-xs">{orderId}</span>
+            <span className="font-medium">{inquiryData.name}</span>
           </div>
           <div className="border-t pt-3 mt-3">
             <div className="flex justify-between">

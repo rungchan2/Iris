@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { CreditCard, Calendar, User, Receipt, AlertCircle, Loader2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CreditCard, Calendar, User, Receipt, AlertCircle, Loader2, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import Link from 'next/link'
@@ -23,15 +25,22 @@ import { toast } from 'sonner'
 
 export function PaymentsClient() {
   const [payments, setPayments] = useState<PaymentWithDetails[]>([])
+  const [filteredPayments, setFilteredPayments] = useState<PaymentWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null)
   const [refundReason, setRefundReason] = useState('')
   const [refundLoading, setRefundLoading] = useState(false)
+  const [dateFilter, setDateFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     loadPayments()
   }, [])
+
+  useEffect(() => {
+    filterPayments()
+  }, [payments, dateFilter, searchQuery])
 
   const loadPayments = async () => {
     setLoading(true)
@@ -42,6 +51,52 @@ export function PaymentsClient() {
       toast.error('결제 내역을 불러오는데 실패했습니다')
     }
     setLoading(false)
+  }
+
+  const filterPayments = () => {
+    let filtered = [...payments]
+
+    // Date filter - use paid_at if available, otherwise created_at
+    if (dateFilter !== 'all') {
+      const now = new Date()
+      const filterDate = new Date()
+
+      switch (dateFilter) {
+        case '1month':
+          filterDate.setMonth(now.getMonth() - 1)
+          break
+        case '3months':
+          filterDate.setMonth(now.getMonth() - 3)
+          break
+        case '6months':
+          filterDate.setMonth(now.getMonth() - 6)
+          break
+      }
+
+      filtered = filtered.filter((payment) => {
+        const paymentDate = payment.paid_at
+          ? new Date(payment.paid_at)
+          : payment.created_at
+          ? new Date(payment.created_at)
+          : null
+
+        return paymentDate && paymentDate >= filterDate
+      })
+    }
+
+    // Search by product name or photographer name
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((payment) => {
+        const productName = payment.product?.name?.toLowerCase() || ''
+        const photographerName = payment.photographer?.name?.toLowerCase() || ''
+        const inquiryName = payment.inquiry?.name?.toLowerCase() || ''
+
+        return productName.includes(query) || photographerName.includes(query) || inquiryName.includes(query)
+      })
+    }
+
+    setFilteredPayments(filtered)
   }
 
   const handleRefundClick = (payment: PaymentWithDetails) => {
@@ -101,25 +156,42 @@ export function PaymentsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">결제 내역</h1>
-              <p className="text-sm text-gray-600 mt-1">총 {payments.length}건의 결제 내역</p>
-            </div>
-            <Link href="/">
-              <Button variant="ghost">홈으로</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen">
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="mx-auto pb-8">
+        <div className="space-y-6">
+          {/* Filter & Search Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>검색 및 필터</CardTitle>
+              <CardDescription>날짜별 필터링 및 상품/작가명 검색</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="md:w-[200px]">
+                    <SelectValue placeholder="전체 기간" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 기간</SelectItem>
+                    <SelectItem value="1month">최근 1개월</SelectItem>
+                    <SelectItem value="3months">최근 3개월</SelectItem>
+                    <SelectItem value="6months">최근 6개월</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Input
+                  placeholder="상품명 또는 작가명으로 검색"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment List */}
           {payments.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -130,9 +202,26 @@ export function PaymentsClient() {
                 </Link>
               </CardContent>
             </Card>
+          ) : filteredPayments.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Receipt className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">검색 결과가 없습니다</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setDateFilter('all')
+                    setSearchQuery('')
+                  }}
+                >
+                  필터 초기화
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-4">
-              {payments.map((payment) => (
+              {filteredPayments.map((payment) => (
                 <Card key={payment.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">

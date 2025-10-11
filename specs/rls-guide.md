@@ -2,10 +2,157 @@
 anon (0) < user (10) < photographer (20) < admin (40)
 photographer는 승인 상태 무관, 프론트에서 approval_status 필터링
 
-🔧 최종 함수 구현
-sql-- ============================================
--- 최소 권한 체크 함수
--- ============================================
+---
+
+## 📚 문서 인덱스
+
+- **새로운 RLS 함수 상세 가이드**: [`/docs/RLS_UTILS_GUIDE.md`](/docs/RLS_UTILS_GUIDE.md)
+- **클라이언트 인증 유틸**: [`/docs/AUTH_UTILS_GUIDE.md`](/docs/AUTH_UTILS_GUIDE.md)
+- **SQL 함수 정의 파일**: [`/lib/auth/rls-utils.sql`](/lib/auth/rls-utils.sql)
+
+---
+
+🔧 RLS 유틸리티 함수 (public 스키마)
+
+> ⚠️ **중요**: 모든 RLS 함수는 `public` 스키마에 생성되어 있습니다.
+>
+> 자세한 사용법은 [`/docs/RLS_UTILS_GUIDE.md`](/docs/RLS_UTILS_GUIDE.md) 참고
+
+**새 함수의 장점**:
+- ✅ **재사용성**: 모든 테이블에서 동일한 패턴 적용
+- ✅ **성능**: STABLE + SECURITY DEFINER + 인덱스 최적화
+- ✅ **가독성**: 복잡한 서브쿼리 대신 명확한 함수 호출
+- ✅ **유지보수**: 권한 로직 중앙화 (한 곳만 수정)
+
+### 1. 단일 소유자 체크 (`is_owner`)
+
+sql
+CREATE OR REPLACE FUNCTION public.is_owner(owner_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT auth.uid() = owner_id;
+$$;
+
+**사용 예시**:
+sql
+-- 본인이 작성한 리뷰만 수정 가능
+CREATE POLICY "reviews_update_own"
+ON reviews FOR UPDATE
+USING (public.is_owner(user_id));
+
+
+### 2. 다중 소유자 체크 (`is_any_owner`)
+
+sql
+CREATE OR REPLACE FUNCTION public.is_any_owner(VARIADIC owner_ids UUID[])
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT auth.uid() = ANY(owner_ids);
+$$;
+
+**사용 예시**:
+sql
+-- inquiries: 문의자 또는 작가가 조회 가능
+CREATE POLICY "inquiries_select_policy"
+ON inquiries FOR SELECT
+USING (
+  public.is_any_owner(user_id, photographer_id)
+  OR public.is_admin()
+);
+
+
+### 3. 사용자 + 작가 체크 (`is_user_or_photographer`)
+
+sql
+CREATE OR REPLACE FUNCTION public.is_user_or_photographer(
+  p_user_id UUID,
+  p_photographer_id UUID
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT auth.uid() = p_user_id
+      OR auth.uid() = p_photographer_id;
+$$;
+
+**사용 예시**:
+sql
+-- payments: 결제자 또는 작가가 조회 가능
+CREATE POLICY "payments_select_policy"
+ON payments FOR SELECT
+USING (
+  public.is_user_or_photographer(user_id, photographer_id)
+  OR public.is_admin()
+);
+
+
+### 4. 관리자 체크 (`is_admin`)
+
+sql
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = auth.uid()
+      AND u.role = 'admin'
+  );
+$$;
+
+**사용 예시**:
+sql
+-- admin만 모든 사용자 정보 조회 가능
+CREATE POLICY "users_admin_select"
+ON users FOR SELECT
+USING (
+  public.is_owner(id)
+  OR public.is_admin()
+);
+
+
+### 5. 작가 권한 체크 (`is_photographer`)
+
+sql
+CREATE OR REPLACE FUNCTION public.is_photographer()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM users u
+    WHERE u.id = auth.uid()
+      AND u.role IN ('photographer', 'admin')
+  );
+$$;
+
+**사용 예시**:
+sql
+-- 작가만 상품 등록 가능
+CREATE POLICY "products_insert_photographer"
+ON products FOR INSERT
+WITH CHECK (
+  public.is_photographer()
+  AND public.is_owner(photographer_id)
+);
+
+
+### 6. 최소 권한 체크 (레거시 - `auth.min_role`)
+
+sql
 CREATE OR REPLACE FUNCTION auth.min_role(required_role TEXT)
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -13,7 +160,7 @@ SECURITY DEFINER
 STABLE
 AS $$
   WITH role_levels AS (
-    SELECT 
+    SELECT
       CASE u.role
         WHEN 'admin' THEN 40
         WHEN 'photographer' THEN 20
@@ -23,8 +170,8 @@ AS $$
     FROM users u
     WHERE u.id = auth.uid()
   )
-  SELECT 
-    COALESCE(current_level, 0) >= 
+  SELECT
+    COALESCE(current_level, 0) >=
     CASE required_role
       WHEN 'admin' THEN 40
       WHEN 'photographer' THEN 20
@@ -35,22 +182,21 @@ AS $$
   FROM role_levels;
 $$;
 
--- ============================================
--- 소유자 체크 함수
--- ============================================
-CREATE OR REPLACE FUNCTION auth.is_owner(owner_id UUID)
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT auth.uid() = owner_id;
-$$;
 
--- ============================================
--- 인덱스 (성능 최적화)
--- ============================================
-CREATE INDEX IF NOT EXISTS idx_users_id_role 
+> 💡 **권장**: 간단한 권한 체크는 `public.is_admin()`, `public.is_photographer()` 사용 (더 빠름)
+
+### 성능 최적화 인덱스
+
+sql
+-- users 테이블 인덱스 (role 체크용)
+CREATE INDEX IF NOT EXISTS idx_users_id_role
 ON users(id, role);
+
+-- owner 컬럼 인덱스 (필요시 추가)
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_photographer_id ON payments(photographer_id);
+CREATE INDEX IF NOT EXISTS idx_inquiries_user_id ON inquiries(user_id);
+CREATE INDEX IF NOT EXISTS idx_inquiries_photographer_id ON inquiries(photographer_id);
 
 📝 photographers 테이블 RLS 예시
 sql-- ============================================
@@ -62,22 +208,14 @@ ALTER TABLE photographers ENABLE ROW LEVEL SECURITY;
 -- 프론트에서 approval_status 필터링
 CREATE POLICY "photographers_select_policy"
 ON photographers FOR SELECT
-USING (
-  auth.min_role('anon')  -- 누구나 (본인 체크 불필요, 어차피 다 보임)
-  OR auth.min_role('admin')  -- 명시적으로 관리자 (사실 위에서 이미 포함)
-);
-
--- 또는 더 간단하게
-CREATE POLICY "photographers_select_policy"
-ON photographers FOR SELECT
 USING (true);  -- 누구나 조회 가능, 프론트에서 필터링
 
 -- INSERT: user 이상, 본인 것만
 CREATE POLICY "photographers_insert_policy"
 ON photographers FOR INSERT
 WITH CHECK (
-  auth.min_role('user') 
-  AND auth.is_owner(id)
+  auth.min_role('user')
+  AND public.is_owner(id)
 );
 
 -- UPDATE: photographer 이상, 본인 것만
@@ -85,17 +223,17 @@ CREATE POLICY "photographers_update_policy"
 ON photographers FOR UPDATE
 USING (
   auth.min_role('photographer')
-  AND auth.is_owner(id)
+  AND public.is_owner(id)
 )
 WITH CHECK (
-  auth.is_owner(id)
+  public.is_owner(id)
 );
 
 -- DELETE: admin만
 CREATE POLICY "photographers_delete_policy"
 ON photographers FOR DELETE
 USING (
-  auth.min_role('admin')
+  public.is_admin()
 );
 
 🤔 SELECT 정책 논의
@@ -128,16 +266,16 @@ ON photographers FOR SELECT
 USING (
   -- 승인된 것만 공개
   approval_status = 'approved'
-  
+
   OR
-  
+
   -- 본인은 항상 볼 수 있음
-  auth.is_owner(id)
-  
+  public.is_owner(id)
+
   OR
-  
+
   -- 관리자는 모두
-  auth.min_role('admin')
+  public.is_admin()
 );
 장점:
 
@@ -162,8 +300,8 @@ sqlUSING (true);
 민감한 테이블은 옵션 B
 sql-- payments, inquiries 등
 USING (
-  auth.is_owner(user_id)
-  OR auth.min_role('admin')
+  public.is_owner(user_id)
+  OR public.is_admin()
 );
 이유:
 
@@ -183,27 +321,28 @@ USING (true);
 CREATE POLICY "products_insert_policy"
 ON products FOR INSERT
 WITH CHECK (
-  auth.min_role('photographer')
-  AND auth.is_owner(photographer_id)
+  public.is_photographer()
+  AND public.is_owner(photographer_id)
 );
 
 -- UPDATE: photographer 이상, 본인 것만
 CREATE POLICY "products_update_policy"
 ON products FOR UPDATE
 USING (
-  auth.min_role('photographer')
-  AND auth.is_owner(photographer_id)
+  public.is_owner(photographer_id)
+  OR public.is_admin()
 )
 WITH CHECK (
-  auth.is_owner(photographer_id)
+  public.is_owner(photographer_id)
+  OR public.is_admin()
 );
 
 -- DELETE: photographer 이상, 본인 것만 (또는 admin)
 CREATE POLICY "products_delete_policy"
 ON products FOR DELETE
 USING (
-  (auth.min_role('photographer') AND auth.is_owner(photographer_id))
-  OR auth.min_role('admin')
+  public.is_owner(photographer_id)
+  OR public.is_admin()
 );
 
 inquiries (민감)
@@ -211,9 +350,8 @@ sql-- SELECT: 본인 것만 + 관련 작가 + 관리자
 CREATE POLICY "inquiries_select_policy"
 ON inquiries FOR SELECT
 USING (
-  auth.is_owner(user_id)
-  OR auth.is_owner(photographer_id)
-  OR auth.min_role('admin')
+  public.is_any_owner(user_id, photographer_id)
+  OR public.is_admin()
 );
 
 -- INSERT: user 이상, 본인 것만
@@ -221,23 +359,22 @@ CREATE POLICY "inquiries_insert_policy"
 ON inquiries FOR INSERT
 WITH CHECK (
   auth.min_role('user')
-  AND auth.is_owner(user_id)
+  AND public.is_owner(user_id)
 );
 
 -- UPDATE: 본인 또는 관련 작가
 CREATE POLICY "inquiries_update_policy"
 ON inquiries FOR UPDATE
 USING (
-  auth.is_owner(user_id)
-  OR auth.is_owner(photographer_id)
-  OR auth.min_role('admin')
+  public.is_any_owner(user_id, photographer_id)
+  OR public.is_admin()
 );
 
 -- DELETE: admin만
 CREATE POLICY "inquiries_delete_policy"
 ON inquiries FOR DELETE
 USING (
-  auth.min_role('admin')
+  public.is_admin()
 );
 
 survey_questions (읽기 전용 + 관리자)
@@ -249,24 +386,32 @@ USING (true);
 -- INSERT/UPDATE/DELETE: admin만
 CREATE POLICY "survey_questions_modify_policy"
 ON survey_questions FOR ALL
-USING (auth.min_role('admin'))
-WITH CHECK (auth.min_role('admin'));
+USING (public.is_admin())
+WITH CHECK (public.is_admin());
 
 ✅ 최종 정리
-함수 2개만!
-sqlauth.min_role('photographer')  -- 권한 체크
-auth.is_owner(photographer_id) -- 소유권 체크
-RLS 패턴 3가지
+
+### 새로운 RLS 함수 (public 스키마)
+sqlpublic.is_owner(owner_id)                    -- 단일 소유자 체크
+public.is_any_owner(user_id, photographer_id)  -- 다중 소유자 체크
+public.is_user_or_photographer(u_id, p_id)     -- 특화 버전 (payments/inquiries)
+public.is_admin()                               -- 관리자 체크 (빠름)
+public.is_photographer()                        -- 작가 이상 권한 체크
+
+### 레거시 함수 (auth 스키마)
+sqlauth.min_role('photographer')  -- 최소 권한 체크 (권장: 새 함수 사용)
+
+### RLS 패턴 3가지
 sql-- 1. 공개 테이블 (photographers, products)
 USING (true);
 
 -- 2. 본인 데이터 (inquiries, payments)
 USING (
-  auth.is_owner(user_id)
-  OR auth.min_role('admin')
+  public.is_any_owner(user_id, photographer_id)
+  OR public.is_admin()
 );
 
 -- 3. 관리자 전용 (settings, logs)
-USING (auth.min_role('admin'));
+USING (public.is_admin());
 이제 30개 테이블에 일관되게 적용 가능합니다!
 다음 단계로 JSON → SQL 자동 생성 스크립트 만들까요?재시도

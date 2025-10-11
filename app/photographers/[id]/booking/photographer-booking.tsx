@@ -28,8 +28,26 @@ const EMAIL_TO = [
   "mingoyoung809@gmail.com"
 ]
 
+interface PhotographerProfile {
+  id: string
+  name: string | null
+  email: string | null
+  profileImage?: string | null
+  created_at: string | null
+  personality_admin_mapping?: Array<{
+    is_primary: boolean
+    personality_types?: {
+      code: string
+      name: string
+    } | null
+  }> | null
+  photos?: Array<{
+    id: string
+  }> | null
+}
+
 interface PhotographerBookingPageProps {
-  photographer: any
+  photographer: PhotographerProfile
   isLoggedIn: boolean
   userProfile: {
     name: string | null
@@ -46,7 +64,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
   const [newInquiry, setNewInquiry] = useState<Inquiry | null>(null)
   // Removed moodKeywords - no longer using keywords table
   const [availableDates, setAvailableDates] = useState<string[]>([])
-  const [paymentData, setPaymentData] = useState<any>(null)
+  const [paymentData, setPaymentData] = useState<{ paymentKey: string; orderId: string } | null>(null)
 
   const supabase = createClient()
 
@@ -57,14 +75,18 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
   }, [isLoggedIn])
 
   const initials = photographer.name
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
+    ? photographer.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : '?'
 
-  const primaryPersonality = photographer.personality_admin_mapping?.find((m: any) => m.is_primary)
+  const primaryPersonality = photographer.personality_admin_mapping?.find((m) => m.is_primary)
   const portfolioCount = photographer.photos?.length || 0
-  const experience = Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
+  const experience = photographer.created_at
+    ? Math.floor((new Date().getTime() - new Date(photographer.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1
+    : 1
   // Generate deterministic rating based on photographer ID to avoid hydration issues
   const rating = portfolioCount > 0 ? 4.5 + (photographer.id.charCodeAt(0) % 5) / 10 : undefined
 
@@ -141,7 +163,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
               matched_admin_id: photographer.id, // Add photographer ID for proper linking
               photographer_id: photographer.id, // Set photographer_id FK for direct filtering
               status: data.paymentKey ? 'reserved' : 'new', // If payment was completed, set as reserved
-            } as any)
+            })
             .select()
             .single()
 
@@ -280,7 +302,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
                 timestamp: new Date().toISOString()
               }],
               completed_at: new Date().toISOString(),
-            } as any,
+            },
             desired_date: newInquiry.desired_date,
           } as Inquiry
 
@@ -303,16 +325,17 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
       }
 
       // Success message - payment is handled in the form
-      const successMessage = data.paymentKey 
+      const successMessage = data.paymentKey
         ? '결제가 완료되었습니다! 예약이 확정되었습니다.'
         : '예약 정보가 저장되었습니다.';
       toast.success(successMessage)
-    } catch (error: any) {
+    } catch (error: unknown) {
       photographerLogger.error('Error submitting inquiry:', error)
-      
+
+      const err = error as { code?: string; message?: string }
       if (
-        error?.code === "42501" ||
-        error?.message?.includes("row-level security")
+        err?.code === "42501" ||
+        err?.message?.includes("row-level security")
       ) {
         photographerLogger.error("RLS Policy violation detected")
         toast.error(
@@ -371,7 +394,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
-                    <AvatarImage src={photographer.profileImage} />
+                    <AvatarImage src={photographer.profileImage || undefined} />
                     <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-2xl">
                       {initials}
                     </AvatarFallback>
@@ -454,7 +477,7 @@ export function PhotographerBookingPage({ photographer, isLoggedIn, userProfile 
               formData={newInquiry}
               category={{
                 id: photographer.id,
-                name: photographer.name,
+                name: photographer.name || '작가',
                 path: '',
                 parent_id: null,
                 depth: 1,

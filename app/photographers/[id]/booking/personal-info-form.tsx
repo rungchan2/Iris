@@ -43,7 +43,7 @@ interface PersonalInfoFormProps {
   photographerId?: string; // Add photographer ID prop
   photographer?: {
     id: string;
-    name: string;
+    name: string | null;
   }; // Add photographer info
   userProfile?: {
     name: string | null;
@@ -773,26 +773,12 @@ export function PersonalInfoForm({
                                           <span className="text-2xl font-bold">
                                             {product.price?.toLocaleString()}원
                                           </span>
-                                          {product.duration_hours && (
+                                          {product.shooting_duration && (
                                             <span className="text-sm text-muted-foreground">
-                                              / {product.duration_hours}시간
+                                              / {product.shooting_duration}분
                                             </span>
                                           )}
                                         </div>
-                                        {product.includes && (
-                                          <div className="text-sm">
-                                            <span className="font-medium">
-                                              포함 내역:
-                                            </span>
-                                            <ul className="list-disc list-inside mt-1 text-muted-foreground">
-                                              {product.includes.map(
-                                                (item, idx) => (
-                                                  <li key={idx}>{item}</li>
-                                                )
-                                              )}
-                                            </ul>
-                                          </div>
-                                        )}
                                       </div>
                                     </div>
                                   </Card>
@@ -889,13 +875,24 @@ export function PersonalInfoForm({
                   const selectedProduct = products.find(
                     (p) => p.id === form.watch("selected_product_id")
                   );
+                  const desiredDate = form.watch("desired_date");
                   return selectedProduct ? (
                     <TossPaymentForm
-                      inquiry={{
-                        id: "temp-inquiry", // This will be generated after form submission
+                      inquiryData={{
                         name: form.watch("name") || "",
                         phone: form.watch("phone") || "",
                         email: undefined,
+                        gender: form.watch("gender") || "male",
+                        desired_date: desiredDate ? format(desiredDate, "yyyy-MM-dd") : "",
+                        selected_slot_id: form.watch("selected_slot_id") || undefined,
+                        people_count: form.watch("people_count") || 1,
+                        relationship: form.watch("relationship") || undefined,
+                        special_request: form.watch("special_request") || undefined,
+                        difficulty_note: form.watch("difficulty_note") || undefined,
+                        conversation_preference: form.watch("conversation_preference") || undefined,
+                        conversation_topics: form.watch("conversation_topics") || undefined,
+                        favorite_music: form.watch("favorite_music") || undefined,
+                        shooting_meaning: form.watch("shooting_meaning") || undefined,
                       }}
                       product={{
                         id: selectedProduct.id,

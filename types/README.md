@@ -93,7 +93,7 @@ const roleLabel = USER_ROLE_LABELS['photographer']     // '사진작가'
 When database schema changes:
 
 ```bash
-npm run gen-types
+npm run update-types
 ```
 
 This will update `database.types.ts`. The `enums.ts` file should be manually updated if new enums are added to the database.
@@ -102,7 +102,7 @@ This will update `database.types.ts`. The `enums.ts` file should be manually upd
 
 When a new enum is added to the database:
 
-1. Run `npm run gen-types` to update `database.types.ts`
+1. Run `npm run update-types` to update `database.types.ts`
 2. Add the new enum type to `enums.ts`:
 
 ```typescript

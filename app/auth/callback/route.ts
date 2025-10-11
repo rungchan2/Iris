@@ -118,7 +118,7 @@ export async function GET(request: Request) {
     // If profile is incomplete (no phone), redirect to profile completion
     // But skip for photographers and admins (they have their own flows)
     if (!userData?.phone && userData?.role === "user") {
-      finalRedirect = "/profile/complete";
+      finalRedirect = "/complete";
     }
 
     if (isLocalEnv) {

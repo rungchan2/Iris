@@ -16,7 +16,7 @@
 
 ### 1. Database Types (자동 생성)
 ```bash
-npm run gen-types
+npm run update-types
 ```
 - `database.types.ts` 파일 자동 생성
 - Supabase 스키마를 TypeScript 타입으로 변환
@@ -212,7 +212,7 @@ type Check = (string | undefined) extends (string | null | undefined) ? true : '
 1. **DB 스키마 변경**
    ```bash
    # Supabase에서 migration 실행
-   npm run gen-types  # database.types.ts 재생성
+   npm run update-types  # database.types.ts 재생성
    ```
 
 2. **빌드 실행**
@@ -263,6 +263,6 @@ npm run build
 
 1. ✅ **모든 Zod 스키마는 `/types` 폴더에 정의**
 2. ✅ **타입 체크는 필수** (`_[Name]Check` 타입 정의)
-3. ✅ **DB 스키마 변경 시 `npm run gen-types` 실행**
+3. ✅ **DB 스키마 변경 시 `npm run update-types` 실행**
 4. ✅ **빌드 에러 발생 시 Zod 스키마 업데이트**
 5. ❌ **컴포넌트 안에서 Zod 스키마 정의 금지**

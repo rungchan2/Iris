@@ -27,7 +27,7 @@
 - 매칭 시스템 전용 인터페이스 정의
 
 **체크리스트:**
-- [ ] `npm run gen-types` 실행하여 최신 DB 타입 생성
+- [ ] `npm run update-types` 실행하여 최신 DB 타입 생성
 - [ ] `types/matching.types.ts` 파일 생성
 - [ ] 매칭 세션, 결과, 질문 인터페이스 정의
 - [ ] 4차원 점수 타입 정의

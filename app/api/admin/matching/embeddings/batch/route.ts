@@ -15,7 +15,7 @@ export async function POST() {
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
-        const sendUpdate = (data: any) => {
+        const sendUpdate = (data: { type: string; progress?: number; current?: number; total?: number; message?: string }) => {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
         }
         

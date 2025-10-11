@@ -12,7 +12,7 @@ export type PaymentWithDetails = Payment & {
     id: string
     name: string
     desired_date: string | null
-    message?: string | null
+    special_request?: string | null
   } | null
   product?: {
     id: string
@@ -46,9 +46,9 @@ export async function getUserPayments(): Promise<ApiResponse<PaymentWithDetails[
       .from('payments')
       .select(`
         *,
-        inquiry:inquiries(id, name, desired_date),
-        product:products(id, name),
-        photographer:photographers(id, name)
+        inquiry:inquiries!payments_inquiry_id_fkey(id, name, desired_date),
+        product:products!payments_product_id_fkey(id, name),
+        photographer:photographers!payments_photographer_id_fkey(id, name)
       `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
@@ -85,9 +85,9 @@ export async function getPaymentDetails(paymentId: string): Promise<ApiResponse<
       .from('payments')
       .select(`
         *,
-        inquiry:inquiries(id, name, desired_date),
-        product:products(id, name),
-        photographer:photographers(id, name)
+        inquiry:inquiries!payments_inquiry_id_fkey(id, name, desired_date),
+        product:products!payments_product_id_fkey(id, name),
+        photographer:photographers!payments_photographer_id_fkey(id, name)
       `)
       .eq('id', paymentId)
       .eq('user_id', user.id)
@@ -123,9 +123,9 @@ export async function getPaymentByOrderId(orderId: string): Promise<ApiResponse<
       .from('payments')
       .select(`
         *,
-        inquiry:inquiries(id, name, desired_date, message),
-        product:products(id, name),
-        photographer:photographers(id, name, email)
+        inquiry:inquiries!payments_inquiry_id_fkey(id, name, desired_date, special_request),
+        product:products!payments_product_id_fkey(id, name),
+        photographer:photographers!payments_photographer_id_fkey(id, name, email)
       `)
       .eq('order_id', orderId)
       .single()

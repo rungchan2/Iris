@@ -271,7 +271,7 @@ export default function PaymentSuccessClient({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/payments" className="flex-1">
+          <Link href="/user/payments" className="flex-1">
             <Button variant="outline" className="w-full">
               <Receipt className="w-4 h-4 mr-2" />
               결제 내역 보기

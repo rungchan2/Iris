@@ -174,7 +174,7 @@ ALTER TABLE users_old RENAME TO users;
 
 ### 1. TypeScript 타입 재생성
 ```bash
-npm run gen-types
+npm run update-types
 ```
 
 ### 2. 애플리케이션 코드 수정

@@ -27,7 +27,7 @@ npm start
 npm run lint
 
 # Sync Types with Supabase
-npm run gen-types
+npm run update-types
 ```
 
 ## Architecture Overview

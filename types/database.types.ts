@@ -296,6 +296,7 @@ export type Database = {
           conversation_preference: string | null
           conversation_topics: string | null
           created_at: string | null
+          deleted_at: string | null
           desired_date: string | null
           difficulty_note: string | null
           favorite_music: string | null
@@ -325,6 +326,7 @@ export type Database = {
           conversation_preference?: string | null
           conversation_topics?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           desired_date?: string | null
           difficulty_note?: string | null
           favorite_music?: string | null
@@ -354,6 +356,7 @@ export type Database = {
           conversation_preference?: string | null
           conversation_topics?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           desired_date?: string | null
           difficulty_note?: string | null
           favorite_music?: string | null

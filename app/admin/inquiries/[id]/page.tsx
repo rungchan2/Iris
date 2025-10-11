@@ -42,7 +42,7 @@ export default async function InquiryDetailPage({
   }
 
   // Category photos removed - no longer using categories
-  const photos: any[] = [];
+  const photos: never[] = [];
 
   return (
     <InquiryDetailClient

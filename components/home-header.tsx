@@ -118,13 +118,13 @@ export function HomeHeader({ serverUser }: HomeHeaderProps) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center cursor-pointer">
+                    <Link href="/user/profile" className="flex items-center cursor-pointer">
                       <UserCircle className="mr-2 h-4 w-4" />
                       <span>내 프로필</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/payments" className="flex items-center cursor-pointer">
+                    <Link href="/user/payments" className="flex items-center cursor-pointer">
                       <Receipt className="mr-2 h-4 w-4" />
                       <span>결제 내역</span>
                     </Link>

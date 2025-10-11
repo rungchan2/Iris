@@ -9,8 +9,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // CRITICAL: Skip profile completion page entirely to avoid redirect loops
-  if (pathname === '/profile/complete' || pathname.startsWith('/profile/complete')) {
-    console.log('[Middleware] Early exit for /profile/complete')
+  if (pathname === '/complete' || pathname.startsWith('/complete')) {
+    console.log('[Middleware] Early exit for /complete')
     const middlewareDuration = performance.now() - middlewareStartTime
     console.log(`[Middleware Performance] Total middleware: ${middlewareDuration.toFixed(2)}ms for ${pathname}`)
     return NextResponse.next()
@@ -34,7 +34,6 @@ export async function middleware(request: NextRequest) {
     '/photographers',
     '/reset-password',
     '/review',
-    '/payment',
   ]
 
   // Check if current path is public
@@ -91,7 +90,7 @@ export async function middleware(request: NextRequest) {
 
       if (!userData) {
         console.log('[Middleware] No user data found, redirecting to profile completion')
-        url.pathname = '/profile/complete'
+        url.pathname = '/complete'
         return NextResponse.redirect(url)
       }
 
@@ -150,11 +149,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Profile completion check (for regular users only)
-  if (user && user.role === 'user' && !user.phone && pathname !== '/profile/complete') {
+  if (user && user.role === 'user' && !user.phone && pathname !== '/complete') {
     // Exclude public routes from profile completion check
     if (!isPublicRoute) {
-      console.log('[Middleware] User profile incomplete, redirecting to /profile/complete')
-      url.pathname = '/profile/complete'
+      console.log('[Middleware] User profile incomplete, redirecting to /complete')
+      url.pathname = '/complete'
       return NextResponse.redirect(url)
     }
   }

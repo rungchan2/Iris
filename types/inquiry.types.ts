@@ -61,6 +61,7 @@ type _InquiryFormValuesCheck = {
   gender: InquiryFormValues['gender'] extends InquiryInsert['gender'] ? true : 'gender type mismatch'
   phone: InquiryFormValues['phone'] extends InquiryInsert['phone'] ? true : 'phone type mismatch'
   // desired_date is Date in form, string in DB (handled in conversion)
+  // selected_product_id maps to product_id in DB (handled in conversion)
   selected_slot_id: InquiryFormValues['selected_slot_id'] extends InquiryInsert['selected_slot_id'] ? true : 'selected_slot_id type mismatch'
   people_count: InquiryFormValues['people_count'] extends InquiryInsert['people_count'] ? true : 'people_count type mismatch'
   relationship: InquiryFormValues['relationship'] extends InquiryInsert['relationship'] ? true : 'relationship type mismatch'
@@ -70,7 +71,6 @@ type _InquiryFormValuesCheck = {
   conversation_topics: InquiryFormValues['conversation_topics'] extends InquiryInsert['conversation_topics'] ? true : 'conversation_topics type mismatch'
   favorite_music: InquiryFormValues['favorite_music'] extends InquiryInsert['favorite_music'] ? true : 'favorite_music type mismatch'
   shooting_meaning: InquiryFormValues['shooting_meaning'] extends InquiryInsert['shooting_meaning'] ? true : 'shooting_meaning type mismatch'
-  selected_product_id: InquiryFormValues['selected_product_id'] extends InquiryInsert['selected_product_id'] ? true : 'selected_product_id type mismatch'
 }
 
 // Legacy types for backward compatibility with old code
